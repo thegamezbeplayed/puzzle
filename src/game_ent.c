@@ -22,11 +22,16 @@ ent_t* InitEnt(ObjectInstance data){
   e->stats[STAT_ACCEL] = InitStatOnMax(STAT_ACCEL,data.accel);
   
   if(e->team == TEAM_ENEMIES){
+    for(int i = 0; i < data.num_attacks; i++){
+      AttackInstance instance = AttackGetData(data.attacks[i]);
+      e->attacks[i] = InitAttack(instance);
 
+    }
     e->control = InitController(data);
     e->control->bt[STATE_IDLE] = InitBehaviorTree("Seek");
     e->control->bt[STATE_WANDER] = InitBehaviorTree("Wander");
     e->control->bt[STATE_AGGRO] = InitBehaviorTree("Chase");
+    e->control->bt[STATE_ATTACK] = InitBehaviorTree("Attack");
   }
   e->events = InitEvents();
   SetState(e,STATE_SPAWN,OnStateChange);
@@ -96,6 +101,10 @@ void EntDestroy(ent_t* e){
   } 
 
   e->control = NULL;
+}
+
+attack_t InitAttack(AttackInstance data){
+
 }
 
 void EntFree(ent_t* e){

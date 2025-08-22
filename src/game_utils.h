@@ -7,6 +7,7 @@
 #include "game_common.h"
 
 #define MAX_BEHAVIOR_TREE 8
+#define MAX_ATTACKS 8
 #define MAX_NAME_LEN 64
 #define COMBO_KEY(a, b) ((a << 8) | b)
 #define CALL_FUNC(type, ptr, ...) ((type)(ptr))(__VA_ARGS__)
@@ -150,4 +151,22 @@ static behavior_tree_node_t* BehaviorFindLeafFactory(const char *name) {
             return g_bt_leaves[i].factory(NULL); // call later w/ params
     return NULL;
 }
+
+typedef struct{
+  bool  is_projectile;
+  int   range;
+  int   rate;
+  int   speed;
+  int   duration;
+  int   damage;
+}AttackInstance;
+
+typedef struct {
+    const char           *name;
+    AttackInstance       *data;
+} attack_register_entry_t;
+
+
+void RegisterAttack(const char *name, AttackInstance *instance);
+AttackInstance* AttackGetData(const char *name);
 #endif

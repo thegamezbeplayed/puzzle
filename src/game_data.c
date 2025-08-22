@@ -73,6 +73,47 @@ void LoadBehaviorTrees(json_object *root) {
     }
 }
 
+static void LoadAttack(const char* name, json_object *root){
+  AttackInstance *instance = malloc(sizeof(AttackInstance));
+  const char *type = json_object_get_string(json_object_object_get(root, "type"));
+
+  instance->is_projectile = strcmp(type,"projectile")==0;
+
+  json_object *rate, *range, *speed, *duration, *damage;
+
+  if(json_object_object_get_ex(root, "attack_rate", &rate))
+    instance->rate = json_object_get_int(rate); 
+
+  if(json_object_object_get_ex(root, "duration", &duration))
+    instance->duration = json_object_get_int(duration); 
+
+  if(json_object_object_get_ex(root, "range", &range))
+    instance->range = json_object_get_int(range); 
+
+  if(json_object_object_get_ex(root, "speed", &speed))
+    instance->speed = json_object_get_int(speed); 
+
+
+  if(json_object_object_get_ex(root, "damage", &damage))
+    instance->damage = json_object_get_int(damage); 
+
+  RegisterAttack(name, instance);
+}
+
+void LoadAttackList(json_object *root){
+  if (!json_object_is_type(root, json_type_object))
+    return;
+
+  json_object *attacks = NULL;
+  if (!json_object_object_get_ex(root, "attacks", &attacks))
+    return;
+
+  json_object_object_foreach(attacks, key, val){
+    if (strcmp(key, "version") == 0) continue;
+    LoadAttack(key,val);
+  }
+}
+
 JNode* ParseJNode(struct json_object* root){
   const char *name   = json_object_get_string(json_object_object_get(root, "name"));
   const char *type = json_object_get_string(json_object_object_get(root, "type"));

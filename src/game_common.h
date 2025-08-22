@@ -4,6 +4,10 @@
 #include "raylib.h"
 
 #define MAX_EVENTS 16
+typedef enum {
+  ATTACK_MELEE,
+  ATTACK_RANGED
+} AttackType;
 
 //====EVENTS===>
 typedef enum{
@@ -23,16 +27,17 @@ typedef struct{
   int               duration;
   int               elapsed;
   bool              is_complete;
+  bool              is_recycled;
   void*             on_end_params;
   CooldownCallback  on_end;
 }cooldown_t;
 cooldown_t* InitCooldown(int dur, EventType type, CooldownCallback on_end_callback, void* params);
 void UnloadCooldown(cooldown_t* cd);
+
 typedef struct{
   cooldown_t  cooldowns[MAX_EVENTS];
   bool        cooldown_used[MAX_EVENTS];
 }events_t;
-
 
 events_t* InitEvents();
 void UnloadEvents(events_t* ev);
@@ -47,7 +52,7 @@ typedef enum{
   TEAM_NONE
 }TeamName;
 
-typedef enum EntityStateEnum {
+typedef enum {
   SHAPE_CIRCLE,
   SHAPE_RECTANGLE,
   SHAPE_TRIANGLE,

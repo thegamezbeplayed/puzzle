@@ -19,17 +19,33 @@ typedef struct {
 		int speed;
 		int accel;
 		int	aggro_range;
-bool	is_projectile;
-int	team_enum;
+	bool	is_projectile;
+	int	num_attacks;
+	const char* attacks[];
+	int	team_enum;
 } ObjectInstance;
 
+typedef struct {
+    const char* engine_instance;
+		const char* name;
+	int sprite_sheet_index;
+	int duration;
+		int fire_rate;
+	int speed;
+int	attack_range;
+} ProjectileInstance;
+
 static const ObjectInstance room_instances[] = {
-    {"ent_data", "bullet", 1600, 352, 41, 16, 0, 450, 1,1},
-    {"ent_data", "Drone", 1248, 128, 37, 16, 4, 450, 0,1},
-    {"ent_data", "player", 416, 288, 0, 16, 0, 450, 0,0},
+    {"ent_data", "Drone", 1248, 128, 37, 16, 4, 450, 0,1,["basic_bullet"],1},
+    {"ent_data", "player", 416, 288, 0, 16, 0, 450, 0,1,["basic_bullet"],0},
 };
 
-#define ROOM_INSTANCE_COUNT 3
+#define ROOM_INSTANCE_COUNT 2
+
+static const ProjectileInstance room_projectiles[] = {
+    {"projectile_data", "basic_bullet", };
+
+#define ROOM_PROJECTILE_COUNT 1
 
 #endif // ROOM_DATA_H
 // Tile Data

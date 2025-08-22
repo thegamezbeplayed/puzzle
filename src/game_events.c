@@ -174,7 +174,7 @@ void StepEvents(events_t* pool){
     if(pool->cooldowns[i].type == EVENT_NONE)
       continue;
 
-    if(pool->cooldowns[i].is_complete){
+    if(pool->cooldowns[i].is_complete && !pool->cooldowns[i].is_recycled){
       pool->cooldowns[i]=(cooldown_t){0};
       pool->cooldowns[i].type = EVENT_NONE;
       pool->cooldown_used[i] = false;

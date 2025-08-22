@@ -173,15 +173,38 @@ BehaviorStatus BehaviorMoveToTarget(behavior_params_t *params){
 
 BehaviorStatus BehaviorCanAttackTarget(behavior_params_t *params){
   struct ent_s* e = params->owner;
-  if(!e)
+  if(!e || !e->control)
     return BEHAVIOR_FAILURE;
+
+  if(!EntTargetable(e->control->target))
+    return BEHAVIOR_FAILURE;
+
+  if(CheckEvent(e->events, EVENT_ATTACK_RATE))
+    return BEHAVIOR_FAILURE;
+
+  for(int i = 0; i < e->num_attacks; i++){
+    if(e->attacks[i].attack_rate->is_complete){
+      if(PhysicsSimpleDistCheck(e->body,e->control->target->body)>e->attacks[i].reach)
+        continue;
+      
+      return BEHAVIOR_SUCCESS;
+    }
+  }
+
   return BEHAVIOR_FAILURE;
+
 }
 
 BehaviorStatus BehaviorAttackTarget(behavior_params_t *params){
-   struct ent_s* e = params->owner;
+  struct ent_s* e = params->owner;
   if(!e)
     return BEHAVIOR_FAILURE;
+
+  for(int i = 0; i < e->num_attacks; i++){
+    if(e->attacks[i].attack_rate->is_complete)
+      AttackPrepare(&e->attacks[i]);
+  }
+
   return BEHAVIOR_FAILURE;
 }
 

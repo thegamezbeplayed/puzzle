@@ -124,15 +124,26 @@ force_t ForceFromVector2(ForceType type, Vector2 vec);
 force_t ForceEmpty(ForceType type);
 force_t ForceBasic(ForceType type);
 //<====PHYSICS
+typedef struct{
+  Vector2 dir;
+}attack_params_t;
+
+typedef bool (*AttackFunc)(attack_params_t* params);
+
 typedef struct {
-  char          name[MAX_NAME_LEN];
-  int           duid;
-  int           num_frames;
-  int           duration;
-  int           reach;
+  char              name[MAX_NAME_LEN];
+  int               duid;
+  int               duration;
+  int               reach;
+  cooldown_t*       attack_rate;
+  AttackType        attack_type;
+  attack_params_t*  params;
+  AttackFunc        attack;
   rigid_body_t  *hurtbox;
   struct ent_s* owner;
 }attack_t;
+void InitAttack(AttackInstance data);
+void AttackPrepare(attack_t* a);
 
 typedef struct{
   ent_t*                target;
@@ -157,7 +168,6 @@ typedef struct ent_s{
   int                   num_attacks;
   int                   active_attack_id;
   attack_t              attacks[MAX_ATTACKS];
-  struct ent_s          *projectile;
   stat_t                stats[STAT_BLANK];
   Vector2               facing;
   sprite_t              *sprite;
