@@ -302,7 +302,7 @@ void InitGameProcess(){
 void InitGameEvents(){
   world_data_t wdata = {0};
   for (int i = 0; i < ROOM_INSTANCE_COUNT; i++){
-    if(room_instances[i].team_enum > -1)
+    if(room_instances[i].team_enum > -1 && !room_instances[i].is_projectile)
       wdata.ents[wdata.num_ents++] = room_instances[i];
   }
 

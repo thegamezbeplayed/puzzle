@@ -23,6 +23,7 @@ static void ChangeToScreen(GameScreen screen);     // Change to screen, no trans
 static void TransitionToScreen(GameScreen screen); // Request transition to next screen
 static void UpdateTransition(void);         // Update transition effect
 static void DrawTransition(void);           // Draw transition effect (full-screen rectangle)
+bool wantQuit = false;
 
 int main(void)
 {
@@ -43,7 +44,7 @@ int main(void)
   emscripten_set_main_loop(UpdateDrawFrame, 60, 1);
 #else
 
-  SetExitKey(KEY_NULL);
+  //SetExitKey(KEY_NULL);
   // Main game loop
   while (!WindowShouldClose() && !wantQuit)    // Detect window close button or ESC key
   {

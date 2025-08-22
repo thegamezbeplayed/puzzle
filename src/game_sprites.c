@@ -7,7 +7,7 @@ Texture2D sprite_sheet;
 
 void InitResources(){
     LoadrtpAtlasSprite(&spritedata);
-      Image spritesImg = LoadImage(TextFormat("resources/%s",ATLAS_RAY_SHEET_IMAGE_PATH));
+      Image spritesImg = LoadImage(TextFormat("resources/%s",ATLAS_ASSET_SPRITES_IMAGE_PATH));
   sprite_sheet = LoadTextureFromImage(spritesImg);
 
 }
@@ -77,8 +77,8 @@ void DrawSprite(sprite_t* s){
 
 void LoadrtpAtlasSprite(sprite_sheet_data_t *out){
 
-  for (int i = 0; i < ATLAS_RAY_SHEET_SPRITE_COUNT; i++){
-    rtpAtlasSprite sprData = rtpDescRaySheet[i];
+  for (int i = 0; i < ATLAS_ASSET_SPRITES_SPRITE_COUNT; i++){
+    rtpAtlasSprite sprData = rtpDescAssetSprites[i];
  
     TraceLog(LOG_INFO,"Load index %d - %s into sprite sheet data",i,sprData.nameId);
 
@@ -102,7 +102,7 @@ void LoadrtpAtlasSprite(sprite_sheet_data_t *out){
 
   }
 
-  TraceLog(LOG_INFO,"Done with %s",ATLAS_RAY_SHEET_IMAGE_PATH);
+  TraceLog(LOG_INFO,"Done with %s",ATLAS_ASSET_SPRITES_IMAGE_PATH);
 
 }
 

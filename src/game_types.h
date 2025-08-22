@@ -92,6 +92,7 @@ typedef struct rigid_body_s {
   ForceType     counter_force[FORCE_NONE];
   float         restitution;
   bool          is_static;
+  bool          is_kinematic;
   bool          is_ground;
   bool          is_grounded;
   bool          simulate;
@@ -102,6 +103,7 @@ typedef struct rigid_body_s {
 
 rigid_body_t* InitRigidBody(ent_t* owner,Vector2 pos, float radius);
 rigid_body_t* InitRigidBodyStatic(ent_t* owner,Vector2 pos, float radius);
+rigid_body_t* InitRigidBodyKinematic(ent_t* owner, Vector2 pos,float radius);
 bool FreeRigidBody(rigid_body_t* b);
 //<====RIGID_BODY
 static inline float PhysicsSimpleDistCheck(rigid_body_t* a, rigid_body_t* b){
@@ -155,6 +157,7 @@ typedef struct ent_s{
   int                   num_attacks;
   int                   active_attack_id;
   attack_t              attacks[MAX_ATTACKS];
+  struct ent_s          *projectile;
   stat_t                stats[STAT_BLANK];
   Vector2               facing;
   sprite_t              *sprite;
@@ -162,6 +165,7 @@ typedef struct ent_s{
 
 ent_t* InitEntStatic(TileInstance data);
 ent_t* InitEnt(ObjectInstance data);
+ent_t InitEntProjectile( ObjectInstance data);
 void EntSync(ent_t* e);
 void EntKill(ent_t* e);
 void EntDestroy(ent_t* e);

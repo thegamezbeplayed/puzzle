@@ -4,7 +4,7 @@
 #include "raylib.h"
 #include <stdlib.h>
 #include <string.h>
-#include "ray_sheet.h"
+#include "asset_sprites.h"
 #include "game_common.h"
 
 #define MAX_SONGS 4

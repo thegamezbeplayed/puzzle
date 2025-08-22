@@ -22,6 +22,7 @@ ent_t* InitEnt(ObjectInstance data){
   e->stats[STAT_ACCEL] = InitStatOnMax(STAT_ACCEL,data.accel);
   
   if(e->team == TEAM_ENEMIES){
+
     e->control = InitController(data);
     e->control->bt[STATE_IDLE] = InitBehaviorTree("Seek");
     e->control->bt[STATE_WANDER] = InitBehaviorTree("Wander");
@@ -46,10 +47,28 @@ ent_t* InitEntStatic( TileInstance data){
   e->name = "tile";
   e->pos = pos;
   float radius = e->sprite->slice->bounds.height * 0.5f;
-  e->body = InitRigidBodyStatic(e,pos, radius);
+  e->body = InitRigidBodyStatic(e, pos, radius);
   e->events = InitEvents();
   e->team = TEAM_ENVIROMENT;
   SetState(e, STATE_SPAWN,OnStateChange);
+  return e;
+}
+
+ent_t InitEntProjectile( ObjectInstance data){
+  ent_t e = (ent_t){0};  // zero initialize if needed
+  Vector2 pos = Vector2FromXY(0,0);
+
+  e.sprite = InitSpriteByIndex(data.sprite_sheet_index,&spritedata);
+  if(e.sprite!=NULL){
+    e.sprite->owner = NULL;
+    pos = Vector2Add(pos,e.sprite->slice->center);
+    e.sprite->layer = LAYER_BG;
+  }
+  e.name = "bullet";
+  e.pos = pos;
+  float radius = e.sprite->slice->bounds.height * 0.5f;
+  e.events = InitEvents();
+  e.team = TEAM_ENEMIES;
   return e;
 }
 
@@ -131,7 +150,7 @@ controller_t* InitController(ObjectInstance data){
   *ctrl = (controller_t){0};
 
   ctrl->destination = VEC_UNSET;
-  ctrl->aggro = 300;
+  ctrl->aggro = data.aggro_range;
   ctrl->range = 80;
   return ctrl;
 }

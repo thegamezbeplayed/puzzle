@@ -86,6 +86,35 @@ rigid_body_t* InitRigidBodyStatic(ent_t* owner, Vector2 pos,float radius){
   return b;
 }
 
+rigid_body_t* InitRigidBodyKinematic(ent_t* owner, Vector2 pos,float radius){
+  rigid_body_t* b = malloc(sizeof(rigid_body_t));
+
+  *b = (rigid_body_t){0};
+  b->owner = owner;
+  b->position = pos;
+  b->velocity = Vector2Zero();
+
+  b->forces[FORCE_STEERING] = ForceBasic(FORCE_STEERING);
+  b->counter_force[FORCE_STEERING] = FORCE_IMPULSE;
+  b->counter_force[FORCE_IMPULSE] = FORCE_NONE;
+  b->counter_force[FORCE_NONE] = FORCE_NONE;
+
+  b->restitution = -1;
+  b->is_kinematic = true;
+  b->simulate = false;
+  b->col_rate = 1;
+  //b->on_collision = NoOpCollision;
+  b->collision_bounds = (bounds_t){
+    .shape = SHAPE_RECTANGLE,
+      .pos = Vector2Zero(),
+      .offset = Vector2FromXY(-radius,-radius),
+      .radius = radius,
+      .width = radius*2,
+      .height = radius*2
+  };
+  return b;
+}
+
 bool FreeRigidBody(rigid_body_t* b){
   if(!b)
     return false;
