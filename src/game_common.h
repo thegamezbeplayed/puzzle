@@ -41,7 +41,7 @@ typedef struct{
 
 events_t* InitEvents();
 void UnloadEvents(events_t* ev);
-bool AddEvent(events_t* pool, cooldown_t* cd);
+int AddEvent(events_t* pool, cooldown_t* cd);
 void StepEvents(events_t* pool);
 bool CheckEvent(events_t* pool, EventType);
 //<======EVENTS>

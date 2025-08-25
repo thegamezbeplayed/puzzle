@@ -89,5 +89,6 @@ sprite_t* InitSprite(const char* tag, sprite_sheet_data_t* spritesheet);
 sprite_t* InitSpriteByIndex(int index, sprite_sheet_data_t* spritesheet);
 bool FreeSprite(sprite_t* s);
 void DrawSprite(sprite_t* s);
+void DrawSpriteAtPos(sprite_t*s , Vector2 pos);
 //====SPRITE_T>>
 #endif

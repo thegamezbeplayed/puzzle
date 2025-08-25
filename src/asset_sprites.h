@@ -10,7 +10,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 #define ATLAS_ASSET_SPRITES_IMAGE_PATH      "asset_sprites.png"
-#define ATLAS_ASSET_SPRITES_SPRITE_COUNT    40
+#define ATLAS_ASSET_SPRITES_SPRITE_COUNT    42
 
 // Atlas sprite properties
 typedef struct rtpAtlasSprite {
@@ -27,7 +27,7 @@ typedef struct rtpAtlasSprite {
 } rtpAtlasSprite;
 
 // Atlas sprites array
-static rtpAtlasSprite rtpDescAssetSprites[40] = {
+static rtpAtlasSprite rtpDescAssetSprites[42] = {
     { "star_large", "", 64, 64, 0, 0, 128, 128, 0, false, 16, 16, 96, 96, 0, 0, 0, 0, 0 },
     { "star_medium", "", 64, 64, 128, 0, 128, 128, 0, false, 16, 16, 96, 96, 0, 0, 0, 0, 0 },
     { "station_A", "", 64, 64, 256, 0, 128, 128, 0, false, 16, 16, 96, 96, 0, 0, 0, 0, 0 },
@@ -68,4 +68,6 @@ static rtpAtlasSprite rtpDescAssetSprites[40] = {
     { "enemy_C", "", 64, 64, 640, 512, 128, 128, 0, false, 0, 32, 128, 64, 0, 0, 0, 0, 0 },
     { "enemy_B", "", 64, 64, 768, 512, 128, 128, 0, false, 16, 16, 96, 96, 0, 0, 0, 0, 0 },
     { "enemy_A", "", 64, 64, 896, 512, 128, 128, 0, false, 16, 16, 96, 96, 0, 0, 0, 0, 0 },
+    { "effect_purple", "", 0, 0, 0, 640, 128, 128, 0, false, 32, 0, 64, 127, 0, 0, 0, 0, 0 },
+    { "effect_yellow", "", 0, 0, 128, 640, 128, 128, 0, false, 32, 0, 64, 127, 0, 0, 0, 0, 0 },
 };

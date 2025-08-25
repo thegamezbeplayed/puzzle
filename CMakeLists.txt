@@ -1,31 +1,13 @@
-cmake_minimum_required(VERSION 3.24)
-project(ultimate)
+cmake_minimum_required(VERSION 3.21)
+project(reflect)
 
 include(FetchContent)
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Debug)
 endif()
-if (PLATFORM STREQUAL "Web")
-  # Pick a stable tag
-  FetchContent_Declare(jsonc
-    GIT_REPOSITORY https://github.com/json-c/json-c.git
-    GIT_TAG json-c-0.17-20230812
-  )
-  # Disable things we don't need
-  set(JSON_C_TESTS OFF CACHE BOOL "" FORCE)
-  set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-  # Some distros use this var name:
-  set(JSON_C_STATIC_LIBS ON CACHE BOOL "" FORCE)
 
-  FetchContent_MakeAvailable(jsonc)
-  # json-c exports target "json-c" when built via CMake
-  set(JSONC_FOUND ON)
-  set(JSONC_LIBRARIES json-c)
-  set(JSONC_INCLUDE_DIRS ${jsonc_SOURCE_DIR} ${jsonc_BINARY_DIR}) # or json-c install include
-else()
-  find_package(PkgConfig REQUIRED)
-  pkg_check_modules(JSONC REQUIRED json-c)
-endif()
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(JSONC REQUIRED json-c)
 
 set(CMAKE_C_STANDARD 99)
 

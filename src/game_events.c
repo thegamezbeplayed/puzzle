@@ -121,13 +121,13 @@ void InteractionStep(){
   }
 }
 
-bool AddEvent(events_t* pool, cooldown_t* cd){
+int AddEvent(events_t* pool, cooldown_t* cd){
   for (int i = 0; i < MAX_EVENTS; i++){
     if(pool->cooldown_used[i]){
       if(pool->cooldowns[i].type == EVENT_NONE){
         pool->cooldowns[i] = *cd;
         pool->cooldown_used[i] = true;
-        return true;
+        return i;
       }
       else
         continue;
@@ -135,11 +135,11 @@ bool AddEvent(events_t* pool, cooldown_t* cd){
     else{
       pool->cooldowns[i] = *cd;
       pool->cooldown_used[i] = true;
-      return true;
+      return i;
     }
   }
 
-  return false;
+  return -1;
 }
 
 events_t* InitEvents(){
@@ -159,8 +159,13 @@ bool CheckEvent(events_t* pool, EventType type){
     if(!pool->cooldown_used[i])
       continue;
 
-    if(pool->cooldowns[i].type == type)
-      return true;
+    if(pool->cooldowns[i].type != type)
+      continue;
+
+    if(pool->cooldowns[i].is_complete)
+      return false;
+
+    return true;
   }
 
   return false;
@@ -180,6 +185,9 @@ void StepEvents(events_t* pool){
       pool->cooldown_used[i] = false;
       continue;
     }
+    if(pool->cooldowns[i].is_complete)
+      continue;
+
     if(pool->cooldowns[i].elapsed >= pool->cooldowns[i].duration){
       TraceLog(LOG_INFO,"Cooldown %i ended",pool->cooldowns[i].type);
       pool->cooldowns[i].is_complete = true;

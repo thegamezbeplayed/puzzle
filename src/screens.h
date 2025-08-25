@@ -83,6 +83,7 @@ void UnloadGameplayScreen(void);
 int FinishGameplayScreen(void);
 void PreUpdate(void);
 void FixedUpdate(void);
+void PostUpdate(void);
 //----------------------------------------------------------------------------------
 // Ending Screen Functions Declaration
 //----------------------------------------------------------------------------------

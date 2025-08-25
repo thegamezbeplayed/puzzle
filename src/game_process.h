@@ -4,8 +4,10 @@
 #include "game_types.h"
 #include "game_common.h"
 #include "screens.h"
+#include "game_projectiles.h"
+
 #define MAX_INTERACTIONS 256
-#define DEBUG false
+#define DEBUG true
 
 extern Font font;
 extern ent_t* player;
@@ -103,6 +105,7 @@ bool RegisterSprite(sprite_t *s);
 void WorldInitOnce();
 void WorldPreUpdate();
 void WorldFixedUpdate();
+void WorldPostUpdate();
 void InitWorld(world_data_t data);
 void WorldRender();
 Rectangle WorldRoomBounds();

@@ -69,7 +69,11 @@ bool FreeSprite(sprite_t* s){
   free(s);
   return true;
 }
+void DrawSpriteAtPos(sprite_t*s , Vector2 pos){
+  if(s->is_visible)
+    DrawSlice(sprite_sheet,s->slice, pos,s->mirror);
 
+}
 void DrawSprite(sprite_t* s){
   if(s->is_visible)
     DrawSlice(sprite_sheet,s->slice, s->pos,s->mirror);

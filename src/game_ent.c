@@ -1,5 +1,13 @@
 #include "game_types.h"
 #include "game_tools.h"
+#include "game_projectiles.h"
+#include "game_math.h"
+
+MAKE_ADAPTER(StepState, ent_t*);
+
+attack_params_t empty_attack_params = {
+  .dir = 0.0f
+};
 
 ent_t* InitEnt(ObjectInstance data){
   ent_t* e = malloc(sizeof(ent_t));
@@ -10,7 +18,7 @@ ent_t* InitEnt(ObjectInstance data){
   strcpy(e->name,data.name);
   e->sprite = InitSpriteByIndex(data.sprite_sheet_index,&spritedata);
   e->sprite->owner = e;  
-  
+
   float radius = e->sprite->slice->bounds.height * 0.5f;
   pos = Vector2Add(pos,e->sprite->slice->center);
   e->pos = pos;
@@ -20,20 +28,18 @@ ent_t* InitEnt(ObjectInstance data){
 
   e->stats[STAT_SPEED] = InitStatOnMax(STAT_SPEED,data.speed);
   e->stats[STAT_ACCEL] = InitStatOnMax(STAT_ACCEL,data.accel);
-  
-  if(e->team == TEAM_ENEMIES){
-    for(int i = 0; i < data.num_attacks; i++){
-      AttackInstance instance = AttackGetData(data.attacks[i]);
-      e->attacks[i] = InitAttack(instance);
 
-    }
+  e->events = InitEvents();
+  if(e->team == TEAM_ENEMIES){
+    ProjectileInstance instance = ProjectileGetData(data.attacks);
+    e->attacks[0] = InitAttack(e,instance);
+    e->num_attacks = 1;
     e->control = InitController(data);
     e->control->bt[STATE_IDLE] = InitBehaviorTree("Seek");
     e->control->bt[STATE_WANDER] = InitBehaviorTree("Wander");
     e->control->bt[STATE_AGGRO] = InitBehaviorTree("Chase");
     e->control->bt[STATE_ATTACK] = InitBehaviorTree("Attack");
   }
-  e->events = InitEvents();
   SetState(e,STATE_SPAWN,OnStateChange);
   return e;
 }
@@ -59,7 +65,7 @@ ent_t* InitEntStatic( TileInstance data){
   return e;
 }
 
-ent_t InitEntProjectile( ObjectInstance data){
+ent_t InitEntProjectile( ProjectileInstance data){
   ent_t e = (ent_t){0};  // zero initialize if needed
   Vector2 pos = Vector2FromXY(0,0);
 
@@ -70,10 +76,16 @@ ent_t InitEntProjectile( ObjectInstance data){
     e.sprite->layer = LAYER_BG;
   }
   e.name = "bullet";
+
+  e.stats[STAT_SPEED] = InitStatOnMax(STAT_SPEED,data.speed);
+
+  e.stats[STAT_ACCEL] = InitStatOnMax(STAT_ACCEL,data.speed);
+
   e.pos = pos;
   float radius = e.sprite->slice->bounds.height * 0.5f;
   e.events = InitEvents();
   e.team = TEAM_ENEMIES;
+  e.state = STATE_SPAWN;
   return e;
 }
 
@@ -103,8 +115,38 @@ void EntDestroy(ent_t* e){
   e->control = NULL;
 }
 
-attack_t InitAttack(AttackInstance data){
+attack_t InitAttack(ent_t* owner, ProjectileInstance data){
+  attack_t a = (attack_t){0};
 
+  strcpy(a.name,data.name);
+  a.owner = owner;
+  a.duration = data.duration;
+  a.attack_type = ATTACK_RANGED;
+  a.reach = data.attack_range;
+  //a.attack = (AttackFunc)data.fn;
+  cooldown_t* cd =InitCooldown(data.fire_rate,EVENT_ATTACK_RATE,NULL,NULL); 
+  cd->is_recycled = true;
+  a.params = &empty_attack_params;
+  int cId = AddEvent(owner->events,cd); 
+  a.cooldown = &owner->events->cooldowns[cId];
+  return a;
+}
+
+bool AttackPrepare(attack_t* a){
+  Vector2 target = VEC_UNSET;
+  if(!a->owner->control)
+    return false;
+
+  if(a->owner->control->target)
+    target = a->owner->control->target->pos;
+  else
+    target = a->owner->control->destination;
+
+  if(v2_compare(target, VEC_UNSET))
+    return false;
+
+  a->params->dir = VectorDirectionBetween(a->owner->pos, target);
+  return true;//a->attack(a->params);
 }
 
 void EntFree(ent_t* e){
@@ -164,12 +206,14 @@ controller_t* InitController(ObjectInstance data){
   return ctrl;
 }
 
+void EntInitOnce(ent_t* e){
+  EntSync(e);
+
+  cooldown_t* spawner = InitCooldown(3,EVENT_SPAWN,StepState_Adapter,e);
+  AddEvent(e->events, spawner);
+}
+
 void EntSync(ent_t* e){
-  if(!e->sprite)
-    return;
-
-  e->sprite->pos = e->pos;// + abs(ent->sprite->offset.y);
-
   switch(e->team){
     case TEAM_ENEMIES:
       EntControlStep(e);
@@ -179,6 +223,12 @@ void EntSync(ent_t* e){
   }
 
   StepEvents(e->events);
+
+  if(!e->sprite)
+    return;
+
+  e->sprite->pos = e->pos;// + abs(ent->sprite->offset.y);
+
 }
 
 void EntControlStep(ent_t *e){
@@ -186,7 +236,7 @@ void EntControlStep(ent_t *e){
     return;
 
   behavior_tree_node_t* current = e->control->bt[e->state];
-  
+
   current->tick(current, e);
 }
 
@@ -212,7 +262,7 @@ void StepState(ent_t *e){
 bool CanChangeState(EntityState old, EntityState s){
   if(old == s || old > STATE_END)
     return false;
-  
+
   switch (COMBO_KEY(old,s)){
     case COMBO_KEY(STATE_NONE,!STATE_SPAWN):
     case COMBO_KEY(!STATE_NONE,STATE_SPAWN):
@@ -233,9 +283,9 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s){
   switch(old){
     case STATE_SPAWN:
       if(e->body)
-        e->body->simulate=true;
+	e->body->simulate=true;
       if(e->sprite)
-        e->sprite->is_visible = true;
+	e->sprite->is_visible = true;
       break;
     case STATE_WANDER:
       StatMaxOut(&e->stats[STAT_ACCEL]);
@@ -246,6 +296,9 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s){
   switch(s){
     case STATE_WANDER:
       e->stats[STAT_ACCEL].current*=0.125;
+    case STATE_AGGRO:
+    case STATE_ATTACK:
+      e->stats[STAT_ACCEL].current = e->stats[STAT_ACCEL].max/4;
     default:
       break;
   }

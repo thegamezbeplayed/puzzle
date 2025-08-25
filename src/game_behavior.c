@@ -183,10 +183,10 @@ BehaviorStatus BehaviorCanAttackTarget(behavior_params_t *params){
     return BEHAVIOR_FAILURE;
 
   for(int i = 0; i < e->num_attacks; i++){
-    if(e->attacks[i].attack_rate->is_complete){
+    if(e->attacks[i].cooldown->is_complete){
       if(PhysicsSimpleDistCheck(e->body,e->control->target->body)>e->attacks[i].reach)
-        continue;
-      
+	continue;
+
       return BEHAVIOR_SUCCESS;
     }
   }
@@ -201,8 +201,21 @@ BehaviorStatus BehaviorAttackTarget(behavior_params_t *params){
     return BEHAVIOR_FAILURE;
 
   for(int i = 0; i < e->num_attacks; i++){
-    if(e->attacks[i].attack_rate->is_complete)
-      AttackPrepare(&e->attacks[i]);
+    if(!e->attacks[i].cooldown->is_complete)
+      continue;
+
+    if(!AttackPrepare(&e->attacks[i]))
+      continue;
+
+    ProjectileShoot(e, e->pos, e->attacks[i].params->dir); 
+
+     e->attacks[i].cooldown->is_complete = false;      
+    return BEHAVIOR_SUCCESS;
+    /*if(e->attacks[i].attack(e->attacks[i].params))
+    return BEHAVIOR_SUCCESS;
+    else
+      return BEHAVIOR_RUNNING;
+      */
   }
 
   return BEHAVIOR_FAILURE;

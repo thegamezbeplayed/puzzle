@@ -5,8 +5,6 @@
 
 game_process_t game_process;
 
-MAKE_ADAPTER(StepState, ent_t*);
-
 void print_mem_usage() {
     FILE* f = fopen("/proc/self/status", "r");
     char buf[256];
@@ -151,6 +149,11 @@ bool RegisterEnt( ent_t *e){
   if(e->sprite)
     RegisterSprite(e->sprite);
 
+  if(game_process.state[SCREEN_GAMEPLAY] == GAME_READY){
+    PhysicsInitOnce(e->body);
+    EntInitOnce(e);
+  }
+
   return e->uid > -1;
 }
 
@@ -172,11 +175,8 @@ void WorldInitOnce(){
   for(int i = 0; i < world.num_ent; i++){
     if(world.cols[i])
       PhysicsInitOnce(world.cols[i]);
-    
-    EntSync(world.ents[i]);
    
-    cooldown_t* spawner = InitCooldown(3,EVENT_SPAWN,StepState_Adapter,world.ents[i]);
-    AddEvent(world.ents[i]->events, spawner);
+    EntInitOnce(world.ents[i]);
   }
 
 }
@@ -207,6 +207,13 @@ void WorldFixedUpdate(){
         break;
     }
   }
+ 
+ ProjectilesStep(); 
+}
+
+void WorldPostUpdate(){
+
+  ProjectileCullOffScreen(WorldRoomBounds());
 }
 
 void InitWorld(world_data_t data){
@@ -263,6 +270,7 @@ void WorldRender(){
     };
     DrawRectangleRec(bounds, BLUE);
   }
+  ProjectilesRender();
 }
 
 void InitGameProcess(){
@@ -292,6 +300,7 @@ void InitGameProcess(){
   game_process.update_steps[SCREEN_GAMEPLAY][UPDATE_PRE] = PreUpdate;
   game_process.update_steps[SCREEN_GAMEPLAY][UPDATE_DRAW] = DrawGameplayScreen;
   game_process.update_steps[SCREEN_GAMEPLAY][UPDATE_FRAME] = UpdateGameplayScreen;
+  game_process.update_steps[SCREEN_GAMEPLAY][UPDATE_POST] = PostUpdate;
     
   game_process.screen = SCREEN_TITLE;
   game_process.state[SCREEN_GAMEPLAY] = GAME_LOADING;
@@ -302,13 +311,16 @@ void InitGameProcess(){
 void InitGameEvents(){
   world_data_t wdata = {0};
   for (int i = 0; i < ROOM_INSTANCE_COUNT; i++){
-    if(room_instances[i].team_enum > -1 && !room_instances[i].is_projectile)
+    if(room_instances[i].team_enum > -1)
       wdata.ents[wdata.num_ents++] = room_instances[i];
   }
 
   for (int j = 0; j < ROOM_TILE_COUNT; j++){
     wdata.tiles[j] = room_tiles[j];
   }
+
+  for (int k = 0; k < ROOM_PROJECTILE_COUNT; k++)
+    InitProjectilePool(room_projectiles[k]);
 
   cooldown_t* loadEvent = InitCooldown(90,EVENT_GAME_PROCESS,GameReady,NULL);
   AddEvent(game_process.events,loadEvent);

@@ -86,25 +86,26 @@ rigid_body_t* InitRigidBodyStatic(ent_t* owner, Vector2 pos,float radius){
   return b;
 }
 
-rigid_body_t* InitRigidBodyKinematic(ent_t* owner, Vector2 pos,float radius){
-  rigid_body_t* b = malloc(sizeof(rigid_body_t));
+rigid_body_t InitRigidBodyKinematic(ent_t* owner, Vector2 pos,float radius){
+  rigid_body_t b = (rigid_body_t){0};
+  b.owner = owner;
+  b.position = pos;
+  b.velocity = Vector2Zero();
 
-  *b = (rigid_body_t){0};
-  b->owner = owner;
-  b->position = pos;
-  b->velocity = Vector2Zero();
+  b.forces[FORCE_STEERING] = ForceBasic(FORCE_STEERING);
+  b.forces[FORCE_STEERING].friction = Vector2One();
 
-  b->forces[FORCE_STEERING] = ForceBasic(FORCE_STEERING);
-  b->counter_force[FORCE_STEERING] = FORCE_IMPULSE;
-  b->counter_force[FORCE_IMPULSE] = FORCE_NONE;
-  b->counter_force[FORCE_NONE] = FORCE_NONE;
+  b.counter_force[FORCE_STEERING] = FORCE_IMPULSE;
 
-  b->restitution = -1;
-  b->is_kinematic = true;
-  b->simulate = false;
-  b->col_rate = 1;
-  //b->on_collision = NoOpCollision;
-  b->collision_bounds = (bounds_t){
+  b.counter_force[FORCE_IMPULSE] = FORCE_NONE;
+  b.counter_force[FORCE_NONE] = FORCE_NONE;
+
+  b.restitution = -1;
+  b.is_kinematic = true;
+  b.simulate = false;
+  b.col_rate = 1;
+  //b.on_collision = NoOpCollision;
+  b.collision_bounds = (bounds_t){
     .shape = SHAPE_RECTANGLE,
       .pos = Vector2Zero(),
       .offset = Vector2FromXY(-radius,-radius),
@@ -149,17 +150,20 @@ void PhysicsStep(rigid_body_t *b){
       b->velocity = Vector2Add(b->velocity,b->forces[i].vel);
     }
   }
-  int steps = ceilf(Vector2Length(b->velocity)/GRID_STEP);
+  
+  if(Vector2Length(b->velocity) > 0){
+    int steps = ceilf(Vector2Length(b->velocity)/GRID_STEP);
 
-  Vector2 velStep = Vector2Lerp(Vector2Zero(),b->velocity,1/steps);
-  for(int j = 0; j<steps; j++){
-    Vector2 applyStep = velStep;
-    if(CheckStep(b,velStep,GRID_STEP,&applyStep))
-        b->position = Vector2Add(b->position, applyStep);
-    else
-      break;
+    Vector2 velStep = Vector2Lerp(Vector2Zero(),b->velocity,1/steps);
+    for(int j = 0; j<steps; j++){
+      Vector2 applyStep = velStep;
+      if(CheckStep(b,velStep,GRID_STEP,&applyStep))
+	b->position = Vector2Add(b->position, applyStep);
+      else
+	break;
+    }
   }
-
+  
   b->num_collisions_detected = 0;
   if(b->owner==NULL)
     return;

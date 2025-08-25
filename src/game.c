@@ -36,7 +36,7 @@ void InitGameplayScreen(void){
   //camera.target = player.position;
   camera.offset = (Vector2){ GetScreenWidth()/2.0f, GetScreenHeight()/2.0f };
   camera.rotation = 0.0f;
-  camera.zoom = 1.0f;
+  camera.zoom = .75f;
  
   camera.target = (Vector2){ROOM_WIDTH/2,ROOM_HEIGHT/2};
   InitGameEvents();
@@ -59,6 +59,11 @@ void FixedUpdate(void){
   }
   WorldFixedUpdate();
 }
+
+void PostUpdate(void){
+  WorldPostUpdate();
+}
+
 // Gameplay Screen Update logic
 void UpdateGameplayScreen(void)
 {

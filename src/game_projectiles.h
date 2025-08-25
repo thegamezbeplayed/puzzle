@@ -14,15 +14,18 @@ typedef struct {
     rigid_body_t   body;              // default physics for bullets
     uint32_t       next_uid;
 } projectile_pool_t;
-void InitProjectilePool(projectile_pool_t* p, ObjectInstance data);
+ProjectileInstance ProjectileGetData(const char* name);
+void InitProjectilePool(ProjectileInstance data);
 
 ent_t* SpawnProjectile(projectile_pool_t* p, Vector2 pos, Vector2 dir);
 
 void DespawnProjectile(projectile_pool_t* p, ent_t* b);
 
-void ProjectileCullOffScreen(projectile_pool_t* p, Rectangle bounds);
+void ProjectileCullOffScreen( Rectangle bounds);
 
 void ProjectileShoot(ent_t* owner, Vector2 pos, Vector2 dir);
 
+void ProjectilesStep();
 void ProjectileSync(ent_t* p);
+void ProjectilesRender();
 #endif

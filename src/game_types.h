@@ -103,7 +103,7 @@ typedef struct rigid_body_s {
 
 rigid_body_t* InitRigidBody(ent_t* owner,Vector2 pos, float radius);
 rigid_body_t* InitRigidBodyStatic(ent_t* owner,Vector2 pos, float radius);
-rigid_body_t* InitRigidBodyKinematic(ent_t* owner, Vector2 pos,float radius);
+rigid_body_t InitRigidBodyKinematic(ent_t* owner, Vector2 pos,float radius);
 bool FreeRigidBody(rigid_body_t* b);
 //<====RIGID_BODY
 static inline float PhysicsSimpleDistCheck(rigid_body_t* a, rigid_body_t* b){
@@ -135,16 +135,17 @@ typedef struct {
   int               duid;
   int               duration;
   int               reach;
-  cooldown_t*       attack_rate;
+  cooldown_t*       cooldown;
   AttackType        attack_type;
   attack_params_t*  params;
   AttackFunc        attack;
-  rigid_body_t  *hurtbox;
+  rigid_body_t	  *hurtbox;
   struct ent_s* owner;
 }attack_t;
-void InitAttack(AttackInstance data);
-void AttackPrepare(attack_t* a);
 
+attack_t InitAttack(ent_t* owner,ProjectileInstance data);
+bool AttackPrepare(attack_t* a);
+bool EntAttack(attack_params_t* params);
 typedef struct{
   ent_t*                target;
   Vector2               destination;
@@ -175,7 +176,8 @@ typedef struct ent_s{
 
 ent_t* InitEntStatic(TileInstance data);
 ent_t* InitEnt(ObjectInstance data);
-ent_t InitEntProjectile( ObjectInstance data);
+ent_t InitEntProjectile( ProjectileInstance data);
+void EntInitOnce(ent_t* e);
 void EntSync(ent_t* e);
 void EntKill(ent_t* e);
 void EntDestroy(ent_t* e);

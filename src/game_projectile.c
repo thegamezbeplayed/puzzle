@@ -1,4 +1,5 @@
 #include "game_projectiles.h"
+#include "game_process.h"
 
 static projectile_pool_t projectile_pool;
 static int attack_count = 0;
@@ -11,6 +12,10 @@ void RegisterAttack(const char *name, AttackInstance *instance){
   Attack_Registry[attack_count].name = strdup(name);
   Attack_Registry[attack_count].data = instance;
   attack_count++;
+}
+
+ProjectileInstance ProjectileGetData(const char* name){
+  return room_projectiles[0];
 }
 
 AttackInstance* AttackGetData(const char *name){
@@ -27,15 +32,17 @@ AttackInstance* AttackGetData(const char *name){
   return NULL;
 }
  
-void InitProjectilePool(projectile_pool_t* p, ObjectInstance data){
-  memset(p,0,sizeof(*p));
-
+void InitProjectilePool(ProjectileInstance data){
+  projectile_pool = (projectile_pool_t){0};
   for (int i = 0; i < MAX_PROJECTILES; i++)
-    p->free_stack[i] = (uint16_t)(MAX_PROJECTILES - 1 - i);
+    projectile_pool.free_stack[i] = (uint16_t)(MAX_PROJECTILES - 1 - i);
   
-  p->top = MAX_PROJECTILES;
+  projectile_pool.top = MAX_PROJECTILES;
 
-  p->base = InitEntProjectile(data);
+  projectile_pool.base = InitEntProjectile(data);
+
+  projectile_pool.body = InitRigidBodyKinematic(NULL,Vector2Zero(),8);
+  projectile_pool.body.forces[FORCE_STEERING].max_velocity = data.speed;
 }
 
 ent_t* SpawnProjectile(projectile_pool_t* p, Vector2 pos, Vector2 dir){
@@ -49,9 +56,13 @@ ent_t* SpawnProjectile(projectile_pool_t* p, Vector2 pos, Vector2 dir){
   e->pos   = pos;
   e->facing = Vector2Normalize(dir);
 
+  e->sprite->owner = e;
   // Give this bullet its own body storage
   rigid_body_t* b = &p->bodies[i];
-  b = InitRigidBodyKinematic(e, pos, .5);
+  *b = p->body;
+  b->position = pos;
+  b->owner    = e;
+  e->body     = b;
   
   e->events = &p->evslots[i];
   InitEvents(e->events);
@@ -65,18 +76,49 @@ void DespawnProjectile(projectile_pool_t* p, ent_t* e){
                                         // Quick scrub of volatile fields to help catch use-after-free in debug builds
   e->body = NULL;
   e->events = NULL;
+  e->sprite = NULL;
   p->free_stack[p->top++] = i;
 }
 
-void ProjectileCullOffScreen(projectile_pool_t* p, Rectangle bounds){
-
+void ProjectileCullOffScreen(Rectangle bounds){
+  // Simple linear sweep; you can also track a compact "alive list" if needed
+  for (int i = 0; i < MAX_PROJECTILES; ++i) {
+    ent_t* e = &projectile_pool.ents[i];
+    // A dead slot has no body because we null it in Despawn
+    if (!e->body) continue;
+    if (!CheckCollisionPointRec(e->pos, bounds)) {
+      DespawnProjectile(&projectile_pool, e);
+    }
+  }
 }
 
 void ProjectileShoot(ent_t* owner, Vector2 pos, Vector2 dir){
   ent_t* p = SpawnProjectile(&projectile_pool,pos, dir);
+
+  PhysicsInitOnce(p->body);
+  EntInitOnce(p);
+  PhysicsAccelDir(p->body,FORCE_STEERING,dir);
+}
+
+void ProjectilesStep(){
+  for (int i = 0; i < MAX_PROJECTILES; ++i) {
+    ent_t* e = &projectile_pool.ents[i];
+    if (!e->body) continue;
+    ProjectileSync(e);
+  }
 }
 
 void ProjectileSync(ent_t* p){
+  PhysicsStep(p->body);
 
+  EntSync(p);
 }
 
+void ProjectilesRender(){
+  for (int i = 0; i < MAX_PROJECTILES; ++i) {
+    ent_t* e = &projectile_pool.ents[i];
+    if (!e->sprite) continue;
+
+    DrawSpriteAtPos(e->sprite,e->pos);
+  }
+}
