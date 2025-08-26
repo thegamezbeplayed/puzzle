@@ -39,24 +39,21 @@ sprite_t* InitSpriteByIndex(int index, sprite_sheet_data_t* spritesheet){
   return spr;
 }
 
-void DrawSlice(Texture2D tex, sprite_slice_t *slice, Vector2 position,bool mirror){
+void DrawSlice(Texture2D tex, sprite_slice_t *slice, Vector2 position,float rot){
    Rectangle src = slice->bounds;
-   if(mirror){
-     src.width *=-1;
-   }
 
     Rectangle dst = {
         position.x,
         position.y,
-        slice->bounds.width * 1.0f,
-        slice->bounds.height * 1.0f
+        slice->bounds.width * slice->scale,
+        slice->bounds.height * slice->scale
     };
 
     Vector2 origin = (Vector2){
-       (mirror ?slice->offset.x+slice->bounds.width - slice->center.x: slice->center.x-slice->offset.x),
-       slice->center.y - slice->offset.y
+       slice->center.x * slice->scale,//offset.x,
+       slice->center.y * slice->scale//offset.y
     };
-    DrawTexturePro(tex, src, dst, origin,0.0f, WHITE);
+    DrawTexturePro(tex, src, dst, origin,rot, WHITE);
     return;
 }
 
@@ -71,12 +68,12 @@ bool FreeSprite(sprite_t* s){
 }
 void DrawSpriteAtPos(sprite_t*s , Vector2 pos){
   if(s->is_visible)
-    DrawSlice(sprite_sheet,s->slice, pos,s->mirror);
+    DrawSlice(sprite_sheet,s->slice, pos, s->rot);
 
 }
 void DrawSprite(sprite_t* s){
   if(s->is_visible)
-    DrawSlice(sprite_sheet,s->slice, s->pos,s->mirror);
+    DrawSlice(sprite_sheet,s->slice, s->pos,s->rot);
 }
 
 void LoadrtpAtlasSprite(sprite_sheet_data_t *out){
@@ -101,7 +98,6 @@ void LoadrtpAtlasSprite(sprite_sheet_data_t *out){
     spr->center = center;
     spr->offset = offset;
     spr->bounds = bounds;
-
     out->sprites[out->num_sprites++] = spr;
 
   }

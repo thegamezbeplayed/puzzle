@@ -38,7 +38,7 @@ int main(void)
   InitAudio();
   InitResources();
 
-  ToggleFullscreen();
+//  ToggleFullscreen();
   InitGameProcess();
   //    InitGameplayScreen();
 #if defined(PLATFORM_WEB)

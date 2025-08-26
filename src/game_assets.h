@@ -61,8 +61,10 @@ typedef struct {
   Vector2   center;
   Rectangle bounds;
   Vector2   offset;
+  float     scale;
 } sprite_slice_t;
-void DrawSlice(Texture2D tex, sprite_slice_t *slice, Vector2 position,bool mirror);
+
+void DrawSlice(Texture2D tex, sprite_slice_t *slice, Vector2 position,float rot);
 
 typedef struct{
   int             num_sprites;
@@ -79,6 +81,7 @@ typedef struct {
   //AnimType        active_anim;
   bool            mirror;
   bool            is_visible;
+  float           rot;
   Vector2         offset;
   Vector2         pos;
   RenderLayer     layer;

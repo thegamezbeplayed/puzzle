@@ -27,6 +27,12 @@ static inline Vector2 Vector2FromAngle(float a, float len){
   };
 }
 
+static inline Vector2 Vector2Bisect(Vector2 a, Vector2 b, float dist){
+  Vector2 dir = Vector2Normalize(Vector2Subtract(b,a));
+
+  return Vector2Add(a,Vector2Scale(dir,dist));
+}
+
 static inline Rectangle RectangleCrop(Rectangle rec, float ex_wid,float ex_hei){
   return (Rectangle){
     .x = rec.x + ex_wid,

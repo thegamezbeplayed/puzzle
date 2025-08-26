@@ -19,7 +19,12 @@ void LoadBehaviorTrees(json_object *root);
 static inline void DO_NOTHING(void){}
 //<===BEHAVIOR TREES
 
-typedef enum { JNODE_LEAF, JNODE_SEQUENCE, JNODE_SELECTOR } JNodeType;
+typedef enum {
+  JNODE_LEAF,
+  JNODE_SEQUENCE,
+  JNODE_SELECTOR,
+  JNODE_CONCURRENT
+} JNodeType;
 
 typedef struct JNode {
     JNodeType    type;
@@ -51,7 +56,8 @@ typedef enum{
 typedef enum{
   BT_LEAF,
   BT_SEQUENCE,
-  BT_SELECTOR
+  BT_SELECTOR,
+  BT_CONCURRENT
 }BehaviorTreeType;
 
 typedef struct {
@@ -108,13 +114,15 @@ behavior_tree_node_t* InitBehaviorTree( const char* name);
 void FreeBehaviorTree(behavior_tree_node_t* node);
 BehaviorStatus BehaviorTickSequence(behavior_tree_node_t *self, void *context);
 BehaviorStatus BehaviorTickSelector(behavior_tree_node_t *self, void *context);
+BehaviorStatus BehaviorTickConcurrent(behavior_tree_node_t *self, void *context);
 behavior_tree_node_t* BehaviorCreateLeaf(BehaviorTreeLeafFunc fn, behavior_params_t* params);
 behavior_tree_node_t* BehaviorCreateSequence(behavior_tree_node_t **children, int count);
 behavior_tree_node_t* BehaviorCreateSelector(behavior_tree_node_t **children, int count);
-BehaviorStatus BehaviorTickSequence(behavior_tree_node_t *self, void *context);
-BehaviorStatus BehaviorTickSelector(behavior_tree_node_t *self, void *context);
+behavior_tree_node_t* BehaviorCreateConcurrent(behavior_tree_node_t **children, int count);
 
 BehaviorStatus BehaviorChangeState(behavior_params_t *params);
+BehaviorStatus BehaviorAcquireMousePosition(behavior_params_t *params);
+BehaviorStatus BehaviorBisectDestination(behavior_params_t *params);
 BehaviorStatus BehaviorAcquireDestination(behavior_params_t *params);
 BehaviorStatus BehaviorAcquireTarget(behavior_params_t *params);
 BehaviorStatus BehaviorCanSeeTarget(behavior_params_t *params);
@@ -123,6 +131,8 @@ BehaviorStatus BehaviorMoveToDestination(behavior_params_t *params);
 BehaviorStatus BehaviorCanAttackTarget(behavior_params_t *params);
 BehaviorStatus BehaviorAttackTarget(behavior_params_t *params);
 
+static inline behavior_tree_node_t* LeafAcquireMousePosition(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorAcquireMousePosition,params); }
+static inline behavior_tree_node_t* LeafBisectDestination(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorBisectDestination,params); }
 static inline behavior_tree_node_t* LeafChangeState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorChangeState,params); }
 static inline behavior_tree_node_t* LeafAcquireTarget(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorAcquireTarget,params); }
 static inline behavior_tree_node_t* LeafAcquireDestination(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorAcquireDestination,params); }
@@ -134,6 +144,8 @@ static inline behavior_tree_node_t* LeafAttackTarget(behavior_params_t *params) 
 
 
 static BTLeafRegistryEntry g_bt_leaves[] = {
+    { "BisectDestination",  LeafBisectDestination  },
+    { "AcquireMousePosition",  LeafAcquireMousePosition  },
     { "ChangeState",  LeafChangeState  },
     { "AcquireTarget",  LeafAcquireTarget  },
     { "AcquireDestination",  LeafAcquireDestination  },

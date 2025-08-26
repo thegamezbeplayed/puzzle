@@ -1,5 +1,6 @@
 #include "game_projectiles.h"
 #include "game_process.h"
+#include "game_tools.h"
 
 static projectile_pool_t projectile_pool;
 static int attack_count = 0;
@@ -54,7 +55,7 @@ ent_t* SpawnProjectile(projectile_pool_t* p, Vector2 pos, Vector2 dir){
   *e = p->base;
   e->uid   = ++p->next_uid;
   e->pos   = pos;
-  e->facing = Vector2Normalize(dir);
+  e->facing = v2_ang_deg(Vector2Normalize(dir));
 
   e->sprite->owner = e;
   // Give this bullet its own body storage
@@ -62,8 +63,8 @@ ent_t* SpawnProjectile(projectile_pool_t* p, Vector2 pos, Vector2 dir){
   *b = p->body;
   b->position = pos;
   b->owner    = e;
+  b->buid = MAX_ENTS + e->uid; 
   e->body     = b;
-  
   e->events = &p->evslots[i];
   InitEvents(e->events);
 
@@ -100,6 +101,40 @@ void ProjectileShoot(ent_t* owner, Vector2 pos, Vector2 dir){
   PhysicsAccelDir(p->body,FORCE_STEERING,dir);
 }
 
+bool ProjectileCollide(rigid_body_t* a, rigid_body_t* b){
+  if(b->forces[FORCE_KINEMATIC].type  == FORCE_KINEMATIC){
+    b->forces[FORCE_KINEMATIC].on_react(b,a,FORCE_KINEMATIC);
+    return true;
+  }
+  
+  for (int i = 0; i < FORCE_NONE; i++){
+    if (a->forces[i].type == FORCE_NONE || !a->forces[i].on_react)
+      continue;
+
+    a->forces[i].on_react(a,b,i);
+  }
+
+  return true;
+}
+
+void ProjectileCollision(rigid_body_t* a, rigid_body_t* b){
+  if(!b->simulate)
+      return;
+
+   if(!CanInteract(a->buid, b->buid))
+      return;
+
+   if(!CheckCollision(a, b,0))
+      return;
+
+   if(!ProjectileCollide(a,b))
+     return;
+
+   AddInteraction(EntInteraction(a->buid,b->buid,b->col_rate));
+   AudioPlayRandomSfx(SFX_ACTION);
+
+}
+
 void ProjectilesStep(){
   for (int i = 0; i < MAX_PROJECTILES; ++i) {
     ent_t* e = &projectile_pool.ents[i];
@@ -111,6 +146,12 @@ void ProjectilesStep(){
 void ProjectileSync(ent_t* p){
   PhysicsStep(p->body);
 
+  struct ent_s* others[MAX_ENTS];
+  int num_others =  WorldGetEnts(others,FilterEntNotOnTeamAlive, p);
+
+  for(int i = 0; i < num_others; i++)
+    ProjectileCollision(p->body,others[i]->body);
+  
   EntSync(p);
 }
 

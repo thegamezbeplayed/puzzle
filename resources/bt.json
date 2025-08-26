@@ -1,169 +1,234 @@
 {
   "version": 1,
   "trees": {
+    "Orbit": {
+      "type": "Sequence",
+      "children": [
+        {
+          "type": "Leaf",
+          "name": "AcquireMousePosition"
+        },
+        {
+          "type": "Leaf",
+          "name": "BisectDestination"
+        }
+      ]
+    },
     "Seek": {
       "type": "Selector",
       "children": [
-	{
-	  "type": "Sequence",
-	  "name": "Seek",
-	  "children": [
-	    {
-	      "type": "Leaf",
-	      "name": "AcquireTarget"
-	    },
-	    {
-	      "type": "Leaf",
-	      "name": "ChangeState",
-	      "params": {
-		"state": "STATE_AGGRO"
-	      }
-	    }
-	  ]
-	},
-	{
-	  "type": "Sequence",
-	  "name": "Wander",
-	  "children": [
-	    {
-	      "type": "Leaf",
-	      "name": "ChangeState",
-	      "params": {
-		"state": "STATE_WANDER"
-	      }
-	    }
-	  ]
-	}
+        {
+          "type": "Sequence",
+          "name": "Seek",
+          "children": [
+            {
+              "type": "Leaf",
+              "name": "AcquireTarget"
+            },
+            {
+              "type": "Leaf",
+              "name": "ChangeState",
+              "params": {
+                "state": "STATE_AGGRO"
+              }
+            }
+          ]
+        },
+        {
+          "type": "Sequence",
+          "name": "Wander",
+          "children": [
+            {
+              "type": "Leaf",
+              "name": "ChangeState",
+              "params": {
+                "state": "STATE_WANDER"
+              }
+            }
+          ]
+        }
       ]
     },
     "Wander": {
       "type": "Selector",
       "children": [
-	{
-	  "type": "Sequence",
-	  "name": "CheckAggro",
-	  "children": [
-	    {
-	      "type": "Leaf",
-	      "name": "AcquireTarget"
-	    },
-	    {
-	      "type": "Leaf",
-	      "name": "ChangeState",
-	      "params": {
-		"state": "STATE_IDLE"
-	      }
-	    }
-	  ]
-	},
-	{
-	  "type": "Sequence",
-	  "name": "Move",
-	  "children": [
-	    {
-	      "type": "Leaf",
-	      "name": "AcquireDestination"
-	    },
-	    {
-	      "type": "Leaf",
-	      "name": "MoveToDestination"
-	    }
-	  ]
-	},
-	{
-	  "type": "Sequence",
-	  "name": "Die",
-	  "children": [
-	    {
-	      "type": "Leaf",
-	      "name": "ChangeState",
-	      "params": {
-		"state": "STATE_DIE"
-	      }
-	    }
-	  ]
-	}
+        {
+          "type": "Sequence",
+          "name": "CheckAggro",
+          "children": [
+            {
+              "type": "Leaf",
+              "name": "AcquireTarget"
+            },
+            {
+              "type": "Leaf",
+              "name": "ChangeState",
+              "params": {
+                "state": "STATE_IDLE"
+              }
+            }
+          ]
+        },
+        {
+          "type": "Sequence",
+          "name": "Move",
+          "children": [
+            {
+              "type": "Leaf",
+              "name": "AcquireDestination"
+            },
+            {
+              "type": "Leaf",
+              "name": "MoveToDestination"
+            }
+          ]
+        },
+        {
+          "type": "Sequence",
+          "name": "Die",
+          "children": [
+            {
+              "type": "Leaf",
+              "name": "ChangeState",
+              "params": {
+                "state": "STATE_DIE"
+              }
+            }
+          ]
+        }
       ]
     },
     "Chase": {
       "type": "Selector",
       "children": [
-	{
-	  "type": "Sequence",
-	  "name": "TryAttack",
-	  "children": [
-	    {
-	      "type": "Leaf",
-	      "name": "AcquireTarget"
-	    },
-	    {
-	      "type": "Leaf",
-	      "name": "ChangeState",
-	      "params": {
-		"state": "STATE_ATTACK"
-	      }
-	    }
-	  ]
-	},
-	{
-	  "type": "Sequence",
-	  "name": "Move",
-	  "children": [
-	    {
-	      "type": "Leaf",
-	      "name": "AcquireTarget"
-	    },
-	    {
-	      "type": "Leaf",
-	      "name": "MoveToTarget"
-	    }
-	  ]
-	},
-	{
-	  "type": "Sequence",
-	  "name": "No Target",
-	  "children": [
-	    {
-	      "type": "Leaf",
-	      "name": "ChangeState",
-	      "params": {
-		"state": "STATE_IDLE"
-	      }
-	    }
-	  ]
-	}
+        {
+          "type": "Sequence",
+          "name": "TryAttack",
+          "children": [
+            {
+              "type": "Leaf",
+              "name": "AcquireTarget"
+            },
+            {
+              "type": "Leaf",
+              "name": "ChangeState",
+              "params": {
+                "state": "STATE_ATTACK"
+              }
+            }
+          ]
+        },
+        {
+          "type": "Sequence",
+          "name": "Move",
+          "children": [
+            {
+              "type": "Leaf",
+              "name": "AcquireTarget"
+            },
+            {
+              "type": "Leaf",
+              "name": "MoveToTarget"
+            }
+          ]
+        },
+        {
+          "type": "Sequence",
+          "name": "No Target",
+          "children": [
+            {
+              "type": "Leaf",
+              "name": "ChangeState",
+              "params": {
+                "state": "STATE_IDLE"
+              }
+            }
+          ]
+        }
       ]
     },
-    "Attack": {
+    "AttackHoldingPosition": {
       "type": "Selector",
       "children": [
-	{
-	  "type": "Sequence",
-	  "name": "TryAttack",
-	  "children": [
-	    {
-	      "type": "Leaf",
-	      "name": "CanAttackTarget"
-	    },
-	    {
-	      "type": "Leaf",
-	      "name": "AttackTarget"
-	    }
-	  ]
-	},
-	{
-	  "type": "Sequence",
-	  "name": "Cant Attack",
-	  "children": [
-	    {
-	      "type": "Leaf",
-	      "name": "ChangeState",
-	      "params": {
-		"state": "STATE_AGGRO"
-	      }
-	    }
-	  ]
-	}
+        {
+          "type": "Sequence",
+          "name": "TryAttack",
+          "children": [
+            {
+              "type": "Leaf",
+              "name": "CanAttackTarget"
+            },
+            {
+              "type": "Leaf",
+              "name": "AttackTarget"
+            }
+          ]
+        },
+        {
+          "type": "Sequence",
+          "name": "Cant Attack",
+          "children": [
+            {
+              "type": "Leaf",
+              "name": "ChangeState",
+              "params": {
+                "state": "STATE_AGGRO"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "AttackOnTheMove": {
+      "type": "Concurrent",
+      "children": [
+        {
+          "type": "Selector",
+          "name": "FireAtWill",
+          "children": [
+            {
+              "type": "Sequence",
+              "name": "TryAttack",
+              "children": [
+                {
+                  "type": "Leaf",
+                  "name": "CanAttackTarget"
+                },
+                {
+                  "type": "Leaf",
+                  "name": "AttackTarget"
+                }
+              ]
+            },
+            {
+              "type": "Sequence",
+              "name": "Cant Attack",
+              "children": [
+                {
+                  "type": "Leaf",
+                  "name": "ChangeState",
+                  "params": {
+                    "state": "STATE_AGGRO"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Sequence",
+          "name": "Move",
+          "children": [
+            {
+              "type": "Leaf",
+              "name": "AcquireTarget"
+            },
+            {
+              "type": "Leaf",
+              "name": "MoveToTarget"
+            }
+          ]
+        }
       ]
     }
   }

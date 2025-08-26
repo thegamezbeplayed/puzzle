@@ -7,21 +7,28 @@
 #include "game_projectiles.h"
 
 #define MAX_INTERACTIONS 256
-#define DEBUG true
+#define DEBUG false
 
 extern Font font;
 extern ent_t* player;
 
 typedef void (*UpdateFn)(void);
 typedef bool EntFilterFn(ent_t* e, ent_t* other); 
-static bool EntNotOnTeam(ent_t* e,ent_t* other){
+static bool FilterEntNotOnTeam(ent_t* e,ent_t* other){
   if(e->team == other->team || e->team == TEAM_ENVIROMENT)
     return false;
   else
     return true;
 }
 
-static bool EntNotOnTeamAlive(ent_t* e,ent_t* other){
+static bool FilterEntTargetable(ent_t* e, ent_t* other){
+    if(e->team == other->team || e->team == TEAM_ENVIROMENT || e->state >= STATE_DIE || !e->sprite->is_visible || e->body->is_kinematic)
+    return false;
+  else
+    return true;
+}
+
+static bool FilterEntNotOnTeamAlive(ent_t* e,ent_t* other){
   if(e->team == other->team || e->team == TEAM_ENVIROMENT || e->state >= STATE_DIE)
     return false;
   else
@@ -97,6 +104,7 @@ typedef struct world_s{
   unsigned int  num_spr;
 } world_t;
 
+ent_t* WorldGetEnt(const char* name);
 int WorldGetEnts(ent_t** results,EntFilterFn fn, void* params);
 Vector2 GetWorldCoordsFromIntGrid(Vector2 pos, float len);
 bool RegisterEnt( ent_t *e);

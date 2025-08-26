@@ -47,10 +47,19 @@ behavior_tree_node_t* BuildFromJNode(const JNode *jn) {
         kids[i] = BuildFromJNode(jn->children[i]);
     }
 
-    if (jn->type == JNODE_SEQUENCE)
-      return BehaviorCreateSequence(kids, jn->child_count);
-    else
-      return BehaviorCreateSelector(kids, jn->child_count);
+    switch(jn->type){
+      case JNODE_SEQUENCE:
+        return BehaviorCreateSequence(kids, jn->child_count);
+        break;
+      case JNODE_SELECTOR:
+        return BehaviorCreateSelector(kids, jn->child_count);
+        break;
+      case JNODE_CONCURRENT:
+        return BehaviorCreateConcurrent(kids, jn->child_count);
+        break;
+      default:
+        break;
+    }
 }
 
 behavior_params_t* BuildBehaviorParams(json_object* params){
@@ -89,9 +98,36 @@ BehaviorStatus BehaviorChangeState(behavior_params_t *params){
     return BEHAVIOR_FAILURE;
 
   SetState(e, params->state,NULL);
-  TraceLog(LOG_INFO,"Change e %s state to %d",e->name, params->state);
+  //TraceLog(LOG_INFO,"Change e %s state to %d",e->name, params->state);
   return BEHAVIOR_SUCCESS;
 
+}
+
+BehaviorStatus BehaviorAcquireMousePosition(behavior_params_t *params){
+  struct ent_s* e = params->owner;
+  if(!e || !e->control)
+    return BEHAVIOR_FAILURE;
+
+  e->control->destination = GetMousePosition();
+
+  return BEHAVIOR_SUCCESS;
+}
+
+BehaviorStatus BehaviorBisectDestination(behavior_params_t *params){
+  struct ent_s* e = params->owner;
+  if(!e || !e->control)
+    return BEHAVIOR_FAILURE;
+
+  if(v2_compare(e->control->destination,VEC_UNSET))
+    return BEHAVIOR_FAILURE;
+
+  if(!e->control->target)
+    return BEHAVIOR_FAILURE;
+
+  Vector2 newpos = Vector2Bisect(e->control->target->pos, e->control->destination, e->control->ranges[RANGE_NEAR]);
+
+  e->facing = v2_ang_deg(Vector2Normalize(Vector2Subtract(e->control->target->pos, e->control->destination))) + 90;
+  RigidBodySetPosition(e->body,newpos);
 }
 
 BehaviorStatus BehaviorAcquireDestination(behavior_params_t *params){
@@ -104,7 +140,6 @@ BehaviorStatus BehaviorAcquireDestination(behavior_params_t *params){
 
   e->control->destination = GetWorldCoordsFromIntGrid(e->pos, e->control->aggro);
  
- TraceLog(LOG_INFO,"Ent %s move to <%0.2f,%0.2f>",e->name,e->control->destination.x,e->control->destination.y); 
   return BEHAVIOR_SUCCESS;
 }
 
@@ -117,7 +152,7 @@ BehaviorStatus BehaviorMoveToDestination(behavior_params_t *params){
     e->control->has_arrived = false;
     return BEHAVIOR_SUCCESS;
   }
-  if(Vector2Distance(e->pos,e->control->destination) <  e->control->range){
+  if(Vector2Distance(e->pos,e->control->destination) <  e->control->ranges[RANGE_NEAR]){
     e->control->has_arrived = true;
     return BEHAVIOR_SUCCESS;
   }
@@ -138,7 +173,7 @@ BehaviorStatus BehaviorAcquireTarget(behavior_params_t *params){
   e->control->target = NULL;
 
   struct ent_s* others[MAX_ENTS];
-  int num_others =  WorldGetEnts(others,EntNotOnTeamAlive, e);
+  int num_others =  WorldGetEnts(others,FilterEntTargetable, e);
   for (int i = 0; i < num_others; i++){
     if(CheckCanSeeTarget(e->body,others[i]->body, e->control->aggro)){
       e->control->target = others[i];
@@ -164,7 +199,7 @@ BehaviorStatus BehaviorMoveToTarget(behavior_params_t *params){
   if(!EntTargetable(e->control->target))
     return BEHAVIOR_FAILURE;
 
-  if(PhysicsSimpleDistCheck(e->body,e->control->target->body) < e->control->range)
+  if(PhysicsSimpleDistCheck(e->body,e->control->target->body) < e->control->ranges[RANGE_NEAR])
     return BEHAVIOR_SUCCESS;
 
   PhysicsAccelDir(e->body, FORCE_STEERING,Vector2Normalize(Vector2Subtract(e->control->target->pos,e->pos)));
@@ -269,6 +304,19 @@ behavior_tree_node_t* BehaviorCreateSelector(behavior_tree_node_t **children, in
     return node;
 }
 
+behavior_tree_node_t* BehaviorCreateConcurrent(behavior_tree_node_t **children, int count) {
+    behavior_tree_selector_t *data = malloc(sizeof(behavior_tree_selector_t));
+    data->children = children;
+    data->num_children = count;
+    data->current = 0;
+
+    behavior_tree_node_t *node = malloc(sizeof(behavior_tree_node_t));
+    node->bt_type = BT_CONCURRENT;
+    node->tick = BehaviorTickConcurrent;
+    node->data = data;
+    return node;
+}
+
 BehaviorStatus BehaviorTickSequence(behavior_tree_node_t *self, void *context) {
     behavior_tree_sequence_t *seq = (behavior_tree_sequence_t *)self->data;
     while (seq->current < seq->num_children) {
@@ -300,5 +348,26 @@ BehaviorStatus BehaviorTickSelector(behavior_tree_node_t *self, void *context) {
 
     sel->current = 0;
     return BEHAVIOR_FAILURE;
+}
+
+BehaviorStatus BehaviorTickConcurrent(behavior_tree_node_t *self, void *context) {
+  behavior_tree_selector_t *sel = (behavior_tree_selector_t *)self->data;
+
+  bool anyRunning = false;
+  bool anySuccess = false;
+  bool anyFailure = false;
+
+  for (int i = 0; i < sel->num_children; i++) {
+    BehaviorStatus status = sel->children[i]->tick(sel->children[i], context);
+    if (status == BEHAVIOR_RUNNING) anyRunning = true;
+    else if (status == BEHAVIOR_SUCCESS) anySuccess = true;
+    else if (status == BEHAVIOR_FAILURE) anyFailure = true;
+  }
+
+  // Rule set: "success if all succeed"
+  if (!anyRunning && !anyFailure) return BEHAVIOR_SUCCESS;
+  if (anyRunning) return BEHAVIOR_RUNNING;
+  return BEHAVIOR_FAILURE;
+
 }
 

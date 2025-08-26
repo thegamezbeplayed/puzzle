@@ -48,6 +48,7 @@ typedef enum {
   FORCE_STEERING,
   FORCE_IMPULSE,
   FORCE_AVOID,
+  FORCE_KINEMATIC,
   //FORCE_JUMP,
   FORCE_NONE
 }ForceType;
@@ -104,6 +105,7 @@ typedef struct rigid_body_s {
 rigid_body_t* InitRigidBody(ent_t* owner,Vector2 pos, float radius);
 rigid_body_t* InitRigidBodyStatic(ent_t* owner,Vector2 pos, float radius);
 rigid_body_t InitRigidBodyKinematic(ent_t* owner, Vector2 pos,float radius);
+void RigidBodySetPosition(rigid_body_t* b, Vector2 pos);
 bool FreeRigidBody(rigid_body_t* b);
 //<====RIGID_BODY
 static inline float PhysicsSimpleDistCheck(rigid_body_t* a, rigid_body_t* b){
@@ -120,6 +122,8 @@ void PhysicsSetAccel(rigid_body_t *b, ForceType type,Vector2 accel);
 void PhysicsCollision(int i,rigid_body_t* bodies[MAX_ENTS],int num_bodies, CollisionCallback callback);
 bool CheckCollision(rigid_body_t *a, rigid_body_t *b, int len);
 bool RigidBodyCollide(rigid_body_t* a, rigid_body_t* b, ent_t *e);
+void CollisionReflect(rigid_body_t* a, rigid_body_t* b, ForceType t);
+void CollisionDamage(rigid_body_t* a, rigid_body_t* b, ForceType t);
 force_t ForceFromVector2(ForceType type, Vector2 vec);
 force_t ForceEmpty(ForceType type);
 force_t ForceBasic(ForceType type);
@@ -146,15 +150,22 @@ typedef struct {
 attack_t InitAttack(ent_t* owner,ProjectileInstance data);
 bool AttackPrepare(attack_t* a);
 bool EntAttack(attack_params_t* params);
+typedef enum{
+  RANGE_AGGRO,
+  RANGE_LOITER,
+  RANGE_NEAR,
+  RANGE_EMPTY
+}RangeType;
+
 typedef struct{
   ent_t*                target;
   Vector2               destination;
+  int                   ranges[RANGE_EMPTY];
   int                   aggro;
-  int                   range;
   bool                  has_arrived;
   behavior_tree_node_t* bt[STATE_END];
 }controller_t;
-controller_t* InitController(ObjectInstance data);
+controller_t* InitController();
 
 //===ENT_T===>
 typedef struct ent_s{
@@ -166,11 +177,12 @@ typedef struct ent_s{
   EntityState           state;
   controller_t          *control;
   events_t              *events;
+  struct ent_s          *child;
   int                   num_attacks;
   int                   active_attack_id;
   attack_t              attacks[MAX_ATTACKS];
   stat_t                stats[STAT_BLANK];
-  Vector2               facing;
+  float                 facing;
   sprite_t              *sprite;
 } ent_t;
 

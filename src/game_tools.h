@@ -27,6 +27,8 @@ static inline Vector2 CellToVector2(Cell c, float scale){
 static inline bool v2_compare(Vector2 v1,Vector2 v2){
   return (v1.x==v2.x && v1.y==v2.y);
 }
+static inline float v2_ang_deg(Vector2 v){ return atan2(v.y,v.x)*180.0 /M_PI;}
+static inline float v2_ang(Vector2 v){ return atan2(v.y,v.x);}
 static inline float v2_len(Vector2 v){ return sqrtf(v.x*v.x + v.y*v.y); }
 static inline Vector2 v2_add(Vector2 a, Vector2 b){ return (Vector2){a.x+b.x,a.y+b.y}; }
 static inline Vector2 v2_sub(Vector2 a, Vector2 b){ return (Vector2){a.x-b.x,a.y-b.y}; }

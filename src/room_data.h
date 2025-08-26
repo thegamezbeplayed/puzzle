@@ -11,58 +11,62 @@
 #define CELL_HEIGHT 80
 
 typedef struct {
-  const char* engine_instance;
-  const char* name;
-  float x;
-  float y;
-  int sprite_sheet_index;
-  int speed;
-  int accel;
-  int	aggro_range;
-  bool	is_projectile;
-  int	num_attacks;
-  char* attacks;
-  int	team_enum;
+    const char* engine_instance;
+		const char* name;
+		int	size;
+	float x;
+    float y;
+		int sprite_sheet_index;
+		int speed;
+		int accel;
+		int	aggro_range;
+	bool	is_projectile;
+	int	num_attacks;
+	const char* attacks;
+	int	team_enum;
 } ObjectInstance;
 
+
+
 typedef struct {
-  const char* engine_instance;
-  const char* name;
-  int sprite_sheet_index;
-  int duration;
-  int fire_rate;
-  int speed;
-  int	attack_range;
-  //bool	(*fn)(void* params);
+    const char* engine_instance;
+		const char* name;
+	int	size;
+	int sprite_sheet_index;
+	int duration;
+		int fire_rate;
+	int speed;
+int	attack_range;
 } ProjectileInstance;
 
 static const ObjectInstance room_instances[] = {
-  {"ent_data", "Drone", 1248, 128, 37, 4, 4, 600, 0,1,"basic_bullet",1},
-  {"ent_data", "player", 416, 288, 0, 4, 0, 450, 0,1,"basic_bullet",0},
+    {"ent_data", "shield", 64,1664, 608, 43, 0, 0, 450, 0,0,"",0},
+    {"ent_data", "Drone", 56,1248, 128, 37, 16, 4, 680, 0,1,"basic_bullet",1},
+    {"ent_data", "player", 72,416, 288, 0, 16, 0, 450, 0,1,"basic_bullet",0},
 };
 
-#define ROOM_INSTANCE_COUNT 2
+#define ROOM_INSTANCE_COUNT 3
 
 static const ProjectileInstance room_projectiles[] = {
-  {"projectile_data", "basic_bullet",41,0,9,32,620 }
+    {"projectile_data", "basic_bullet", 16,41, 0,12,26,650},
 };
 
 #define ROOM_PROJECTILE_COUNT 1
 
 #endif // ROOM_DATA_H
-       // Tile Data
-  typedef struct {
+// Tile Data
+typedef struct {
     int tile_index;
     int start_x;
-    int start_y;
-    int map_x;
+		int start_y;
+		int map_x;
     int map_y;
     int rotation;
     bool flip_x;
     bool flip_y;
-  } TileInstance;
+} TileInstance;
 
-  static const TileInstance room_tiles[] = {
-  };
+static const TileInstance room_tiles[] = {
+};
 
 #define ROOM_TILE_COUNT 0

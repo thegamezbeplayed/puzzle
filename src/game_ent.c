@@ -19,7 +19,8 @@ ent_t* InitEnt(ObjectInstance data){
   e->sprite = InitSpriteByIndex(data.sprite_sheet_index,&spritedata);
   e->sprite->owner = e;  
 
-  float radius = e->sprite->slice->bounds.height * 0.5f;
+  e->sprite->slice->scale = data.size / e->sprite->slice->bounds.width;
+  float radius = data.size * 0.5f;
   pos = Vector2Add(pos,e->sprite->slice->center);
   e->pos = pos;
   e->body = InitRigidBody(e,pos, radius);
@@ -35,11 +36,16 @@ ent_t* InitEnt(ObjectInstance data){
     e->attacks[0] = InitAttack(e,instance);
     e->num_attacks = 1;
     e->control = InitController(data);
+    e->control->ranges[RANGE_AGGRO] = data.aggro_range;
+    e->control->ranges[RANGE_LOITER] = radius*2 + data.aggro_range/2;
+    e->control->ranges[RANGE_NEAR] = radius*2+data.speed;
+    e->control->aggro = data.aggro_range;
     e->control->bt[STATE_IDLE] = InitBehaviorTree("Seek");
     e->control->bt[STATE_WANDER] = InitBehaviorTree("Wander");
     e->control->bt[STATE_AGGRO] = InitBehaviorTree("Chase");
-    e->control->bt[STATE_ATTACK] = InitBehaviorTree("Attack");
+    e->control->bt[STATE_ATTACK] = InitBehaviorTree("AttackOnTheMove");
   }
+
   SetState(e,STATE_SPAWN,OnStateChange);
   return e;
 }
@@ -51,6 +57,7 @@ ent_t* InitEntStatic( TileInstance data){
 
   e->sprite = InitSpriteByIndex(data.tile_index,&spritedata);
   if(e->sprite!=NULL){
+    //e->sprite->slice->scale = data.size / e->sprite->slice->bounds.width;
     e->sprite->owner = e;  
     pos = Vector2Add(pos,e->sprite->slice->center);
     e->sprite->layer = LAYER_BG;
@@ -71,6 +78,7 @@ ent_t InitEntProjectile( ProjectileInstance data){
 
   e.sprite = InitSpriteByIndex(data.sprite_sheet_index,&spritedata);
   if(e.sprite!=NULL){
+    e.sprite->slice->scale = data.size / e.sprite->slice->bounds.width;
     e.sprite->owner = NULL;
     pos = Vector2Add(pos,e.sprite->slice->center);
     e.sprite->layer = LAYER_BG;
@@ -196,31 +204,33 @@ void StatChangeValue(ent_t* owner, stat_t* attr, float val){
     attr->on_stat_empty(owner);
 }
 
-controller_t* InitController(ObjectInstance data){
+controller_t* InitController(){
   controller_t* ctrl = malloc(sizeof(controller_t));
   *ctrl = (controller_t){0};
 
   ctrl->destination = VEC_UNSET;
-  ctrl->aggro = data.aggro_range;
-  ctrl->range = 80;
   return ctrl;
 }
 
 void EntInitOnce(ent_t* e){
   EntSync(e);
-
+  
   cooldown_t* spawner = InitCooldown(3,EVENT_SPAWN,StepState_Adapter,e);
   AddEvent(e->events, spawner);
+  if(e->child){
+    e->child->control = InitController();
+    e->child->control->target = e;
+    e->child->control->bt[STATE_IDLE] = InitBehaviorTree("Orbit");
+    e->child->control->ranges[RANGE_NEAR] = e->body->collision_bounds.radius + e->child->body->collision_bounds.radius;
+    e->child->body->is_kinematic = true;
+    e->child->body->forces[FORCE_KINEMATIC].type = FORCE_KINEMATIC;
+    e->child->body->forces[FORCE_KINEMATIC].on_react = CollisionReflect;
+  }
 }
 
 void EntSync(ent_t* e){
-  switch(e->team){
-    case TEAM_ENEMIES:
-      EntControlStep(e);
-      break;
-    default:
-      break;
-  }
+  if(e->control)  
+    EntControlStep(e);
 
   StepEvents(e->events);
 
@@ -229,6 +239,7 @@ void EntSync(ent_t* e){
 
   e->sprite->pos = e->pos;// + abs(ent->sprite->offset.y);
 
+  e->sprite->rot = 90+e->facing;
 }
 
 void EntControlStep(ent_t *e){
@@ -279,7 +290,7 @@ bool CanChangeState(EntityState old, EntityState s){
 } 
 
 void OnStateChange(ent_t *e, EntityState old, EntityState s){
-  TraceLog(LOG_INFO,"Entity %s state change from %s to %s",e->name,EntityStateName(old),EntityStateName(s));
+  //TraceLog(LOG_INFO,"Entity %s state change from %s to %s",e->name,EntityStateName(old),EntityStateName(s));
   switch(old){
     case STATE_SPAWN:
       if(e->body)

@@ -1,6 +1,7 @@
 #include "game_types.h"
 #include "game_process.h"
 #include "raymath.h"
+#include "game_tools.h"
 
 static inline Rectangle RecFromBounds(bounds_t b){
   Rectangle result = {
@@ -25,6 +26,7 @@ rigid_body_t* InitRigidBody(ent_t* owner, Vector2 pos, float radius){
   b->forces[FORCE_STEERING] = ForceBasic(FORCE_STEERING);
   b->forces[FORCE_STEERING].max_velocity = GRID_SIZE/8;
 
+  b->forces[FORCE_KINEMATIC] = ForceBasic(FORCE_NONE);
   b->forces[FORCE_IMPULSE] = ForceBasic(FORCE_IMPULSE);
   b->forces[FORCE_IMPULSE].on_react = ReactionBumpForce;
   b->forces[FORCE_IMPULSE].threshold = 1.5F;
@@ -66,6 +68,7 @@ rigid_body_t* InitRigidBodyStatic(ent_t* owner, Vector2 pos,float radius){
   b->forces[FORCE_AVOID].on_react = CollisionBoundsAvoid;
   
   b->forces[FORCE_STEERING] = ForceBasic(FORCE_STEERING);
+  b->forces[FORCE_KINEMATIC] = ForceBasic(FORCE_KINEMATIC);
   b->counter_force[FORCE_STEERING] = FORCE_IMPULSE;
   b->counter_force[FORCE_IMPULSE] = FORCE_NONE;
   b->counter_force[FORCE_NONE] = FORCE_NONE;
@@ -94,7 +97,9 @@ rigid_body_t InitRigidBodyKinematic(ent_t* owner, Vector2 pos,float radius){
 
   b.forces[FORCE_STEERING] = ForceBasic(FORCE_STEERING);
   b.forces[FORCE_STEERING].friction = Vector2One();
+  b.forces[FORCE_STEERING].on_react = CollisionDamage;
 
+  b.forces[FORCE_KINEMATIC] = ForceBasic(FORCE_KINEMATIC);
   b.counter_force[FORCE_STEERING] = FORCE_IMPULSE;
 
   b.counter_force[FORCE_IMPULSE] = FORCE_NONE;
@@ -103,7 +108,7 @@ rigid_body_t InitRigidBodyKinematic(ent_t* owner, Vector2 pos,float radius){
   b.restitution = -1;
   b.is_kinematic = true;
   b.simulate = false;
-  b.col_rate = 1;
+  b.col_rate = 4;
   //b.on_collision = NoOpCollision;
   b.collision_bounds = (bounds_t){
     .shape = SHAPE_RECTANGLE,
@@ -114,6 +119,10 @@ rigid_body_t InitRigidBodyKinematic(ent_t* owner, Vector2 pos,float radius){
       .height = radius*2
   };
   return b;
+}
+
+void RigidBodySetPosition(rigid_body_t* b, Vector2 pos){
+  b->position = pos;
 }
 
 bool FreeRigidBody(rigid_body_t* b){
@@ -170,7 +179,8 @@ void PhysicsStep(rigid_body_t *b){
 
   b->collision_bounds.pos = Vector2Add(b->collision_bounds.offset,b->position);
   b->owner->pos = b->position;
-
+  if(Vector2Length(b->velocity) > 0)
+    b->owner->facing = v2_ang_deg(Vector2Normalize(b->velocity));
 }
 
 bool PhysicsStepForce(force_t *force,bool accelerate){
@@ -308,6 +318,9 @@ void PhysicsCollision(int i, rigid_body_t* bodies[MAX_ENTS],int num_bodies, Coll
   if(!bodies[i]->simulate)
     return;
 
+  if(bodies[i]->is_kinematic)
+    return;
+
   for (int j = 0; j < num_bodies; j++){
     if(i == j)
       continue;
@@ -319,6 +332,9 @@ void PhysicsCollision(int i, rigid_body_t* bodies[MAX_ENTS],int num_bodies, Coll
       continue;
 
     if(bodies[j]->is_static)
+      continue;
+
+    if(bodies[j]->is_kinematic)
       continue;
 
     if(!CanInteract(bodies[i]->buid, bodies[j]->buid))
@@ -381,6 +397,23 @@ bool RigidBodyCollide(rigid_body_t* a, rigid_body_t* b, ent_t *e){
   }
     
   return true;
+}
+
+void CollisionReflect(rigid_body_t* a, rigid_body_t* b, ForceType t){
+  /*if(a->is_static){
+    //
+    return;
+  }*/
+
+  //TODO check if normal surface is facing the incoming projectile
+  b->owner->team = a->owner->team;
+  Vector2 origVel = b->forces[FORCE_STEERING].vel;
+  b->forces[FORCE_STEERING].vel = Vector2Rotate(origVel,M_PI);
+  TraceLog(LOG_INFO,"%s vel <%0.2f,%02f> reflect to <%0.2f,%0.2f>",b->owner->name,origVel.x, origVel.y, b->forces[FORCE_STEERING].vel.x, b->forces[FORCE_STEERING].vel.y);
+}
+
+void CollisionDamage(rigid_body_t* a, rigid_body_t* b, ForceType t){
+  TraceLog(LOG_INFO,"%s takes damage from %s %d", b->owner->name, a->owner->name, a->buid);
 }
 
 void CollisionBoundsAvoid(rigid_body_t* a, rigid_body_t* b, ForceType t){

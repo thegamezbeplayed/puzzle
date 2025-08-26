@@ -145,7 +145,9 @@ JNode* ParseJNode(struct json_object* root){
   else if (strcmp(type, "Selector") == 0) {
     node->type = JNODE_SELECTOR;
   }
-  
+  else if (strcmp(type, "Concurrent") == 0) {
+    node->type = JNODE_CONCURRENT;
+  } 
   if(node->type!=JNODE_LEAF){
     struct json_object *children = json_object_object_get(root, "children");
     int count = json_object_array_length(children);

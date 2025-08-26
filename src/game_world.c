@@ -70,6 +70,15 @@ Vector2 GetWorldCoordsFromIntGrid(Vector2 pos, float len){
   return CellToVector2(candidates[r],CELL_WIDTH);
 }
 
+ent_t* WorldGetEnt(const char* name){
+  for(int i = 0; i < world.num_ent; i++){
+    if(strcmp(world.ents[i]->name, name) == 0)
+      return world.ents[i];
+  }
+
+  return NULL;
+}
+
 Rectangle WorldRoomBounds(){
   return world.room_bounds;
 }
@@ -175,7 +184,10 @@ void WorldInitOnce(){
   for(int i = 0; i < world.num_ent; i++){
     if(world.cols[i])
       PhysicsInitOnce(world.cols[i]);
-   
+ 
+    if(world.ents[i]->uid == player->uid)
+      world.ents[i]->child =  WorldGetEnt("shield");
+  
     EntInitOnce(world.ents[i]);
   }
 
@@ -202,8 +214,8 @@ void WorldFixedUpdate(){
       default:
         PhysicsStep(world.ents[i]->body);
         EntSync(world.ents[i]);
-        if(!CheckEntOutOfBounds(world.ents[i], WorldRoomBounds()))
-          EntKill(world.ents[i]);
+       /* if(!CheckEntOutOfBounds(world.ents[i], WorldRoomBounds()))
+          EntKill(world.ents[i]);*/
         break;
     }
   }
