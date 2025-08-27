@@ -3,18 +3,53 @@
 #include "game_projectiles.h"
 #include "game_math.h"
 
+entity_pool_t ent_pool;
+
 MAKE_ADAPTER(StepState, ent_t*);
 
 attack_params_t empty_attack_params = {
   .dir = 0.0f
 };
 
+void InitEntityPool(){
+  memset(&ent_pool,0,sizeof(ent_pool));
+}
+
+void RegisterPoolRef(EntityType ref){
+  if(ent_pool.num_references[ref] == 0){
+    //build reference ent
+  }
+  else
+    ent_pool.num_references[ref]++;
+
+}
+
+ent_t InitEntRef(ObjectInstance ref){
+  ent_t e = {0};
+  e.pos = Vector2Zero();
+  e.name = (char*)malloc(100*sizeof(char));
+
+  strcpy(e.name,ref.name);
+
+  e.type =ref.ent_ref;
+  //e.sprite = InitSpriteByIndex(ref.sprite_sheet_index,&spritedata);
+  //e.sprite->owner = e;
+  e.team = ref.team_enum;
+
+  e.stats[STAT_HEALTH] = InitStatOnMax(STAT_HEALTH,ref.health);
+  e.stats[STAT_HEALTH].on_stat_empty = EntKill;
+
+  e.stats[STAT_SPEED] = InitStatOnMax(STAT_SPEED,ref.speed);
+  e.stats[STAT_ACCEL] = InitStatOnMax(STAT_ACCEL,ref.accel);
+  return e;
+}
+
 ent_t* InitEnt(ObjectInstance data){
   ent_t* e = malloc(sizeof(ent_t));
   *e = (ent_t){0};  // zero initialize if needed
   Vector2 pos = Vector2FromXY(data.x,data.y);
   e->name = (char*)malloc(100*sizeof(char));
-
+  e->type = data.ent_ref;
   strcpy(e->name,data.name);
   e->sprite = InitSpriteByIndex(data.sprite_sheet_index,&spritedata);
   e->sprite->owner = e;  
@@ -26,6 +61,9 @@ ent_t* InitEnt(ObjectInstance data){
   e->body = InitRigidBody(e,pos, radius);
   SetState(e,STATE_SPAWN,NULL);
   e->team = data.team_enum;
+
+  e->stats[STAT_HEALTH] = InitStatOnMax(STAT_HEALTH,data.health);
+  e->stats[STAT_HEALTH].on_stat_empty = EntKill;
 
   e->stats[STAT_SPEED] = InitStatOnMax(STAT_SPEED,data.speed);
   e->stats[STAT_ACCEL] = InitStatOnMax(STAT_ACCEL,data.accel);
@@ -39,7 +77,6 @@ ent_t* InitEnt(ObjectInstance data){
     e->control->ranges[RANGE_AGGRO] = data.aggro_range;
     e->control->ranges[RANGE_LOITER] = radius*2 + data.aggro_range/2;
     e->control->ranges[RANGE_NEAR] = radius*2+data.speed;
-    e->control->aggro = data.aggro_range;
     e->control->bt[STATE_IDLE] = InitBehaviorTree("Seek");
     e->control->bt[STATE_WANDER] = InitBehaviorTree("Wander");
     e->control->bt[STATE_AGGRO] = InitBehaviorTree("Chase");
@@ -75,6 +112,7 @@ ent_t* InitEntStatic( TileInstance data){
 ent_t InitEntProjectile( ProjectileInstance data){
   ent_t e = (ent_t){0};  // zero initialize if needed
   Vector2 pos = Vector2FromXY(0,0);
+  e.type = data.ent_ref;
 
   e.sprite = InitSpriteByIndex(data.sprite_sheet_index,&spritedata);
   if(e.sprite!=NULL){
@@ -97,8 +135,8 @@ ent_t InitEntProjectile( ProjectileInstance data){
   return e;
 }
 
-void EntKill(ent_t* e){
-  SetState(e, STATE_DIE,NULL);
+bool EntKill(ent_t* e){
+  return SetState(e, STATE_DIE,NULL);
 }
 
 void EntDestroy(ent_t* e){
@@ -226,6 +264,11 @@ void EntInitOnce(ent_t* e){
     e->child->body->forces[FORCE_KINEMATIC].type = FORCE_KINEMATIC;
     e->child->body->forces[FORCE_KINEMATIC].on_react = CollisionReflect;
   }
+}
+
+void DamageEnt(ent_t *e, attack_t a){//Copy of attack cuz its subject to Updates
+  //AnimPlay(e->sprite,ANIM_HURT);
+  StatChangeValue(e,&e->stats[STAT_HEALTH],-10);
 }
 
 void EntSync(ent_t* e){

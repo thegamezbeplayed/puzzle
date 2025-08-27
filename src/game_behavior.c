@@ -138,7 +138,7 @@ BehaviorStatus BehaviorAcquireDestination(behavior_params_t *params){
   if(!e->control->has_arrived && !v2_compare(e->control->destination,VEC_UNSET))
     return BEHAVIOR_SUCCESS;
 
-  e->control->destination = GetWorldCoordsFromIntGrid(e->pos, e->control->aggro);
+  e->control->destination = GetWorldCoordsFromIntGrid(e->pos, e->control->ranges[RANGE_AGGRO]);
  
   return BEHAVIOR_SUCCESS;
 }
@@ -175,7 +175,7 @@ BehaviorStatus BehaviorAcquireTarget(behavior_params_t *params){
   struct ent_s* others[MAX_ENTS];
   int num_others =  WorldGetEnts(others,FilterEntTargetable, e);
   for (int i = 0; i < num_others; i++){
-    if(CheckCanSeeTarget(e->body,others[i]->body, e->control->aggro)){
+    if(CheckCanSeeTarget(e->body,others[i]->body, e->control->ranges[RANGE_AGGRO])){
       e->control->target = others[i];
       return BEHAVIOR_SUCCESS;
     }

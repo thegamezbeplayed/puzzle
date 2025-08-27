@@ -4,6 +4,7 @@
 #include "game_tools.h"
 
 game_process_t game_process;
+level_t test_level;
 
 void print_mem_usage() {
     FILE* f = fopen("/proc/self/status", "r");
@@ -294,10 +295,15 @@ void InitGameProcess(){
     LoadBehaviorTrees(rawJNode);
   }
 
-  for(int s = 0; s<SCREEN_DONE; s++)
+  for(int s = 0; s<SCREEN_DONE; s++){
     for(int u = 0; u<UPDATE_DONE;u++){
       game_process.update_steps[s][u] = DO_NOTHING;
+    
     }
+    game_process.children[s].process= PROCESS_NONE;
+    for(int p = 0; p < PROCESS_DONE; p++)
+      game_process.children[s].state[p]=GAME_NONE;
+  }
  
   game_process.next[SCREEN_TITLE] = SCREEN_GAMEPLAY;
   game_process.init[SCREEN_TITLE] = InitTitleScreen;
@@ -337,6 +343,10 @@ void InitGameEvents(){
   cooldown_t* loadEvent = InitCooldown(90,EVENT_GAME_PROCESS,GameReady,NULL);
   AddEvent(game_process.events,loadEvent);
   InitWorld(wdata);
+  game_process.children[SCREEN_GAMEPLAY].process = PROCESS_LEVEL;
+  game_process.children[SCREEN_GAMEPLAY].init[PROCESS_LEVEL] =InitLevel;
+  game_process.children[SCREEN_GAMEPLAY].finish[PROCESS_LEVEL] =LevelEnd;
+  game_process.children[SCREEN_GAMEPLAY].update_steps[PROCESS_LEVEL][UPDATE_FIXED] = LevelStep;
 }
 
 void GameTransitionScreen(){
@@ -370,9 +380,37 @@ void GameProcessSync(bool wait){
       return;
     game_process.update_steps[game_process.screen][i]();
   }
+
+  for(int i = 0; i < PROCESS_DONE;i++){
+    if(game_process.children[game_process.screen].process==PROCESS_NONE)
+      continue;
+    child_process_t* kids = &game_process.children[game_process.screen];
+    for(int j = 0; j < UPDATE_DONE; j++)
+      kids->update_steps[i][j];
+  }
 }
 
 void GameProcessEnd(){
   UnloadEvents(game_process.events);
   FreeWorld();
+}
+
+void InitLevel(){
+  InitEntityPool();
+  for(int i = 0; i < ROOM_LEVEL_WAVE_COUNT; i++){
+    test_level.spawn_events[i] = InitEvents();
+    test_level.mob_spawners[i] = InitObjectStatic(room_spawners[i]);
+  }  
+}
+
+void InitLevelEvents(){
+  
+}
+
+void LevelStep(){
+  
+}
+
+void LevelEnd(){
+
 }

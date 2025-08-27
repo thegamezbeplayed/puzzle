@@ -161,7 +161,6 @@ typedef struct{
   ent_t*                target;
   Vector2               destination;
   int                   ranges[RANGE_EMPTY];
-  int                   aggro;
   bool                  has_arrived;
   behavior_tree_node_t* bt[STATE_END];
 }controller_t;
@@ -171,13 +170,14 @@ controller_t* InitController();
 typedef struct ent_s{
   int                   uid;
   char*                 name;
+  EntityType            type;
   TeamName              team;
   Vector2               pos;
   rigid_body_t          *body;
   EntityState           state;
   controller_t          *control;
   events_t              *events;
-  struct ent_s          *child;
+  struct ent_s*         child;
   int                   num_attacks;
   int                   active_attack_id;
   attack_t              attacks[MAX_ATTACKS];
@@ -185,15 +185,16 @@ typedef struct ent_s{
   float                 facing;
   sprite_t              *sprite;
 } ent_t;
-
+ent_t InitEntRef(ObjectInstance ref);
 ent_t* InitEntStatic(TileInstance data);
 ent_t* InitEnt(ObjectInstance data);
 ent_t InitEntProjectile( ProjectileInstance data);
 void EntInitOnce(ent_t* e);
 void EntSync(ent_t* e);
-void EntKill(ent_t* e);
+bool EntKill(ent_t* e);
 void EntDestroy(ent_t* e);
 void EntFree(ent_t* e);
+void DamageEnt(ent_t *e, attack_t a);
 static inline bool EntTargetable(ent_t* e){
   return (e!=NULL && e->state <= STATE_DIE);
 }
@@ -205,5 +206,20 @@ void StepState(ent_t *e);
 void OnStateChange(ent_t *e, EntityState old, EntityState s);
 bool CanChangeState(EntityState old, EntityState s);
 
+typedef struct {
+  ent_t   reference_ents[ENT_BLANK];
+  int     num_references[ENT_BLANK];
+}entity_pool_t;
+
+void InitEntityPool();
 //===ENT_T==>
+//====GAME_OBJECT_T===>
+typedef struct{
+  unsigned char   id;
+  Vector2         pos;
+  ObjectState     state;
+}game_object_t;
+game_object_t* InitObjectStatic(SpawnerInstance);
+void RegisterPoolRef(EntityType ref);
+//===GAME_OBJECT_T===>
 #endif

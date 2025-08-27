@@ -40,6 +40,7 @@ void InitGameplayScreen(void){
  
   camera.target = (Vector2){ROOM_WIDTH/2,ROOM_HEIGHT/2};
   InitGameEvents();
+  InitLevelEvents();
 }
 
 void PreUpdate(void){

@@ -413,7 +413,7 @@ void CollisionReflect(rigid_body_t* a, rigid_body_t* b, ForceType t){
 }
 
 void CollisionDamage(rigid_body_t* a, rigid_body_t* b, ForceType t){
-  TraceLog(LOG_INFO,"%s takes damage from %s %d", b->owner->name, a->owner->name, a->buid);
+  DamageEnt(b->owner,a->owner->attacks[0]);
 }
 
 void CollisionBoundsAvoid(rigid_body_t* a, rigid_body_t* b, ForceType t){

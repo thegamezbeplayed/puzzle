@@ -7,6 +7,7 @@
 #include "game_projectiles.h"
 
 #define MAX_INTERACTIONS 256
+#define MAX_SPAWNERS 16
 #define DEBUG false
 
 extern Font font;
@@ -53,6 +54,12 @@ void InteractionStep();
 //EVENTS==>
 
 typedef enum{
+  PROCESS_NONE,
+  PROCESS_LEVEL,
+  PROCESS_DONE
+}ProcessType;
+
+typedef enum{
   UPDATE_FRAME,//update running at full fps
   UPDATE_DRAW,
   UPDATE_PRE,
@@ -70,13 +77,23 @@ typedef enum{
 }GameState;
 
 typedef struct{
-  GameScreen  screen;
-  GameScreen  next[SCREEN_DONE];
-  GameState   state[SCREEN_DONE];//TODO each screen needs a state
+  ProcessType process;
+  GameState   state[PROCESS_DONE];
   events_t    *events;
-  UpdateFn    init[SCREEN_DONE];
-  UpdateFn    update_steps[SCREEN_DONE][UPDATE_DONE];
-  UpdateFn    finish[SCREEN_DONE];
+  UpdateFn    init[PROCESS_DONE];
+  UpdateFn    update_steps[PROCESS_DONE][UPDATE_DONE];
+  UpdateFn    finish[PROCESS_DONE];
+}child_process_t;
+
+typedef struct{
+  GameScreen     screen;
+  child_process_t children[SCREEN_DONE];
+  GameScreen     next[SCREEN_DONE];
+  GameState      state[SCREEN_DONE];//TODO each screen needs a state
+  events_t       *events;
+  UpdateFn       init[SCREEN_DONE];
+  UpdateFn       update_steps[SCREEN_DONE][UPDATE_DONE];
+  UpdateFn       finish[SCREEN_DONE];
 }game_process_t;
 
 void InitGameEvents();
@@ -85,6 +102,20 @@ void GameProcessStep();
 void GameProcessSync(bool wait);
 void GameTransitionScreen();
 void GameProcessEnd();
+//====level process==>
+typedef struct{
+  int               current_spawner;
+  int               num_spawners;
+  game_object_t*    mob_spawners[MAX_SPAWNERS];
+  events_t*         spawn_events[MAX_SPAWNERS];
+  entity_pool_t*    spawns;
+}level_t;
+
+void InitLevel();
+void InitLevelEvents();
+void LevelStep();
+void LevelEnd();
+
 //===WORLD_T===>
 
 typedef struct{

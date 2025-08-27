@@ -70,6 +70,16 @@ typedef enum{
   STATE_END//sentinel entity state should never be this or greater
 }EntityState;
 
+typedef enum{
+  OBJECT_NONE,//if ent_t is properly initalized to {0} this is already set
+  OBJECT_START,//Should only be set after NONE
+  OBJECT_PAUSE,
+  OBJECT_RUN,
+  OBJECT_FINISH,
+  OBJECT_END//sentinel entity state should never be this or greater
+}ObjectState;
+
+
 typedef struct {
   const char* name;
   EntityState   state;
