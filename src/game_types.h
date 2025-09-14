@@ -185,6 +185,7 @@ typedef struct ent_s{
   float                 facing;
   sprite_t              *sprite;
 } ent_t;
+
 ent_t InitEntRef(ObjectInstance ref);
 ent_t* InitEntStatic(TileInstance data);
 ent_t* InitEnt(ObjectInstance data);
@@ -219,7 +220,7 @@ typedef struct{
   Vector2         pos;
   ObjectState     state;
 }game_object_t;
-game_object_t* InitObjectStatic(SpawnerInstance);
-void RegisterPoolRef(EntityType ref);
+game_object_t* InitObjectStatic(SpawnerInstance inst);
+void RegisterPoolRef(unsigned int index, EntityType ref);
 //===GAME_OBJECT_T===>
 #endif

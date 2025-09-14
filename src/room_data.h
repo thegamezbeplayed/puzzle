@@ -13,10 +13,8 @@
 #define ROOM_LEVEL_WAVE_COUNT 6
 
 typedef enum {
-  ENT_NONE,
   ENT_PLAYER,
   ENT_SHIELD,
-  ENT_MOB,
   ENT_DRONE,
   ENT_BULLET,
   ENT_BLANK
@@ -73,9 +71,9 @@ typedef struct {
 } ProjectileInstance;
 
 static const ObjectInstance room_instances[] = {
+  {ENT_PLAYER,"ent_data", "player", 72,416, 288, 0, 200,16, 0, 450, 0,1,"basic_bullet",0},
   {ENT_SHIELD,"ent_data", "shield", 64,1664, 608, 43,1, 0, 0, 450, 0,0,"",0},
   {ENT_DRONE,"ent_data", "Drone", 56,1248, 128, 37,24, 16, 4, 680, 0,1,"basic_bullet",1},
-  {ENT_PLAYER,"ent_data", "player", 72,416, 288, 0, 200,16, 0, 450, 0,1,"basic_bullet",0},
 };
 
 #define ROOM_INSTANCE_COUNT 3

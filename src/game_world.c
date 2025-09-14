@@ -265,7 +265,7 @@ void FreeWorld(){
 }
 
 void WorldRender(){
-  DrawRectangleRec(world.room_bounds, PURPLE);
+  DrawRectangleRec(world.room_bounds, BLACK);
   
   for(int i = 0; i < world.num_spr;i++){
     if(world.sprs[i]->owner !=NULL)
@@ -401,6 +401,15 @@ void InitLevel(){
     test_level.spawn_events[i] = InitEvents();
     test_level.mob_spawners[i] = InitObjectStatic(room_spawners[i]);
   }  
+}
+
+void RegisterPoolRef(unsigned int index, EntityType ref){
+  if(test_level.spawns[index].num_references[ref] == 0){
+    test_level.spawns[index].reference_ents[ref] = InitEntRef(room_instances[ref]);
+  }
+  else
+    test_level.spawns[index].num_references[ref]++;
+
 }
 
 void InitLevelEvents(){

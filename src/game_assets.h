@@ -28,22 +28,50 @@ typedef enum{
   SFX_ALL,
   SFX_UI,
   SFX_ACTION,
-  SFX_NONE
+  SFX_DONE
 }SfxGroup;
 
+typedef enum {
+  ACTION_SHOOT,
+  ACTION_SHOT,
+  ACTION_FRAG,
+  ACTION_COMBO,
+  END_SFX
+}SfxType;
+
 typedef struct{
-  int   num_sounds;
-  Sound *sounds;
+  SfxType     type;
+  SfxGroup    group;
+  int         num_sounds;
+  const char* paths[5];
+}sfx_info_t;
+
+typedef struct{
+  SfxType   type;
+  int       num_sounds;
+  Sound     *sounds;
+}sfx_sound_t;
+
+static sfx_info_t sfx_catalog[]={
+  {ACTION_SHOOT,SFX_ACTION,4,{"close_001.ogg","close_002.ogg","close_003.ogg","close_004.ogg"}},
+  {ACTION_SHOT,SFX_ACTION,4,{"select_001.ogg","select_002.ogg","select_003.ogg","select_004.ogg"}},
+  {ACTION_FRAG,SFX_ACTION,4,{"scratch_001.ogg","scratch_002.ogg","scratch_003.ogg","scratch_004.ogg"}},
+  {ACTION_COMBO,SFX_ACTION,5,{"combo_001.ogg","combo_002.ogg","combo_003.ogg","combo_004.ogg","combo_005.ogg"}}
+};
+
+typedef struct{
+  int         num_types;
+  sfx_sound_t items[5];
 }sfx_group_t;
 
 typedef struct{
   music_group_t   tracks;
-  sfx_group_t     sfx[SFX_NONE];
-  events_t        *timers[SFX_NONE];
+  sfx_group_t     sfx[SFX_DONE];
+  events_t        *timers[SFX_DONE];
 }audio_manager_t;
 void InitAudio();
 void AudioStep();
-void AudioPlayRandomSfx(SfxGroup group);
+void AudioPlayRandomSfx(SfxGroup group, SfxType type);
 
 typedef enum{
   LAYER_ROOT,

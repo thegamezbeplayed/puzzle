@@ -108,10 +108,11 @@ typedef struct{
   int               num_spawners;
   game_object_t*    mob_spawners[MAX_SPAWNERS];
   events_t*         spawn_events[MAX_SPAWNERS];
-  entity_pool_t*    spawns;
+  entity_pool_t     spawns[MAX_SPAWNERS];
 }level_t;
 
 void InitLevel();
+void LevelAddSpawn(unsigned int index, EntityType ref, int count);
 void InitLevelEvents();
 void LevelStep();
 void LevelEnd();

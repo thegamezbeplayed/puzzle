@@ -3,8 +3,6 @@
 #include "game_projectiles.h"
 #include "game_math.h"
 
-entity_pool_t ent_pool;
-
 MAKE_ADAPTER(StepState, ent_t*);
 
 attack_params_t empty_attack_params = {
@@ -12,16 +10,7 @@ attack_params_t empty_attack_params = {
 };
 
 void InitEntityPool(){
-  memset(&ent_pool,0,sizeof(ent_pool));
-}
-
-void RegisterPoolRef(EntityType ref){
-  if(ent_pool.num_references[ref] == 0){
-    //build reference ent
-  }
-  else
-    ent_pool.num_references[ref]++;
-
+  //memset(&ent_pool,0,sizeof(ent_pool));
 }
 
 ent_t InitEntRef(ObjectInstance ref){

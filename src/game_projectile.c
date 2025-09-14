@@ -131,7 +131,7 @@ void ProjectileCollision(rigid_body_t* a, rigid_body_t* b){
      return;
 
    AddInteraction(EntInteraction(a->buid,b->buid,b->col_rate));
-   AudioPlayRandomSfx(SFX_ACTION);
+   AudioPlayRandomSfx(SFX_ACTION,ACTION_SHOOT);
 
 }
 
