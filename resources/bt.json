@@ -82,19 +82,6 @@
               "name": "MoveToDestination"
             }
           ]
-        },
-        {
-          "type": "Sequence",
-          "name": "Die",
-          "children": [
-            {
-              "type": "Leaf",
-              "name": "ChangeState",
-              "params": {
-                "state": "STATE_DIE"
-              }
-            }
-          ]
         }
       ]
     },
@@ -197,19 +184,6 @@
                 {
                   "type": "Leaf",
                   "name": "AttackTarget"
-                }
-              ]
-            },
-            {
-              "type": "Sequence",
-              "name": "Cant Attack",
-              "children": [
-                {
-                  "type": "Leaf",
-                  "name": "ChangeState",
-                  "params": {
-                    "state": "STATE_AGGRO"
-                  }
                 }
               ]
             }

@@ -2,7 +2,6 @@
 #include "screens.h"    // NOTE: Declares global (extern) variables and screens functions
 #include "game_assets.h"
 #include "game_process.h"
-
 #if defined(PLATFORM_WEB)
 #include <emscripten/emscripten.h>
 #endif
@@ -33,7 +32,6 @@ int main(void)
 
   InitAudioDevice();      // Initialize audio device
                           //--------------------------------------------------------------------------------------
-
 
   InitAudio();
   InitResources();

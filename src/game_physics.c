@@ -108,7 +108,7 @@ rigid_body_t InitRigidBodyKinematic(ent_t* owner, Vector2 pos,float radius){
   b.restitution = -1;
   b.is_kinematic = true;
   b.simulate = false;
-  b.col_rate = 4;
+  b.col_rate = 60;
   //b.on_collision = NoOpCollision;
   b.collision_bounds = (bounds_t){
     .shape = SHAPE_RECTANGLE,
@@ -409,11 +409,14 @@ void CollisionReflect(rigid_body_t* a, rigid_body_t* b, ForceType t){
   b->owner->team = a->owner->team;
   Vector2 origVel = b->forces[FORCE_STEERING].vel;
   b->forces[FORCE_STEERING].vel = Vector2Rotate(origVel,M_PI);
-  TraceLog(LOG_INFO,"%s vel <%0.2f,%02f> reflect to <%0.2f,%0.2f>",b->owner->name,origVel.x, origVel.y, b->forces[FORCE_STEERING].vel.x, b->forces[FORCE_STEERING].vel.y);
+  AudioPlayRandomSfx(SFX_ACTION,ACTION_REFLECT);
 }
 
 void CollisionDamage(rigid_body_t* a, rigid_body_t* b, ForceType t){
+  b->owner->lastdamage_sourceid = b->buid;
   DamageEnt(b->owner,a->owner->attacks[0]);
+  TraceLog(LOG_INFO,"Damage ent %d for %d damage",b->owner->type, a->owner->attacks[0].damage);
+  AudioPlayRandomSfx(SFX_ACTION,ACTION_SHOT);
 }
 
 void CollisionBoundsAvoid(rigid_body_t* a, rigid_body_t* b, ForceType t){

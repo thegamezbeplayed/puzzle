@@ -93,12 +93,13 @@ void ProjectileCullOffScreen(Rectangle bounds){
   }
 }
 
-void ProjectileShoot(ent_t* owner, Vector2 pos, Vector2 dir){
+void ProjectileShoot(ent_t* owner, Vector2 pos, Vector2 dir,int damage){
   ent_t* p = SpawnProjectile(&projectile_pool,pos, dir);
 
   PhysicsInitOnce(p->body);
   EntInitOnce(p);
   PhysicsAccelDir(p->body,FORCE_STEERING,dir);
+  p->attacks[0].damage = damage;
 }
 
 bool ProjectileCollide(rigid_body_t* a, rigid_body_t* b){
@@ -131,6 +132,9 @@ void ProjectileCollision(rigid_body_t* a, rigid_body_t* b){
      return;
 
    AddInteraction(EntInteraction(a->buid,b->buid,b->col_rate));
+   if(b->owner->team == TEAM_ENEMIES)
+    AddPoints(GetInteractions(a->buid),1,b->position);
+
    AudioPlayRandomSfx(SFX_ACTION,ACTION_SHOOT);
 
 }

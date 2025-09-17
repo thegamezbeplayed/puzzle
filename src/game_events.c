@@ -30,6 +30,7 @@ interaction_t* EntInteraction(unsigned int source, unsigned int target, int dura
 
  return result;
 }
+
 cooldown_t* InitCooldown(int dur, EventType type, CooldownCallback on_end_callback, void* params){
   cooldown_t* cd = malloc(sizeof(cooldown_t)); 
 
@@ -85,6 +86,18 @@ bool CanInteract(int source, int target){
   }
 
   return true;
+}
+
+int GetInteractions(int source){
+  int count = 0;
+  for (int i = 0; i < MAX_INTERACTIONS; i++){
+    if(interactions[i].source_uid != source)
+      continue;
+
+    count++;
+  }
+
+  return count;
 }
 
 void FreeInteraction(interaction_t* item) {
@@ -171,6 +184,32 @@ bool CheckEvent(events_t* pool, EventType type){
   return false;
 }
 
+void ResetEvent(events_t* pool, EventType type){
+  for (int i = 0; i < MAX_EVENTS; i++){
+    if(!pool->cooldown_used[i])
+      continue;
+
+    if(pool->cooldowns[i].type != type)
+      continue;
+
+    pool->cooldowns[i].is_complete = false;
+    pool->cooldowns[i].elapsed = 0;
+  }
+
+}
+
+void StartEvent(events_t* pool, EventType type){
+  for (int i = 0; i < MAX_EVENTS; i++){
+    if(!pool->cooldown_used[i])
+      continue;
+ 
+    if(pool->cooldowns[i].type != type)
+      continue;
+   
+  }
+
+}
+
 void StepEvents(events_t* pool){
   for (int i = 0; i < MAX_EVENTS; i++){
     if(!pool->cooldown_used[i])
@@ -185,9 +224,16 @@ void StepEvents(events_t* pool){
       pool->cooldown_used[i] = false;
       continue;
     }
-    if(pool->cooldowns[i].is_complete)
-      continue;
+    if(pool->cooldowns[i].is_complete){
+      if(!pool->cooldowns[i].is_recycled)
+        continue;
 
+      pool->cooldowns[i].is_complete = false;
+      pool->cooldowns[i].elapsed = 0;
+
+      continue;
+    }
+    
     if(pool->cooldowns[i].elapsed >= pool->cooldowns[i].duration){
       TraceLog(LOG_INFO,"Cooldown %i ended",pool->cooldowns[i].type);
       pool->cooldowns[i].is_complete = true;

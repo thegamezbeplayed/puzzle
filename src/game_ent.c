@@ -2,16 +2,13 @@
 #include "game_tools.h"
 #include "game_projectiles.h"
 #include "game_math.h"
+#include "game_process.h"
 
 MAKE_ADAPTER(StepState, ent_t*);
 
 attack_params_t empty_attack_params = {
   .dir = 0.0f
 };
-
-void InitEntityPool(){
-  //memset(&ent_pool,0,sizeof(ent_pool));
-}
 
 ent_t InitEntRef(ObjectInstance ref){
   ent_t e = {0};
@@ -61,18 +58,20 @@ ent_t* InitEnt(ObjectInstance data){
   if(e->team == TEAM_ENEMIES){
     ProjectileInstance instance = ProjectileGetData(data.attacks);
     e->attacks[0] = InitAttack(e,instance);
+    e->attacks[0].damage*=data.damage;
     e->num_attacks = 1;
+    e->stats[STAT_POINTS] = InitStatOnMax(STAT_POINTS,data.points);
     e->control = InitController(data);
     e->control->ranges[RANGE_AGGRO] = data.aggro_range;
-    e->control->ranges[RANGE_LOITER] = radius*2 + data.aggro_range/2;
-    e->control->ranges[RANGE_NEAR] = radius*2+data.speed;
+    e->control->ranges[RANGE_LOITER] = radius*2 + data.aggro_range;
+    e->control->ranges[RANGE_NEAR] = radius+data.speed;
     e->control->bt[STATE_IDLE] = InitBehaviorTree("Seek");
     e->control->bt[STATE_WANDER] = InitBehaviorTree("Wander");
     e->control->bt[STATE_AGGRO] = InitBehaviorTree("Chase");
     e->control->bt[STATE_ATTACK] = InitBehaviorTree("AttackOnTheMove");
   }
 
-  SetState(e,STATE_SPAWN,OnStateChange);
+  //SetState(e,STATE_SPAWN,OnStateChange);
   return e;
 }
 
@@ -124,12 +123,21 @@ ent_t InitEntProjectile( ProjectileInstance data){
   return e;
 }
 
+void EntAddPoints(ent_t *e,EntityState old, EntityState s){
+  if(e->team == TEAM_PLAYER)
+    return;
+  if(e->stats[STAT_POINTS].current <= 0)
+    return;
+
+  AddPoints(GetInteractions(e->lastdamage_sourceid), e->stats[STAT_POINTS].current,e->pos);
+}
+
 bool EntKill(ent_t* e){
   return SetState(e, STATE_DIE,NULL);
 }
 
 void EntDestroy(ent_t* e){
-  SetState(e, STATE_END,NULL);//when animations are used do this after the death animation
+  SetState(e, STATE_END,EntAddPoints);//when animations are used do this after the death animation
   if(e->sprite!=NULL){
     e->sprite->owner = NULL;
     e->sprite->is_visible = false;
@@ -155,6 +163,7 @@ attack_t InitAttack(ent_t* owner, ProjectileInstance data){
 
   strcpy(a.name,data.name);
   a.owner = owner;
+  a.damage = data.damage;
   a.duration = data.duration;
   a.attack_type = ATTACK_RANGED;
   a.reach = data.attack_range;
@@ -165,6 +174,10 @@ attack_t InitAttack(ent_t* owner, ProjectileInstance data){
   int cId = AddEvent(owner->events,cd); 
   a.cooldown = &owner->events->cooldowns[cId];
   return a;
+}
+
+void EntPrepStep(ent_t* e){
+  e->body->forces[FORCE_STEERING].max_velocity = e->stats[STAT_SPEED].current;
 }
 
 bool AttackPrepare(attack_t* a){
@@ -204,10 +217,12 @@ stat_t InitStatOnMax(StatType attr, float val){
       .min = 0,
       .max = val,
       .current = val,
-      .increment = 1//TODO idk yet
+      .ratio = StatGetRatio
   };
 }
-
+float StatGetRatio(stat_t *self) {
+    return (float)self->current / (float)self->max;
+}
 void StatMaxOut(stat_t* s){
   s->current = s->max;
 }
@@ -257,7 +272,7 @@ void EntInitOnce(ent_t* e){
 
 void DamageEnt(ent_t *e, attack_t a){//Copy of attack cuz its subject to Updates
   //AnimPlay(e->sprite,ANIM_HURT);
-  StatChangeValue(e,&e->stats[STAT_HEALTH],-10);
+  StatChangeValue(e,&e->stats[STAT_HEALTH],-a.damage);
 }
 
 void EntSync(ent_t* e){
@@ -331,17 +346,25 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s){
 	e->sprite->is_visible = true;
       break;
     case STATE_WANDER:
+    case STATE_ATTACK:
       StatMaxOut(&e->stats[STAT_ACCEL]);
+      StatMaxOut(&e->stats[STAT_SPEED]);
     default:
       break;
   }
 
   switch(s){
     case STATE_WANDER:
-      e->stats[STAT_ACCEL].current*=0.125;
     case STATE_AGGRO:
+      StatMaxOut(&e->stats[STAT_SPEED]);
+      break;
     case STATE_ATTACK:
-      e->stats[STAT_ACCEL].current = e->stats[STAT_ACCEL].max/4;
+      e->stats[STAT_ACCEL].current = e->stats[STAT_ACCEL].max*0.925f;
+      e->stats[STAT_SPEED].current = e->stats[STAT_SPEED].max*.85f;
+      break;
+    case STATE_DIE:
+        AudioPlayRandomSfx(SFX_ACTION,ACTION_BOOM);
+        break;
     default:
       break;
   }

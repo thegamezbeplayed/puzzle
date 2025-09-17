@@ -23,7 +23,7 @@ void DespawnProjectile(projectile_pool_t* p, ent_t* b);
 
 void ProjectileCullOffScreen( Rectangle bounds);
 
-void ProjectileShoot(ent_t* owner, Vector2 pos, Vector2 dir);
+void ProjectileShoot(ent_t* owner, Vector2 pos, Vector2 dir,int damage);
 void ProjectileCollision(rigid_body_t* a, rigid_body_t* b);
 bool ProjectileCollide(rigid_body_t* a, rigid_body_t* b);
 void ProjectilesStep();

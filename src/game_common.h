@@ -4,6 +4,15 @@
 #include "raylib.h"
 
 #define MAX_EVENTS 16
+
+typedef struct{
+  const char* text;
+  Vector2     pos;
+  int         size;
+  Color       color;
+  int         duration;
+}render_text_t;
+
 typedef enum {
   ATTACK_MELEE,
   ATTACK_RANGED
@@ -17,6 +26,7 @@ typedef enum{
   EVENT_ATTACK_INPUT,
   EVENT_ATTACK_RATE,
   EVENT_PLAY_SFX,
+  EVENT_FINISH,
   EVENT_NONE
 } EventType;
 
@@ -43,7 +53,8 @@ events_t* InitEvents();
 void UnloadEvents(events_t* ev);
 int AddEvent(events_t* pool, cooldown_t* cd);
 void StepEvents(events_t* pool);
-bool CheckEvent(events_t* pool, EventType);
+void StartEvent(events_t* pool, EventType type);
+bool CheckEvent(events_t* pool, EventType type);
 //<======EVENTS>
 typedef enum{
   TEAM_PLAYER,
@@ -79,7 +90,6 @@ typedef enum{
   OBJECT_END//sentinel entity state should never be this or greater
 }ObjectState;
 
-
 typedef struct {
   const char* name;
   EntityState   state;
@@ -103,6 +113,7 @@ typedef enum{
   STAT_DAMAGE,
   STAT_SPEED,
   STAT_ACCEL,
+  STAT_POINTS,
   STAT_BLANK//sentinel
 }StatType;
 

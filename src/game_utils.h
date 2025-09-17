@@ -65,9 +65,10 @@ typedef struct {
     behavior_tree_node_t *root;
 } TreeCacheEntry;
 
-static TreeCacheEntry tree_cache[16];
-static int tree_cache_count = 0;
+extern TreeCacheEntry tree_cache[10];
+extern int tree_cache_count;
 
+behavior_tree_node_t *BuildTreeNode(const char *name);
 behavior_tree_node_t* BuildFromJNode(const JNode *jn);
 static behavior_tree_node_t* BehaviorFindLeafFactory(const char *name);
 
@@ -75,7 +76,11 @@ typedef BehaviorStatus (*BehaviorTreeTickFunc)(behavior_tree_node_t* self, void*
 
 typedef struct behavior_params_s{
   struct ent_s*  owner;
+  struct game_object_s * obj;
   EntityState    state;
+  ObjectState    obj_state;
+  EventType      event;
+  int            duration;
 }behavior_params_t;
 
 behavior_params_t* BuildBehaviorParams(json_object* params);
@@ -130,6 +135,10 @@ BehaviorStatus BehaviorMoveToTarget(behavior_params_t *params);
 BehaviorStatus BehaviorMoveToDestination(behavior_params_t *params);
 BehaviorStatus BehaviorCanAttackTarget(behavior_params_t *params);
 BehaviorStatus BehaviorAttackTarget(behavior_params_t *params);
+BehaviorStatus BehaviorStartEvent(behavior_params_t *params);
+BehaviorStatus BehaviorCheckEvent(behavior_params_t *params);
+BehaviorStatus BehaviorStartState(behavior_params_t *params);
+BehaviorStatus BehaviorSpawnEnt(behavior_params_t *params);
 
 static inline behavior_tree_node_t* LeafAcquireMousePosition(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorAcquireMousePosition,params); }
 static inline behavior_tree_node_t* LeafBisectDestination(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorBisectDestination,params); }
@@ -141,7 +150,10 @@ static inline behavior_tree_node_t* LeafMoveToTarget(behavior_params_t *params) 
 static inline behavior_tree_node_t* LeafMoveToDestination(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorMoveToDestination,params); }
 static inline behavior_tree_node_t* LeafCanAttackTarget(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCanAttackTarget,params); }
 static inline behavior_tree_node_t* LeafAttackTarget(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorAttackTarget,params); }
-
+static inline behavior_tree_node_t* LeafStartEvent(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorStartEvent,params); }
+static inline behavior_tree_node_t* LeafCheckEvent(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCheckEvent,params); }
+static inline behavior_tree_node_t* LeafStartState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorStartState,params); }
+static inline behavior_tree_node_t* LeafSpawnEnt(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorSpawnEnt,params); }
 
 static BTLeafRegistryEntry g_bt_leaves[] = {
     { "BisectDestination",  LeafBisectDestination  },

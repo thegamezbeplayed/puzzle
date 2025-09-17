@@ -1,8 +1,8 @@
 #ifndef ROOM_DATA_H
 #define ROOM_DATA_H
 
-#define ROOM_WIDTH 1600
-#define ROOM_HEIGHT 900
+#define ROOM_WIDTH 1920
+#define ROOM_HEIGHT 1080
 
 #define GRID_WIDTH 20
 #define GRID_HEIGHT 12
@@ -10,11 +10,13 @@
 #define CELL_WIDTH 80
 #define CELL_HEIGHT 80
 
-#define ROOM_LEVEL_WAVE_COUNT 6
+#define ROOM_LEVEL_WAVE_COUNT 12
+#define ROOM_LEVEL_COUNT 3
 
 typedef enum {
   ENT_PLAYER,
   ENT_SHIELD,
+  ENT_MOB,
   ENT_DRONE,
   ENT_BULLET,
   ENT_BLANK
@@ -22,6 +24,7 @@ typedef enum {
 
 typedef struct {
   unsigned char id;
+  unsigned char level;
   const char* engine_instance;
   float x;
   float y;
@@ -30,15 +33,50 @@ typedef struct {
   int   spawn_rate;
 } SpawnerInstance;
 
-static const SpawnerInstance room_spawners[] = {
-  {0,"spawn_data", 64,64, 4, {[ENT_DRONE]=4},54},
-  {1,"spawn_data", 64,64, 4, {[ENT_DRONE]=4},54},
-  {2,"spawn_data", 64,64, 4, {[ENT_DRONE]=4},54},
-  {3,"spawn_data", 64,64, 4, {[ENT_DRONE]=4},54},
-  {4,"spawn_data", 1534,64, 4, {[ENT_DRONE]=4},54},
-  {5,"spawn_data", 1534,64, 4, {[ENT_DRONE]=4},54}
-};
+typedef struct {
+  const char* name;
+  bool    is_root;
+  BehaviorTreeType  bt_type;
+  behavior_tree_node_t *(*func)(behavior_params_t *);
+  EventType     event;
+  EntityState   state;
+  ObjectState   obj_state;
+  int           duration;
+  int           num_children;
+  const char*   children[5];
+} BehaviorData;
 
+static const BehaviorData room_behaviors[] = {
+  {"start_spawn",false,BT_LEAF,LeafStartEvent,EVENT_SPAWN,STATE_NONE,OBJECT_NONE,33,0,{}},
+  {"end_event",false,BT_LEAF,LeafStartEvent,EVENT_FINISH,STATE_NONE,OBJECT_NONE,180,0,{}},
+  {"check_end_event",false,BT_LEAF,LeafCheckEvent,EVENT_FINISH,STATE_NONE,OBJECT_NONE,0,0,{}},
+  {"run_state",false,BT_LEAF,LeafStartState,EVENT_SPAWN,STATE_NONE,OBJECT_RUN,0,0,{}},
+  {"start_state",false,BT_LEAF,LeafStartState,EVENT_SPAWN,STATE_NONE,OBJECT_START,0,0,{}},
+  {"idle_state",false,BT_LEAF,LeafStartState,EVENT_SPAWN,STATE_NONE,OBJECT_PAUSE,0,0,{}},
+  {"finish_state",false,BT_LEAF,LeafStartState,EVENT_SPAWN,STATE_NONE,OBJECT_FINISH,0,0,{}},
+  {"end_state",false,BT_LEAF,LeafStartState,EVENT_SPAWN,STATE_NONE,OBJECT_END,0,0,{}},
+  {"Prep", true,BT_SEQUENCE,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,2,{"start_spawn","run_state"}},
+  {"spawn_ent",false,BT_LEAF,LeafSpawnEnt,EVENT_SPAWN,STATE_NONE,OBJECT_RUN,0,0,{}},
+  {"Run", false,BT_SEQUENCE,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,2,{"spawn_ent","idle_state"}},
+  {"Check", true,BT_SELECTOR,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,2,{"Run","finish_state"}},
+  {"Finish", true,BT_SEQUENCE,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,3,{"end_event","check_end_event","end_state"}},
+};
+#define ROOM_BEHAVIOR_COUNT 13
+
+static const SpawnerInstance room_spawners[] = {
+  {0, 0,"spawn_data", 64,856, 4, {[ENT_DRONE]=4},74},
+  {1, 0,"spawn_data", 64,64, 4, {[ENT_DRONE]=4},54},
+  {2, 0,"spawn_data", 1534,856, 4, {[ENT_DRONE]=4},54},
+  {0, 1,"spawn_data", 64,64, 4, {[ENT_DRONE]=4},54},
+  {1, 1,"spawn_data", 1534,64, 4, {[ENT_DRONE]=4},54},
+  {2, 1,"spawn_data", 1534,64, 4, {[ENT_DRONE]=4},54},
+  {3, 1,"spawn_data", 64,856, 4, {[ENT_DRONE]=4},74},
+  {0, 2,"spawn_data", 64,64, 5, {[ENT_DRONE]=5},54},
+  {1, 2,"spawn_data", 1534,856, 5, {[ENT_DRONE]=5},54},
+  {2, 2,"spawn_data", 64,64, 5, {[ENT_DRONE]=5},54},
+  {3, 2,"spawn_data", 1534,64, 5, {[ENT_DRONE]=5},54},
+  {4, 2,"spawn_data", 1534,64, 5, {[ENT_DRONE]=5},54}
+};
 
 typedef struct {
   EntityType  ent_ref;
@@ -48,11 +86,12 @@ typedef struct {
   float x;
   float y;
   int sprite_sheet_index;
+  int points;
   int health;
   int speed;
   int accel;
+  int damage;
   int	aggro_range;
-  bool	is_projectile;
   int	num_attacks;
   const char* attacks;
   int	team_enum;
@@ -68,18 +107,20 @@ typedef struct {
   int fire_rate;
   int speed;
   int	attack_range;
+  int damage;
 } ProjectileInstance;
 
 static const ObjectInstance room_instances[] = {
-  {ENT_PLAYER,"ent_data", "player", 72,416, 288, 0, 200,16, 0, 450, 0,1,"basic_bullet",0},
-  {ENT_SHIELD,"ent_data", "shield", 64,1664, 608, 43,1, 0, 0, 450, 0,0,"",0},
-  {ENT_DRONE,"ent_data", "Drone", 56,1248, 128, 37,24, 16, 4, 680, 0,1,"basic_bullet",1},
+  {ENT_PLAYER,"ent_data", "player", 72,416, 288, 0,0, 200,15, 0, 0,450,1,"basic_bullet",0},
+  {ENT_SHIELD,"ent_data", "shield", 64,1664, 608, 43,0,1, 0, 0, 0,450,0,"",0},
+  {ENT_MOB,"ent_data", "Drone", 56,1248, 128, 37,2,24, 16, 4, 3,680, 1,"basic_bullet",1},
+  {ENT_DRONE,"ent_data", "Drone", 56,1248, 128, 37,1,24, 8, 3.1f, 3,680, 1,"basic_bullet",1},
 };
 
 #define ROOM_INSTANCE_COUNT 3
 
 static const ProjectileInstance room_projectiles[] = {
-  {ENT_BULLET,"projectile_data", "basic_bullet", 16,41, 0,12,26,650},
+  {ENT_BULLET,"projectile_data", "basic_bullet", 16,41, 0,15,25,650,3},
 };
 
 #define ROOM_PROJECTILE_COUNT 1
@@ -99,5 +140,4 @@ typedef struct {
 
 static const TileInstance room_tiles[] = {
 };
-
 #define ROOM_TILE_COUNT 0

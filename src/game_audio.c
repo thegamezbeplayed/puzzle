@@ -39,16 +39,14 @@ void AudioPlayRandomSfx(SfxGroup group, SfxType type){
   if(CheckEvent(AudioMan.timers[group],EVENT_PLAY_SFX))
     return;
 
-
   for(int i = 0; i < AudioMan.sfx[group].num_types; i++){
     if(AudioMan.sfx[group].items[i].type != type)
       continue;
 
-
     int r = rand()%AudioMan.sfx[group].items[i].num_sounds;
     PlaySound(AudioMan.sfx[group].items[i].sounds[r]);
 
-    int wait  = (int)((AudioMan.sfx[group].items[i].sounds[r].frameCount*60)/44100);
+    int wait  = (int)((AudioMan.sfx[group].items[i].sounds[r].frameCount*30)/44100);
     AddEvent(AudioMan.timers[group],InitCooldown(wait,EVENT_PLAY_SFX,NULL,NULL));
     return;
   }

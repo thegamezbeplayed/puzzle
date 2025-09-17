@@ -9,7 +9,7 @@
 #define MAX_INTERACTIONS 256
 #define MAX_SPAWNERS 16
 #define DEBUG false
-
+#define CURRENT_LEVEL levels.levels[levels.current]
 extern Font font;
 extern ent_t* player;
 
@@ -47,6 +47,7 @@ int InitInteractions();
 interaction_t* EntInteraction(unsigned int source, unsigned int target, int duration);
 bool AddInteraction(interaction_t* inter);
 bool CanInteract(int source, int target);
+int GetInteractions(int source);
 void FreeInteraction(interaction_t* item);
 void FreeInteractionByIndex(int i);
 void InteractionStep();
@@ -76,6 +77,16 @@ typedef enum{
   GAME_OVER
 }GameState;
 
+typedef enum{
+  LEVEL_NONE,
+  LEVEL_LOADING,
+  LEVEL_START,
+  LEVEL_RUNNING,
+  LEVEL_FINISH,
+  LEVEL_COMPLETE,
+  LEVEL_DONE
+}LevelState;
+
 typedef struct{
   ProcessType process;
   GameState   state[PROCESS_DONE];
@@ -104,18 +115,34 @@ void GameTransitionScreen();
 void GameProcessEnd();
 //====level process==>
 typedef struct{
+  unsigned int      luid;
+  LevelState        state;
+  float             points;
   int               current_spawner;
   int               num_spawners;
   game_object_t*    mob_spawners[MAX_SPAWNERS];
-  events_t*         spawn_events[MAX_SPAWNERS];
   entity_pool_t     spawns[MAX_SPAWNERS];
 }level_t;
 
+typedef struct{
+  unsigned int current;
+  int          num_levels;
+  level_t      *levels[10];
+}level_order_t;
+
 void InitLevel();
 void LevelAddSpawn(unsigned int index, EntityType ref, int count);
+game_object_t* LevelGetSpawner(unsigned int index);
+void AddPoints(float mul,float points,Vector2 pos);
+const char* GetPoints();
+level_t* LevelCurrent();
 void InitLevelEvents();
 void LevelStep();
-void LevelEnd();
+void LevelBegin(level_t *l);
+void LevelEnd(level_t *l);
+void SetLevelState(level_t *l, LevelState state);
+void OnLevelStateChange(level_t *l, LevelState state);
+bool CanChangeLevelState(LevelState old, LevelState s);
 
 //===WORLD_T===>
 
@@ -134,6 +161,9 @@ typedef struct world_s{
   unsigned int  num_col;
   sprite_t*     sprs[MAX_ENTS];
   unsigned int  num_spr;
+  render_text_t *texts[MAX_EVENTS];
+  bool          floatytext_used[MAX_EVENTS];
+  int           points;
 } world_t;
 
 ent_t* WorldGetEnt(const char* name);
@@ -149,5 +179,6 @@ void WorldPostUpdate();
 void InitWorld(world_data_t data);
 void WorldRender();
 Rectangle WorldRoomBounds();
+
 #endif
 

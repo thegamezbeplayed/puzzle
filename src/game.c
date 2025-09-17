@@ -1,8 +1,13 @@
 #include "raylib.h"
 #include "game_process.h"
-#include "screens.h"    // NOTE: Declares global (extern) variables and screens functions
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
 
+#include "light.h"
+#define GUI_HUD_BAR_IMPLEMENTATION
+#include "gui_hud_bar.h"
 Camera2D camera = { 0 };
+GuiHudBarState hud_state;
 //----------------------------------------------------------------------------------
 // Gameplay Screen Functions Definition
 //----------------------------------------------------------------------------------
@@ -33,6 +38,8 @@ Vector2 CaptureInput(){
 
 // Gameplay Screen Initialization logic
 void InitGameplayScreen(void){
+  GuiLoadStyleLight();     
+  hud_state = InitGuiHudBar();
   //camera.target = player.position;
   camera.offset = (Vector2){ GetScreenWidth()/2.0f, GetScreenHeight()/2.0f };
   camera.rotation = 0.0f;
@@ -88,6 +95,7 @@ void DrawGameplayScreen(void)
   WorldRender();
 
   EndMode2D();
+  GuiHudBar(&hud_state);
   DrawFPS(10, 10);
 
   EndDrawing();

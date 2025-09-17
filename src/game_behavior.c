@@ -15,12 +15,59 @@ void BT_RegisterTree(const char *name, JNode *root) {
 }
 
 behavior_tree_node_t *BehaviorGetTree(const char *name) {
+   for (int i = 0; i < tree_cache_count; i++){
+    if (strcmp(tree_cache[i].name, name) == 0)
+      return tree_cache[i].root;
+  }
+
   for (int i = 0; i < registry_count; i++) {
     if (strcmp(BT_Registry[i].name, name) == 0){
       if(!BT_Registry[i].tree)
         BT_Registry[i].tree = BuildFromJNode(BT_Registry[i].root);
 
       return BT_Registry[i].tree;
+    }
+  }
+  return NULL;
+}
+
+behavior_tree_node_t *BuildTreeNode(const char *name) {
+  for (int i = 0; i < ROOM_BEHAVIOR_COUNT; i++){
+    if (strcmp(room_behaviors[i].name, name) != 0)
+      continue;
+
+    BehaviorData data = room_behaviors[i];
+    if(data.bt_type == BT_LEAF){
+      behavior_params_t *params = malloc(sizeof *params);
+      *params =(behavior_params_t){
+        .owner = NULL,
+        .event = data.event,
+        .state = data.state,
+        .obj_state = data.obj_state,
+        .duration = data.duration
+      };
+      return room_behaviors[i].func(params);
+    }
+    else{
+      behavior_tree_node_t **kids = malloc(sizeof(*kids) * data.num_children);
+      for (int j = 0; j < data.num_children; ++j)
+        kids[j] = BuildTreeNode(data.children[j]);
+
+      switch(data.bt_type){
+        case BT_SEQUENCE:
+          return BehaviorCreateSequence(kids, data.num_children);
+          break;
+        case BT_SELECTOR:
+          return BehaviorCreateSelector(kids, data.num_children);
+          break;
+        case BT_CONCURRENT:
+          return BehaviorCreateConcurrent(kids, data.num_children);
+          break;
+        default:
+          TraceLog(LOG_WARNING,"Behavior Node Type %d NOT FOUND!",data.bt_type);
+          break;
+      }
+
     }
   }
   return NULL;
@@ -138,8 +185,9 @@ BehaviorStatus BehaviorAcquireDestination(behavior_params_t *params){
   if(!e->control->has_arrived && !v2_compare(e->control->destination,VEC_UNSET))
     return BEHAVIOR_SUCCESS;
 
-  e->control->destination = GetWorldCoordsFromIntGrid(e->pos, e->control->ranges[RANGE_AGGRO]);
- 
+  e->control->destination = GetWorldCoordsFromIntGrid(e->pos, e->control->ranges[RANGE_LOITER]);
+
+ TraceLog(LOG_INFO,"Ent %d New Destination <%0.2f,%0.2f>",e->uid, e->control->destination.x,  e->control->destination.y);  
   return BEHAVIOR_SUCCESS;
 }
 
@@ -150,6 +198,7 @@ BehaviorStatus BehaviorMoveToDestination(behavior_params_t *params){
 
   if(e->control->has_arrived){
     e->control->has_arrived = false;
+    e->control->destination = VEC_UNSET;
     return BEHAVIOR_SUCCESS;
   }
   if(Vector2Distance(e->pos,e->control->destination) <  e->control->ranges[RANGE_NEAR]){
@@ -172,6 +221,9 @@ BehaviorStatus BehaviorAcquireTarget(behavior_params_t *params){
 
   e->control->target = NULL;
 
+  e->control->target = player;
+  return BEHAVIOR_SUCCESS;
+  /*
   struct ent_s* others[MAX_ENTS];
   int num_others =  WorldGetEnts(others,FilterEntTargetable, e);
   for (int i = 0; i < num_others; i++){
@@ -180,7 +232,7 @@ BehaviorStatus BehaviorAcquireTarget(behavior_params_t *params){
       return BEHAVIOR_SUCCESS;
     }
   }
-
+*/
   return BEHAVIOR_FAILURE;
 }
 
@@ -242,7 +294,7 @@ BehaviorStatus BehaviorAttackTarget(behavior_params_t *params){
     if(!AttackPrepare(&e->attacks[i]))
       continue;
 
-    ProjectileShoot(e, e->pos, e->attacks[i].params->dir); 
+    ProjectileShoot(e, e->pos, e->attacks[i].params->dir, e->attacks[i].damage); 
 
      e->attacks[i].cooldown->is_complete = false;      
     return BEHAVIOR_SUCCESS;
@@ -256,10 +308,57 @@ BehaviorStatus BehaviorAttackTarget(behavior_params_t *params){
   return BEHAVIOR_FAILURE;
 }
 
+BehaviorStatus BehaviorCheckEvent(behavior_params_t *params){
+  struct game_object_s* o = params->obj;
+  if(!o || !o->control)
+    return BEHAVIOR_FAILURE;
+
+  if(CheckEvent(o->events, params->event))
+    return BEHAVIOR_SUCCESS;
+
+  return BEHAVIOR_RUNNING;
+}
+
+BehaviorStatus BehaviorStartEvent(behavior_params_t *params){
+  struct game_object_s* o = params->obj;
+  if(!o || !o->control)
+    return BEHAVIOR_FAILURE;
+
+  if(CheckEvent(o->events, params->event))
+    return BEHAVIOR_SUCCESS;
+
+  AddEvent(o->events, InitCooldown(params->duration,params->event,NULL,NULL));
+  return BEHAVIOR_SUCCESS;
+}
+
+BehaviorStatus BehaviorStartState(behavior_params_t *params){
+  struct game_object_s* o = params->obj;
+  if(!o || !o->control)
+    return BEHAVIOR_FAILURE;
+
+  SetObjectState(o,params->obj_state);
+  return BEHAVIOR_SUCCESS;
+}
+
+BehaviorStatus BehaviorSpawnEnt(behavior_params_t *params){
+  struct game_object_s* o = params->obj;
+  if(!o || !o->control)
+    return BEHAVIOR_FAILURE;
+  if(CheckEvent(o->events, params->event))
+    return BEHAVIOR_RUNNING;
+
+  if(SpawnEnt(o->id))
+    return BEHAVIOR_SUCCESS;
+
+  return BEHAVIOR_FAILURE;
+}
+
+
 BehaviorStatus BehaviorTickLeaf(behavior_tree_node_t *self, void *context) {
     behavior_tree_leaf_t *leaf = (behavior_tree_leaf_t *)self->data;
     if (!leaf || !leaf->action) return BEHAVIOR_FAILURE;
     leaf->params->owner = context;
+    leaf->params->obj = context;
     return leaf->action(leaf->params);
 }
 
@@ -276,7 +375,6 @@ behavior_tree_node_t* BehaviorCreateLeaf(BehaviorTreeLeafFunc fn, behavior_param
 
   return node;
 }
-
 
 behavior_tree_node_t* BehaviorCreateSequence(behavior_tree_node_t **children, int count) {
     behavior_tree_sequence_t *data = calloc(1,sizeof(behavior_tree_sequence_t));
