@@ -17,18 +17,70 @@ typedef enum {
   ATTACK_MELEE,
   ATTACK_RANGED
 } AttackType;
+//===STATS===>
+typedef enum{
+  STAT_HEALTH,
+  STAT_DAMAGE,
+  STAT_SPEED,
+  STAT_ACCEL,
+  STAT_POINTS,
+  STAT_DURATION,
+  STAT_BLANK//sentinel
+}StatType;
+
+struct ent_s;   // forward declaration
+
+struct stat_s;
+typedef struct stat_s stat_t;
+typedef bool (*StatCallback)(struct ent_s* owner);
+typedef float (*StatGetter)(stat_t* self);
+typedef struct stat_s{
+  StatType  attribute;
+  float     min;
+  float     max;
+  float     current;
+  float     increment;
+  StatGetter ratio;
+  StatCallback on_stat_change;
+  StatCallback on_stat_empty;
+} stat_t;
+
+stat_t InitStatOnMax(StatType attr, float val);
+stat_t InitStatEmpty();
+void InitStats(stat_t stats[STAT_BLANK]);
+void StatChangeValue(struct ent_s* owner, stat_t* attr, float val);
+void StatMaxOut(stat_t* s);
+float StatGetRatio(stat_t *self);
+//<====STATS
 
 //====EVENTS===>
 typedef enum{
   EVENT_GAME_PROCESS,
   EVENT_INTERACTION,
   EVENT_SPAWN,
+  EVENT_WAVE,
   EVENT_ATTACK_INPUT,
   EVENT_ATTACK_RATE,
   EVENT_PLAY_SFX,
   EVENT_FINISH,
   EVENT_NONE
 } EventType;
+
+typedef struct {
+  EventType   ev;
+  stat_t      dur;
+}EventDefaultDuration;
+
+static EventDefaultDuration event_durations[EVENT_NONE] = {
+  {EVENT_NONE,0},
+  {EVENT_NONE,0},
+  {EVENT_SPAWN, (stat_t){.attribute = STAT_DURATION, .max = 35, .current = 35, .min = 24}},
+  {EVENT_WAVE, (stat_t){.attribute = STAT_DURATION, .max = 180, .current = 196, .min = 66}},
+  {EVENT_NONE,0},
+  {EVENT_NONE,0},
+  {EVENT_NONE,0},
+  {EVENT_NONE,0},
+};
 
 typedef void (*CooldownCallback)(void* params);
 
@@ -67,6 +119,7 @@ typedef enum {
   SHAPE_CIRCLE,
   SHAPE_RECTANGLE,
   SHAPE_TRIANGLE,
+  SHAPE_PIXEL,
   SHAPE_NONE
 } ShapeType;
 
@@ -83,6 +136,7 @@ typedef enum{
 
 typedef enum{
   OBJECT_NONE,//if ent_t is properly initalized to {0} this is already set
+  OBJECT_LOAD,
   OBJECT_START,//Should only be set after NONE
   OBJECT_PAUSE,
   OBJECT_RUN,
@@ -107,14 +161,4 @@ static EntityStateAlias ent_state_alias[STATE_END] = {
 
 EntityState EntityStateLookup(const char* name);
 const char* EntityStateName(EntityState s);
-//===STATS===>
-typedef enum{
-  STAT_HEALTH,
-  STAT_DAMAGE,
-  STAT_SPEED,
-  STAT_ACCEL,
-  STAT_POINTS,
-  STAT_BLANK//sentinel
-}StatType;
-
 #endif

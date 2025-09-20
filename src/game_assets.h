@@ -8,9 +8,49 @@
 #include "game_common.h"
 
 #define MAX_SONGS 4
-
 struct ent_s;
 void InitResources();
+
+//====SHADERS===>
+typedef enum{
+  SHADER_NONE,
+  SHADER_OUTLINE,
+  SHADER_DONE
+}ShaderType;
+
+typedef struct{
+  const char* name;
+  ShaderType  type;
+}ShaderTypeAlias;
+
+typedef enum {
+    UNIFORM_TEXSIZE,
+    UNIFORM_OUTLINESIZE,
+    UNIFORM_OUTLINECOLOR,
+    UNIFORM_COUNT,
+    UNIFORM_NONE
+} ShaderUniform;
+
+static ShaderTypeAlias shader_alias[SHADER_DONE] = {
+  {"outline", SHADER_OUTLINE},
+};
+
+ShaderType ShaderTypeLookup(const char* name);
+
+typedef struct{
+  ShaderType    stype;
+  int           version;
+  Shader        shader;
+  const char*   vs_path;
+  const char*   fs_path;
+  bool          uniforms[UNIFORM_NONE];
+}gl_shader_t;
+extern gl_shader_t shaders[SHADER_DONE];
+
+void InitShaders();
+void LoadShaders();
+void ShaderSetUniforms(gl_shader_t *s, Texture2D texture);
+//<=====SHADERS====
 
 typedef struct{
   Music music;
@@ -109,6 +149,8 @@ typedef struct {
   int             suid;
   Texture2D       *sheet;
   sprite_slice_t* slice;
+  Color           color;
+  gl_shader_t*    gls;//[SHADER_DONE];
   //anim_t          *animation;
   //AnimType        active_anim;
   bool            mirror;

@@ -20,33 +20,12 @@
 #define RATIO(s) ((s).ratio(&(s)))
 typedef struct ent_s ent_t;
 typedef struct rigid_body_s rigid_body_t;
-struct stat_s;
-typedef struct stat_s stat_t;
-typedef bool (*StatCallback)(ent_t* owner);
-typedef float (*StatGetter)(stat_t* self);
-typedef struct stat_s{
-  StatType  attribute;
-  float     min;
-  float     max;
-  float     current;
-  float     increment;
-  StatGetter ratio;
-  StatCallback on_stat_change;
-  StatCallback on_stat_empty;
-} stat_t;
-
-stat_t InitStatOnMax(StatType attr, float val);
-stat_t InitStatEmpty();
-void InitStats(stat_t stats[STAT_BLANK]);
-void StatChangeValue(ent_t* owner, stat_t* attr, float val);
-void StatMaxOut(stat_t* s);
-float StatGetRatio(stat_t *self);
-//<====STATS
 
 //PHYSICS====>
 typedef struct rigid_body_s rigid_body_t;
 
 typedef enum {
+  FORCE_BLANK,
   //FORCE_GRAVITY,
   FORCE_STEERING,
   FORCE_IMPULSE,
@@ -162,11 +141,11 @@ typedef enum{
 }RangeType;
 
 typedef struct{
-  ent_t*                target;
-  Vector2               destination;
-  int                   ranges[RANGE_EMPTY];
-  bool                  has_arrived;
-  behavior_tree_node_t* bt[STATE_END];
+  ent_t*                  target;
+  Vector2                 destination;
+  int                     ranges[RANGE_EMPTY];
+  bool                    has_arrived;
+  behavior_tree_node_t*   bt[STATE_END];
 }controller_t;
 controller_t* InitController();
 
@@ -195,16 +174,16 @@ ent_t InitEntRef(ObjectInstance ref);
 ent_t* InitEntStatic(TileInstance data);
 ent_t* InitEnt(ObjectInstance data);
 ent_t InitEntProjectile( ProjectileInstance data);
-bool SpawnEnt(unsigned int spawner_id);
+
 void EntInitOnce(ent_t* e);
 void EntSync(ent_t* e);
 bool EntKill(ent_t* e);
 void EntDestroy(ent_t* e);
-void EntFree(ent_t* e);
+bool FreeEnt(ent_t* e);
 void EntAddPoints(ent_t* e,EntityState old, EntityState s);
 void DamageEnt(ent_t *e, attack_t a);
 static inline bool EntTargetable(ent_t* e){
-  return (e!=NULL && e->state <= STATE_DIE);
+  return (e && e->state <= STATE_DIE);
 }
 void EntPrepStep(ent_t *e);
 void EntControlStep(ent_t *e);
@@ -230,7 +209,7 @@ typedef struct game_object_s{
   events_t        *events;
   controller_t    *control;
 }game_object_t;
-
+bool SpawnEnt(game_object_t* spawner);
 game_object_t* InitObjectStatic(SpawnerInstance inst);
 void SetObjectState(game_object_t *obj, ObjectState state);
 void StepObject(game_object_t *obj);

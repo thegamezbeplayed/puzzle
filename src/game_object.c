@@ -18,10 +18,11 @@ game_object_t* InitObjectStatic(SpawnerInstance inst){
 
   obj->events = InitEvents();
   obj->control = InitController();
+  obj->control->bt[OBJECT_LOAD] = InitBehaviorTree("Load");
   obj->control->bt[OBJECT_START] = InitBehaviorTree("Prep");
   obj->control->bt[OBJECT_RUN] = InitBehaviorTree("Check");
   obj->control->bt[OBJECT_PAUSE] =InitBehaviorTree("Prep");
-  obj->control->bt[OBJECT_FINISH] =InitBehaviorTree("Finish");
+//  obj->control->bt[OBJECT_FINISH] =InitBehaviorTree("Finish");
 
   return obj;
 
@@ -29,6 +30,9 @@ game_object_t* InitObjectStatic(SpawnerInstance inst){
 
 void OnObjectStateChange(game_object_t *obj, ObjectState s){
   switch(s){
+    case OBJECT_START:
+      LevelLoadWave(obj->id+1);
+      break;
     default:
       break;
   }
@@ -39,7 +43,11 @@ bool CanChangeObjectState(ObjectState old, ObjectState s){
 }
 
 void SetObjectState(game_object_t *obj, ObjectState state){
+  ObjectState old = obj->state;
   obj->state = state;
+
+  if(old!=state)
+    OnObjectStateChange(obj,state);
 }
 
 void StepObject(game_object_t *obj){

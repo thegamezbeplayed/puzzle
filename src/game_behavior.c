@@ -44,7 +44,7 @@ behavior_tree_node_t *BuildTreeNode(const char *name) {
         .event = data.event,
         .state = data.state,
         .obj_state = data.obj_state,
-        .duration = data.duration
+        .duration = data.duration,
       };
       return room_behaviors[i].func(params);
     }
@@ -263,7 +263,7 @@ BehaviorStatus BehaviorCanAttackTarget(behavior_params_t *params){
   if(!e || !e->control)
     return BEHAVIOR_FAILURE;
 
-  if(!EntTargetable(e->control->target))
+  if(!e->control->target && !e->control->target->body && !EntTargetable(e->control->target))
     return BEHAVIOR_FAILURE;
 
   if(CheckEvent(e->events, EVENT_ATTACK_RATE))
@@ -296,7 +296,7 @@ BehaviorStatus BehaviorAttackTarget(behavior_params_t *params){
 
     ProjectileShoot(e, e->pos, e->attacks[i].params->dir, e->attacks[i].damage); 
 
-     e->attacks[i].cooldown->is_complete = false;      
+    e->attacks[i].cooldown->is_complete = false;      
     return BEHAVIOR_SUCCESS;
     /*if(e->attacks[i].attack(e->attacks[i].params))
     return BEHAVIOR_SUCCESS;
@@ -314,9 +314,9 @@ BehaviorStatus BehaviorCheckEvent(behavior_params_t *params){
     return BEHAVIOR_FAILURE;
 
   if(CheckEvent(o->events, params->event))
-    return BEHAVIOR_SUCCESS;
+    return BEHAVIOR_RUNNING;
 
-  return BEHAVIOR_RUNNING;
+  return BEHAVIOR_SUCCESS;
 }
 
 BehaviorStatus BehaviorStartEvent(behavior_params_t *params){
@@ -326,6 +326,10 @@ BehaviorStatus BehaviorStartEvent(behavior_params_t *params){
 
   if(CheckEvent(o->events, params->event))
     return BEHAVIOR_SUCCESS;
+
+  int dur = params->duration;
+  if(event_durations[params->event].ev!=EVENT_NONE)
+    dur = event_durations[params->event].dur.current;
 
   AddEvent(o->events, InitCooldown(params->duration,params->event,NULL,NULL));
   return BEHAVIOR_SUCCESS;
@@ -347,7 +351,7 @@ BehaviorStatus BehaviorSpawnEnt(behavior_params_t *params){
   if(CheckEvent(o->events, params->event))
     return BEHAVIOR_RUNNING;
 
-  if(SpawnEnt(o->id))
+  if(SpawnEnt(o))
     return BEHAVIOR_SUCCESS;
 
   return BEHAVIOR_FAILURE;

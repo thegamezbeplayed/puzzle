@@ -244,9 +244,6 @@ bool CheckStep(rigid_body_t* b, Vector2 vel, float dist, Vector2* out){
 
   *out = Vector2Subtract(testStep,b->position);
 
-  if(trimmed)
-    TraceLog(LOG_INFO,"Velocity <%0.2f,%0.2f> trimmed to <%0.2f,%0.2f>",vel.x,vel.y,out->x,out->y);
-
   return true;
 }
 
@@ -415,7 +412,6 @@ void CollisionReflect(rigid_body_t* a, rigid_body_t* b, ForceType t){
 void CollisionDamage(rigid_body_t* a, rigid_body_t* b, ForceType t){
   b->owner->lastdamage_sourceid = b->buid;
   DamageEnt(b->owner,a->owner->attacks[0]);
-  TraceLog(LOG_INFO,"Damage ent %d for %d damage",b->owner->type, a->owner->attacks[0].damage);
   AudioPlayRandomSfx(SFX_ACTION,ACTION_SHOT);
 }
 

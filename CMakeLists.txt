@@ -42,6 +42,9 @@ target_include_directories(${PROJECT_NAME}
 )
 # Libraries & link dirs
 
+target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address -g -O0)
+target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
+
 if("${PLATFORM}" MATCHES "WEB")
     add_custom_command(
         TARGET ${PROJECT_NAME} PRE_BUILD
@@ -54,7 +57,6 @@ else()
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources
     )
   endif()
-
 # Web Configurations
 if ("${PLATFORM}" MATCHES "WEB")
     set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".html")

@@ -17,7 +17,9 @@ typedef enum {
   ENT_PLAYER,
   ENT_SHIELD,
   ENT_MOB,
+  ENT_SWARMER,
   ENT_DRONE,
+  ENT_HUNTER,
   ENT_BULLET,
   ENT_BLANK
 }EntityType;
@@ -42,26 +44,29 @@ typedef struct {
   EntityState   state;
   ObjectState   obj_state;
   int           duration;
+  //CooldownCallback fn;
+  //TODO
   int           num_children;
   const char*   children[5];
 } BehaviorData;
 
 static const BehaviorData room_behaviors[] = {
   {"start_spawn",false,BT_LEAF,LeafStartEvent,EVENT_SPAWN,STATE_NONE,OBJECT_NONE,33,0,{}},
-  {"end_event",false,BT_LEAF,LeafStartEvent,EVENT_FINISH,STATE_NONE,OBJECT_NONE,180,0,{}},
-  {"check_end_event",false,BT_LEAF,LeafCheckEvent,EVENT_FINISH,STATE_NONE,OBJECT_NONE,0,0,{}},
+  {"start_event",false,BT_LEAF,LeafStartEvent,EVENT_WAVE,STATE_NONE,OBJECT_NONE,180,0,{}},
+  {"check_start_event",false,BT_LEAF,LeafCheckEvent,EVENT_WAVE,STATE_NONE,OBJECT_NONE,0,0,{}},
+  {"check_spawn_event",false,BT_LEAF,LeafCheckEvent,EVENT_SPAWN,STATE_NONE,OBJECT_NONE,0,0,{}},
   {"run_state",false,BT_LEAF,LeafStartState,EVENT_SPAWN,STATE_NONE,OBJECT_RUN,0,0,{}},
   {"start_state",false,BT_LEAF,LeafStartState,EVENT_SPAWN,STATE_NONE,OBJECT_START,0,0,{}},
   {"idle_state",false,BT_LEAF,LeafStartState,EVENT_SPAWN,STATE_NONE,OBJECT_PAUSE,0,0,{}},
   {"finish_state",false,BT_LEAF,LeafStartState,EVENT_SPAWN,STATE_NONE,OBJECT_FINISH,0,0,{}},
   {"end_state",false,BT_LEAF,LeafStartState,EVENT_SPAWN,STATE_NONE,OBJECT_END,0,0,{}},
-  {"Prep", true,BT_SEQUENCE,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,2,{"start_spawn","run_state"}},
+  {"Load", true,BT_SEQUENCE,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,3,{"start_event","check_start_event","start_state"}},
   {"spawn_ent",false,BT_LEAF,LeafSpawnEnt,EVENT_SPAWN,STATE_NONE,OBJECT_RUN,0,0,{}},
   {"Run", false,BT_SEQUENCE,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,2,{"spawn_ent","idle_state"}},
   {"Check", true,BT_SELECTOR,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,2,{"Run","finish_state"}},
-  {"Finish", true,BT_SEQUENCE,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,3,{"end_event","check_end_event","end_state"}},
+  {"Prep", true,BT_SEQUENCE,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,3,{"start_spawn","check_spawn_event","run_state"}},
 };
-#define ROOM_BEHAVIOR_COUNT 13
+#define ROOM_BEHAVIOR_COUNT 14
 
 static const SpawnerInstance room_spawners[] = {
   {0, 0,"spawn_data", 64,856, 4, {[ENT_DRONE]=4},74},
@@ -72,7 +77,7 @@ static const SpawnerInstance room_spawners[] = {
   {2, 1,"spawn_data", 1534,64, 4, {[ENT_DRONE]=4},54},
   {3, 1,"spawn_data", 64,856, 4, {[ENT_DRONE]=4},74},
   {0, 2,"spawn_data", 64,64, 5, {[ENT_DRONE]=5},54},
-  {1, 2,"spawn_data", 1534,856, 5, {[ENT_DRONE]=5},54},
+  {1, 2,"spawn_data", 1534,856, 4, {[ENT_HUNTER]=4},54},
   {2, 2,"spawn_data", 64,64, 5, {[ENT_DRONE]=5},54},
   {3, 2,"spawn_data", 1534,64, 5, {[ENT_DRONE]=5},54},
   {4, 2,"spawn_data", 1534,64, 5, {[ENT_DRONE]=5},54}
@@ -114,13 +119,15 @@ static const ObjectInstance room_instances[] = {
   {ENT_PLAYER,"ent_data", "player", 72,416, 288, 0,0, 200,15, 0, 0,450,1,"basic_bullet",0},
   {ENT_SHIELD,"ent_data", "shield", 64,1664, 608, 43,0,1, 0, 0, 0,450,0,"",0},
   {ENT_MOB,"ent_data", "Drone", 56,1248, 128, 37,2,24, 16, 4, 3,680, 1,"basic_bullet",1},
-  {ENT_DRONE,"ent_data", "Drone", 56,1248, 128, 37,1,24, 8, 3.1f, 3,680, 1,"basic_bullet",1},
+  {ENT_SWARMER,"ent_data", "Drone", 56,1248, 128, 37,1,24, 8, 3.1f, 8,680, 1,"basic_bullet",1},
+  {ENT_DRONE,"ent_data", "Drone", 56,1248, 128, 37,1,24, 8, 3.1f, 8,680, 1,"basic_bullet",1},
+  {ENT_HUNTER,"ent_data", "Hunter", 64,1248, 128, 7,2,36, 7.6, 2.7f, 9,620, 1,"basic_bullet",1},
 };
 
 #define ROOM_INSTANCE_COUNT 3
 
 static const ProjectileInstance room_projectiles[] = {
-  {ENT_BULLET,"projectile_data", "basic_bullet", 16,41, 0,15,25,650,3},
+  {ENT_BULLET,"projectile_data", "basic_bullet", 16,41, 0,15,25,650,1},
 };
 
 #define ROOM_PROJECTILE_COUNT 1

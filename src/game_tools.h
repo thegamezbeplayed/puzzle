@@ -14,6 +14,7 @@
 #define VECTOR2_RIGHT  (Vector2){ -1.0f, 0.0f }
 #define Vector2X(x) ((Vector2){ (x), 0.0f })
 #define Vector2Y(y) ((Vector2){ 0.0f, (y) })
+#define Vector2Inc(v,xi,yi) ((Vector2){ (v.x+xi), (v.y+yi) })
 
 typedef struct {
   int x,y;
@@ -28,6 +29,12 @@ static inline float distance(int x1, int y1, int x2, int y2) {
 static inline float frand() {
     return (float)rand() / (float)RAND_MAX;
 }
+
+static inline Vector2 Vector2Avg(Vector2 a, Vector2 b){
+ return (Vector2){ (a.x + b.x) * 0.5f,
+                      (a.y + b.y) * 0.5f };
+}
+
 static inline Vector2 CellToVector2(Cell c, float scale){
   Vector2 result = Vector2FromXY(c.x,c.y);
 

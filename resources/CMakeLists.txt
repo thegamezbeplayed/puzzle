@@ -4,6 +4,8 @@ file(GLOB_RECURSE RESOURCE_FILES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/*.jpg
     ${CMAKE_CURRENT_SOURCE_DIR}/*.ogg
     ${CMAKE_CURRENT_SOURCE_DIR}/*.json
+    ${CMAKE_CURRENT_SOURCE_DIR}/*.vs
+    ${CMAKE_CURRENT_SOURCE_DIR}/*.fs
     # Add more patterns as needed
 )
 

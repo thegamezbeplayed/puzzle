@@ -205,9 +205,7 @@ void StartEvent(events_t* pool, EventType type){
  
     if(pool->cooldowns[i].type != type)
       continue;
-   
   }
-
 }
 
 void StepEvents(events_t* pool){
@@ -224,6 +222,7 @@ void StepEvents(events_t* pool){
       pool->cooldown_used[i] = false;
       continue;
     }
+    
     if(pool->cooldowns[i].is_complete){
       if(!pool->cooldowns[i].is_recycled)
         continue;

@@ -6,10 +6,9 @@ sprite_sheet_data_t spritedata;
 Texture2D sprite_sheet;
 
 void InitResources(){
-    LoadrtpAtlasSprite(&spritedata);
-      Image spritesImg = LoadImage(TextFormat("resources/%s",ATLAS_ASSET_SPRITES_IMAGE_PATH));
+  LoadrtpAtlasSprite(&spritedata);
+  Image spritesImg = LoadImage(TextFormat("resources/%s",ATLAS_ASSET_SPRITES_IMAGE_PATH)); 
   sprite_sheet = LoadTextureFromImage(spritesImg);
-
 }
 
 sprite_t* InitSprite(const char* group, sprite_sheet_data_t* spritesheet){
@@ -24,6 +23,7 @@ sprite_t* InitSprite(const char* group, sprite_sheet_data_t* spritesheet){
     spr->slice = spritesheet->sprites[i];
 
   }
+  spr->color = PINK;
   return spr;
 }
 
@@ -35,7 +35,7 @@ sprite_t* InitSpriteByIndex(int index, sprite_sheet_data_t* spritesheet){
 
   spr->sheet = &sprite_sheet;
   spr->slice = spritesheet->sprites[index];
-
+  spr->color = PINK;
   return spr;
 }
 

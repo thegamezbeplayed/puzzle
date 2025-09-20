@@ -80,6 +80,7 @@ typedef enum{
 typedef enum{
   LEVEL_NONE,
   LEVEL_LOADING,
+  LEVEL_RELOADING,
   LEVEL_START,
   LEVEL_RUNNING,
   LEVEL_FINISH,
@@ -113,6 +114,22 @@ void GameProcessStep();
 void GameProcessSync(bool wait);
 void GameTransitionScreen();
 void GameProcessEnd();
+struct difficulty_modifier_s;
+typedef struct difficulty_modifier_s difficulty_modifier_t;
+
+typedef bool (*ModifierCallback)(difficulty_modifier_t* self);
+typedef enum{
+  MOD_NONE,
+  MOD_MOB_UPGRADE,
+  MOD_DONE
+}ModifierType;
+
+typedef struct difficulty_modifier_s{
+  ModifierType      type;
+  int               denom;
+  ModifierCallback  modFn;
+}difficulty_modifier_t;
+
 //====level process==>
 typedef struct{
   unsigned int      luid;
@@ -122,11 +139,14 @@ typedef struct{
   int               num_spawners;
   game_object_t*    mob_spawners[MAX_SPAWNERS];
   entity_pool_t     spawns[MAX_SPAWNERS];
+  int               difficulty;
+  int               modifiers[MOD_DONE];
 }level_t;
 
 typedef struct{
   unsigned int current;
   int          num_levels;
+  int          round_num;
   level_t      *levels[10];
 }level_order_t;
 
@@ -135,10 +155,12 @@ void LevelAddSpawn(unsigned int index, EntityType ref, int count);
 game_object_t* LevelGetSpawner(unsigned int index);
 void AddPoints(float mul,float points,Vector2 pos);
 const char* GetPoints();
+int LevelGetCurrentWaveNum();
 level_t* LevelCurrent();
 void InitLevelEvents();
 void LevelStep();
 void LevelBegin(level_t *l);
+void LevelLoadWave(unsigned int index);
 void LevelEnd(level_t *l);
 void SetLevelState(level_t *l, LevelState state);
 void OnLevelStateChange(level_t *l, LevelState state);

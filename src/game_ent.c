@@ -41,6 +41,9 @@ ent_t* InitEnt(ObjectInstance data){
   e->sprite->owner = e;  
 
   e->sprite->slice->scale = data.size / e->sprite->slice->bounds.width;
+
+  e->sprite->gls = &shaders[SHADER_OUTLINE];
+  ShaderSetUniforms(e->sprite->gls, *e->sprite->sheet);
   float radius = data.size * 0.5f;
   pos = Vector2Add(pos,e->sprite->slice->center);
   e->pos = pos;
@@ -197,8 +200,12 @@ bool AttackPrepare(attack_t* a){
   return true;//a->attack(a->params);
 }
 
-void EntFree(ent_t* e){
+bool FreeEnt(ent_t* e){
+  if(!e)
+    return false;
 
+  free(e);
+  return true;
 }
 
 stat_t InitStatEmpty(){
@@ -363,6 +370,7 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s){
       e->stats[STAT_SPEED].current = e->stats[STAT_SPEED].max*.85f;
       break;
     case STATE_DIE:
+      ParticleExplosion(e->pos,e->body->velocity,e->body->collision_bounds.radius,e->sprite->color);
         AudioPlayRandomSfx(SFX_ACTION,ACTION_BOOM);
         break;
     default:

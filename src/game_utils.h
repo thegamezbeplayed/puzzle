@@ -16,6 +16,10 @@
 void LoadJson(const char* filename, struct json_object** out);
 void LoadBehaviorTrees(json_object *root);
 
+//====FILE & STRINGS====>
+char* GetFileStem(const char* filename);
+//<==========
+//
 static inline void DO_NOTHING(void){}
 //<===BEHAVIOR TREES
 
@@ -75,12 +79,13 @@ static behavior_tree_node_t* BehaviorFindLeafFactory(const char *name);
 typedef BehaviorStatus (*BehaviorTreeTickFunc)(behavior_tree_node_t* self, void* context);
 
 typedef struct behavior_params_s{
-  struct ent_s*  owner;
-  struct game_object_s * obj;
-  EntityState    state;
-  ObjectState    obj_state;
-  EventType      event;
-  int            duration;
+  struct ent_s*         owner;
+  struct game_object_s* obj;
+  EntityState           state;
+  ObjectState           obj_state;
+  EventType             event;
+  CooldownCallback      eventFn;
+  int                   duration;
 }behavior_params_t;
 
 behavior_params_t* BuildBehaviorParams(json_object* params);

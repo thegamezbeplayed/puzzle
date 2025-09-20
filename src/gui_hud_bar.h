@@ -107,7 +107,7 @@ void GuiHudBar(GuiHudBarState *state)
 {
   state->ProgressBar002Value = RATIO(player->stats[STAT_HEALTH]);
   GuiStatusBar(state->layoutRecs[0], GetPoints());
-  GuiStatusBar(state->layoutRecs[1], TextFormat("Wave %d",1+LevelCurrent()->luid));
+  GuiStatusBar(state->layoutRecs[1], TextFormat("Wave %d",1+LevelGetCurrentWaveNum()));
   GuiProgressBar(state->layoutRecs[2], NULL, NULL, &state->ProgressBar002Value, 0, 1);
 }
 
