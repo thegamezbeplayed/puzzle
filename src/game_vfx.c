@@ -8,37 +8,33 @@ void InitShaders(){
   for (int i = 0; i < SHADER_DONE; i++)
     shaders[i] = (gl_shader_t){0};
   
-  FilePathList shaderfiles = LoadDirectoryFiles("resources/shaders");
+  FilePathList shaderfiles = LoadDirectoryFiles("resources/shaders/glsl100");
   for (int i = 0; i < shaderfiles.count; i++){
-    char *token = strtok(shaderfiles.paths[i],"\\");
-
     const char* filename = GetFileName(shaderfiles.paths[i]);
     char* shadername = GetFileStem(filename);
     const char* extStr = GetFileExtension(filename);
 
     ShaderType type = ShaderTypeLookup(shadername);
-    gl_shader_t *s = malloc(sizeof(gl_shader_t));
+    gl_shader_t *s = &shaders[type];
     if(shaders[type].stype == SHADER_NONE){
-      *s = (gl_shader_t){0};
       s->stype = type;
-      s->version = (int)token[0];
-      s->vs_path = NULL;
-      s->fs_path = NULL;
-      shaders[type] = *s;
+      s->version = 100;
     }
-    else
-      *s = shaders[type];
     
-    if(strcmp(extStr,"vs") == 0)
-      s->vs_path = shaderfiles.paths[i];
-    else if (strcmp(extStr,"fs") == 0)
-      s->fs_path = shaderfiles.paths[i];
+    if(strcmp(extStr,".vs") == 0)
+      s->vs_path = strdup(shaderfiles.paths[i]);
+    else if (strcmp(extStr,".fs") == 0)
+      s->fs_path = strdup(shaderfiles.paths[i]);
+  
+    free(shadername);
   }
+
+  UnloadDirectoryFiles(shaderfiles);
 }
 
 void LoadShaders(){
   for(int i = 0; i < SHADER_DONE;i++){
-    if(shaders[i].stype = SHADER_NONE)
+    if(shaders[i].stype == SHADER_NONE)
       continue;
 
     shaders[i].shader = LoadShader(shaders[i].vs_path, shaders[i].fs_path);

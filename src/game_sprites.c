@@ -39,8 +39,9 @@ sprite_t* InitSpriteByIndex(int index, sprite_sheet_data_t* spritesheet){
   return spr;
 }
 
-void DrawSlice(Texture2D tex, sprite_slice_t *slice, Vector2 position,float rot){
-   Rectangle src = slice->bounds;
+void DrawSlice(Texture2D tex, sprite_t *spr, Vector2 position,float rot){
+  sprite_slice_t* slice = spr->slice; 
+  Rectangle src = slice->bounds;
 
     Rectangle dst = {
         position.x,
@@ -53,7 +54,11 @@ void DrawSlice(Texture2D tex, sprite_slice_t *slice, Vector2 position,float rot)
        slice->center.x * slice->scale,//offset.x,
        slice->center.y * slice->scale//offset.y
     };
+
+    //BeginShaderMode(spr->gls->shader);
+
     DrawTexturePro(tex, src, dst, origin,rot, WHITE);
+    //EndShaderMode();
     return;
 }
 
@@ -68,12 +73,12 @@ bool FreeSprite(sprite_t* s){
 }
 void DrawSpriteAtPos(sprite_t*s , Vector2 pos){
   if(s->is_visible)
-    DrawSlice(sprite_sheet,s->slice, pos, s->rot);
+    DrawSlice(sprite_sheet,s, pos, s->rot);
 
 }
 void DrawSprite(sprite_t* s){
   if(s->is_visible)
-    DrawSlice(sprite_sheet,s->slice, s->pos,s->rot);
+    DrawSlice(sprite_sheet,s, s->pos,s->rot);
 }
 
 void LoadrtpAtlasSprite(sprite_sheet_data_t *out){

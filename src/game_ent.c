@@ -5,6 +5,7 @@
 #include "game_process.h"
 
 MAKE_ADAPTER(StepState, ent_t*);
+MAKE_ADAPTER(StatMaxOut, stat_t*);
 
 attack_params_t empty_attack_params = {
   .dir = 0.0f
@@ -59,6 +60,12 @@ ent_t* InitEnt(ObjectInstance data){
 
   e->events = InitEvents();
   if(e->team == TEAM_ENEMIES){
+    cooldown_t* cd =InitCooldown(data.reload_rate,EVENT_ATTACK_PREPARE,StatMaxOut_Adapter,&e->stats[STAT_AMMO]);
+    AddEvent(e->events,cd);
+
+    e->stats[STAT_AMMO] = InitStatOnMax(STAT_AMMO,data.num_attacks);
+    e->stats[STAT_AMMO].on_stat_empty = EntReload;
+
     ProjectileInstance instance = ProjectileGetData(data.attacks);
     e->attacks[0] = InitAttack(e,instance);
     e->attacks[0].damage*=data.damage;
@@ -139,6 +146,10 @@ bool EntKill(ent_t* e){
   return SetState(e, STATE_DIE,NULL);
 }
 
+bool EntReload(ent_t* e){
+  ResetEvent(e->events, EVENT_ATTACK_PREPARE);
+}
+
 void EntDestroy(ent_t* e){
   SetState(e, STATE_END,EntAddPoints);//when animations are used do this after the death animation
   if(e->sprite!=NULL){
@@ -166,6 +177,7 @@ attack_t InitAttack(ent_t* owner, ProjectileInstance data){
 
   strcpy(a.name,data.name);
   a.owner = owner;
+  a.duid = owner->uid;
   a.damage = data.damage;
   a.duration = data.duration;
   a.attack_type = ATTACK_RANGED;
@@ -238,19 +250,21 @@ void InitStats(stat_t stats[STAT_BLANK]){
 
 }
 
-void StatChangeValue(ent_t* owner, stat_t* attr, float val){
+bool StatChangeValue(ent_t* owner, stat_t* attr, float val){
   float old = attr->current;
   attr->current+=val;
   attr->current = CLAMPF(attr->current,attr->min, attr->max);
 
   if(attr->current == old)
-    return;
+    return false;
 
   if(attr->on_stat_change != NULL)
     attr->on_stat_change(owner);
 
   if(attr->current == attr->min && attr->on_stat_empty!=NULL)
     attr->on_stat_empty(owner);
+
+  return true;
 }
 
 controller_t* InitController(){
@@ -279,6 +293,8 @@ void EntInitOnce(ent_t* e){
 
 void DamageEnt(ent_t *e, attack_t a){//Copy of attack cuz its subject to Updates
   //AnimPlay(e->sprite,ANIM_HURT);
+  if(e->type == ENT_PLAYER)
+    TraceLog(LOG_INFO,"Player takes %d damage",a.damage);
   StatChangeValue(e,&e->stats[STAT_HEALTH],-a.damage);
 }
 

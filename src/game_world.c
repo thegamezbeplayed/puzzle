@@ -4,7 +4,6 @@
 #include "game_tools.h"
 
 game_process_t game_process;
-level_order_t levels;
 TreeCacheEntry tree_cache[10] = {0};
 int tree_cache_count = 0;
 
@@ -17,9 +16,6 @@ void print_mem_usage() {
         }
     }
     fclose(f);
-}
-level_t* LevelCurrent(){
-  return levels.levels[levels.current];
 }
 
 void GameReady(){
@@ -328,9 +324,7 @@ void WorldRender(){
   
   for(int i = 0; i < world.num_spr;i++){
     if(world.sprs[i]->owner !=NULL){
-      BeginShaderMode(world.sprs[i]->gls->shader);
       DrawSprite(world.sprs[i]);
-      EndShaderMode();
     }
     else
       i-=RemoveSprite(i);
@@ -473,104 +467,6 @@ void GameProcessEnd(){
   FreeWorld();
 }
 
-entity_pool_t* InitEntityPool(void) {
-    entity_pool_t* pool = malloc(sizeof(entity_pool_t));
-    pool->num_references = 0;
-    return pool;
-}
-
-void InitLevel(level_t *l){
-  l->current_spawner = 0;
-  l->num_spawners = 0;
-  for (int i = 0; i < ROOM_LEVEL_WAVE_COUNT; i++) {
-    if(room_spawners[i].level != l->luid)
-      continue;
-    int idx = l->num_spawners;
-    l->spawns[idx] = *InitEntityPool(); // or store pointers too
-    l->mob_spawners[idx] = InitObjectStatic(room_spawners[i]);
-    l->num_spawners++;
-    //SetObjectState(l->mob_spawners[idx],OBJECT_LOAD);
-  }
-
-}
-
-void GenerateLevels(int num_levels, bool inc_diff){
-  StatChangeValue(NULL,&event_durations[EVENT_WAVE].dur,-6);
-  for (int i = 0; i < num_levels; i++){
-    TraceLog(LOG_INFO,"Reset Level %d",i);
-    InitLevel(levels.levels[i]);
-  }
-
-  LevelBegin(levels.levels[0]);
-}
-
-void RegisterPoolRef(unsigned int level_index,unsigned int index, EntityType ref){
-  int num_refs = levels.levels[level_index]->spawns[index].num_references;
-  levels.levels[level_index]->spawns[index].reference_ents[num_refs] = ref;
-  levels.levels[level_index]->spawns[index].num_references++;
-}
-
-bool SpawnEnt(game_object_t* spawner){
-
-  int ref_ent = ENT_MOB;
-  for (int i = ENT_MOB; i < ENT_BLANK; i++){
-    if(CURRENT_LEVEL->spawns[spawner->id].num_references == 0)
-      continue;
-    CURRENT_LEVEL->spawns[spawner->id].num_references--;
-    ref_ent = CURRENT_LEVEL->spawns[spawner->id].reference_ents[i];
-    break;
-  }
-
-  if (ref_ent == ENT_MOB)
-    return false;
-
-  ent_t* spawn = InitEnt(room_instances[ref_ent]);
-  spawn->body->position = spawner->pos;
-  RegisterEnt(spawn);
-  SetState(spawn,STATE_SPAWN,NULL);
-  return true;
-}
-
-void InitLevelEvents(){
-  levels.num_levels = ROOM_LEVEL_COUNT;
-  for (int i = 0; i<levels.num_levels; i++){
-    levels.levels[i] = calloc(1,sizeof(level_t));
-    levels.levels[i]->luid = i;
-    SetLevelState(levels.levels[i],LEVEL_LOADING);
-  }
-  
-  LevelBegin(CURRENT_LEVEL);
-}
-
-void LevelLoadWave(unsigned int index){
-  if(index < CURRENT_LEVEL->num_spawners)
-    SetObjectState(CURRENT_LEVEL->mob_spawners[index],OBJECT_LOAD);
-  else{
-    //begin level end 
-  }
-}
-
-void LevelStep(){
-  bool end = true;
-  switch(CURRENT_LEVEL->state){
-    case LEVEL_RUNNING:
-      for(int i = 0; i< CURRENT_LEVEL->num_spawners; i++){
-        StepObject(CURRENT_LEVEL->mob_spawners[i]);
-        if(CURRENT_LEVEL->spawns->num_references > 0)
-          end = false;
-      }
-      break;
-    default:
-      end = false;
-      break;
-  }
-  if(end){
-  ent_t* any[MAX_ENTS];
-  if(WorldGetEnts(any,FilterEntNotOnTeam,player)==0)
-    SetLevelState(CURRENT_LEVEL,LEVEL_FINISH);
-  }
-}
-
 void AddPoints(float mul,float points, Vector2 pos){
   world.points+=mul*points;
   if(mul < 2)
@@ -587,58 +483,6 @@ void AddPoints(float mul,float points, Vector2 pos){
   AddFloatingText(rt);
 }
 
-void SetLevelState(level_t *l, LevelState state){
-  if(!CanChangeLevelState(l->state, state))
-    return;
-
-  LevelState old = l->state;
-  l->state = state;
-
-  OnLevelStateChange(l, state);
-}
-
-void OnLevelStateChange(level_t *l, LevelState state){
-  switch(state){
-    case LEVEL_FINISH:
-      LevelEnd(l);
-      break;
-    case LEVEL_LOADING:
-      InitLevel(l);
-      break;
-    case LEVEL_START:
-      SetLevelState(CURRENT_LEVEL, LEVEL_RUNNING);
-      break;
-    case LEVEL_RUNNING:
-      SetObjectState(l->mob_spawners[0],OBJECT_START);
-    default:
-      break;
-  }
-}
-
-bool CanChangeLevelState(LevelState old, LevelState s){
-  return true;
-}
-
-int LevelGetCurrentWaveNum(){
-  return levels.round_num * levels.num_levels + levels.current;
-}
-
 const char* GetPoints(){
   return TextFormat("%09i",(int)world.points);
-}
-
-void LevelBegin(level_t *l){
-  levels.current = l->luid;
-  SetLevelState(CURRENT_LEVEL,LEVEL_START);
-}
-
-void LevelEnd(level_t *l){
-  SetLevelState(l,LEVEL_COMPLETE);
-  if(l->luid+1 >= ROOM_LEVEL_COUNT){
-    levels.round_num++;
-    GenerateLevels(ROOM_LEVEL_COUNT, true);
-    return;
-  }
-  
-  LevelBegin(levels.levels[l->luid+1]);
 }

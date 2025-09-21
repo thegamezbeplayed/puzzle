@@ -234,7 +234,6 @@ void StepEvents(events_t* pool){
     }
     
     if(pool->cooldowns[i].elapsed >= pool->cooldowns[i].duration){
-      TraceLog(LOG_INFO,"Cooldown %i ended",pool->cooldowns[i].type);
       pool->cooldowns[i].is_complete = true;
       pool->cooldowns[i].elapsed = 0;
       if(pool->cooldowns[i].on_end)

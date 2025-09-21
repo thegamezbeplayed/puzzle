@@ -180,6 +180,7 @@ void EntSync(ent_t* e);
 bool EntKill(ent_t* e);
 void EntDestroy(ent_t* e);
 bool FreeEnt(ent_t* e);
+bool EntReload(ent_t* e);
 void EntAddPoints(ent_t* e,EntityState old, EntityState s);
 void DamageEnt(ent_t *e, attack_t a);
 static inline bool EntTargetable(ent_t* e){

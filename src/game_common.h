@@ -25,6 +25,7 @@ typedef enum{
   STAT_ACCEL,
   STAT_POINTS,
   STAT_DURATION,
+  STAT_AMMO,
   STAT_BLANK//sentinel
 }StatType;
 
@@ -48,7 +49,7 @@ typedef struct stat_s{
 stat_t InitStatOnMax(StatType attr, float val);
 stat_t InitStatEmpty();
 void InitStats(stat_t stats[STAT_BLANK]);
-void StatChangeValue(struct ent_s* owner, stat_t* attr, float val);
+bool StatChangeValue(struct ent_s* owner, stat_t* attr, float val);
 void StatMaxOut(stat_t* s);
 float StatGetRatio(stat_t *self);
 //<====STATS
@@ -61,6 +62,7 @@ typedef enum{
   EVENT_WAVE,
   EVENT_ATTACK_INPUT,
   EVENT_ATTACK_RATE,
+  EVENT_ATTACK_PREPARE,
   EVENT_PLAY_SFX,
   EVENT_FINISH,
   EVENT_NONE
@@ -106,6 +108,7 @@ void UnloadEvents(events_t* ev);
 int AddEvent(events_t* pool, cooldown_t* cd);
 void StepEvents(events_t* pool);
 void StartEvent(events_t* pool, EventType type);
+void ResetEvent(events_t* pool, EventType type);
 bool CheckEvent(events_t* pool, EventType type);
 //<======EVENTS>
 typedef enum{

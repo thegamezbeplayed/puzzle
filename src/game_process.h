@@ -120,27 +120,38 @@ typedef struct difficulty_modifier_s difficulty_modifier_t;
 typedef bool (*ModifierCallback)(difficulty_modifier_t* self);
 typedef enum{
   MOD_NONE,
+  MOD_LEVEL_DIFF,
+  MOD_LEVEL_POINTS,
   MOD_MOB_UPGRADE,
+  MOD_WAVE_INTERVAL,
   MOD_DONE
 }ModifierType;
 
+bool ModifyWaveInterval(difficulty_modifier_t* self);
+bool ModifyMobUpgrade(difficulty_modifier_t* self);
+bool ModifyLevelPoints(difficulty_modifier_t* self);
+bool ModifyLevelDifficulty(difficulty_modifier_t* self);
+
 typedef struct difficulty_modifier_s{
   ModifierType      type;
+  unsigned int      level_id;
   int               denom;
+  float             amount;
   ModifierCallback  modFn;
 }difficulty_modifier_t;
 
 //====level process==>
 typedef struct{
-  unsigned int      luid;
-  LevelState        state;
-  float             points;
-  int               current_spawner;
-  int               num_spawners;
-  game_object_t*    mob_spawners[MAX_SPAWNERS];
-  entity_pool_t     spawns[MAX_SPAWNERS];
-  int               difficulty;
-  int               modifiers[MOD_DONE];
+  unsigned int         luid;
+  LevelState           state;
+  float                points;
+  int                  current_spawner;
+  int                  num_spawners;
+  game_object_t*       mob_spawners[MAX_SPAWNERS];
+  entity_pool_t        spawns[MAX_SPAWNERS];
+  float                difficulty;
+  int                  modifiers[MOD_DONE];
+  EventDefaultDuration event_durations[EVENT_NONE];
 }level_t;
 
 typedef struct{
@@ -149,6 +160,7 @@ typedef struct{
   int          round_num;
   level_t      *levels[10];
 }level_order_t;
+extern level_order_t levels;
 
 void InitLevel();
 void LevelAddSpawn(unsigned int index, EntityType ref, int count);
@@ -158,6 +170,7 @@ const char* GetPoints();
 int LevelGetCurrentWaveNum();
 level_t* LevelCurrent();
 void InitLevelEvents();
+void GenerateLevels(int num_levels, bool inc_diff);
 void LevelStep();
 void LevelBegin(level_t *l);
 void LevelLoadWave(unsigned int index);

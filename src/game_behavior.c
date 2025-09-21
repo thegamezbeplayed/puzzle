@@ -266,7 +266,7 @@ BehaviorStatus BehaviorCanAttackTarget(behavior_params_t *params){
   if(!e->control->target && !e->control->target->body && !EntTargetable(e->control->target))
     return BEHAVIOR_FAILURE;
 
-  if(CheckEvent(e->events, EVENT_ATTACK_RATE))
+  if(e->stats[STAT_AMMO].current <1 || CheckEvent(e->events, EVENT_ATTACK_RATE))
     return BEHAVIOR_FAILURE;
 
   for(int i = 0; i < e->num_attacks; i++){
@@ -296,7 +296,8 @@ BehaviorStatus BehaviorAttackTarget(behavior_params_t *params){
 
     ProjectileShoot(e, e->pos, e->attacks[i].params->dir, e->attacks[i].damage); 
 
-    e->attacks[i].cooldown->is_complete = false;      
+    e->attacks[i].cooldown->is_complete = false;
+    StatChangeValue(e,&e->stats[STAT_AMMO],-1);    
     return BEHAVIOR_SUCCESS;
     /*if(e->attacks[i].attack(e->attacks[i].params))
     return BEHAVIOR_SUCCESS;
@@ -328,8 +329,8 @@ BehaviorStatus BehaviorStartEvent(behavior_params_t *params){
     return BEHAVIOR_SUCCESS;
 
   int dur = params->duration;
-  if(event_durations[params->event].ev!=EVENT_NONE)
-    dur = event_durations[params->event].dur.current;
+  if(LevelCurrent()->event_durations[params->event].ev!=EVENT_NONE)
+    dur = LevelCurrent()->event_durations[params->event].dur.current;
 
   AddEvent(o->events, InitCooldown(params->duration,params->event,NULL,NULL));
   return BEHAVIOR_SUCCESS;

@@ -136,8 +136,6 @@ typedef struct {
   float     scale;
 } sprite_slice_t;
 
-void DrawSlice(Texture2D tex, sprite_slice_t *slice, Vector2 position,float rot);
-
 typedef struct{
   int             num_sprites;
   sprite_slice_t  *sprites[1024];
@@ -162,6 +160,7 @@ typedef struct {
   struct ent_s    *owner;
 } sprite_t;
 
+void DrawSlice(Texture2D tex, sprite_t *spr, Vector2 position,float rot);
 sprite_t* InitSprite(const char* tag, sprite_sheet_data_t* spritesheet);
 sprite_t* InitSpriteByIndex(int index, sprite_sheet_data_t* spritesheet);
 bool FreeSprite(sprite_t* s);

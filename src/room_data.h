@@ -12,7 +12,6 @@
 
 #define ROOM_LEVEL_WAVE_COUNT 12
 #define ROOM_LEVEL_COUNT 3
-
 typedef enum {
   ENT_PLAYER,
   ENT_SHIELD,
@@ -98,6 +97,7 @@ typedef struct {
   int damage;
   int	aggro_range;
   int	num_attacks;
+  int reload_rate;
   const char* attacks;
   int	team_enum;
 } ObjectInstance;
@@ -116,18 +116,18 @@ typedef struct {
 } ProjectileInstance;
 
 static const ObjectInstance room_instances[] = {
-  {ENT_PLAYER,"ent_data", "player", 72,416, 288, 0,0, 200,15, 0, 0,450,1,"basic_bullet",0},
-  {ENT_SHIELD,"ent_data", "shield", 64,1664, 608, 43,0,1, 0, 0, 0,450,0,"",0},
-  {ENT_MOB,"ent_data", "Drone", 56,1248, 128, 37,2,24, 16, 4, 3,680, 1,"basic_bullet",1},
-  {ENT_SWARMER,"ent_data", "Drone", 56,1248, 128, 37,1,24, 8, 3.1f, 8,680, 1,"basic_bullet",1},
-  {ENT_DRONE,"ent_data", "Drone", 56,1248, 128, 37,1,24, 8, 3.1f, 8,680, 1,"basic_bullet",1},
-  {ENT_HUNTER,"ent_data", "Hunter", 64,1248, 128, 7,2,36, 7.6, 2.7f, 9,620, 1,"basic_bullet",1},
+  {ENT_PLAYER,"ent_data", "player", 72,416, 288, 0,0, 200,15, 0, 0,450,1,0,"basic_bullet",0},
+  {ENT_SHIELD,"ent_data", "shield", 64,1664, 608, 43,0,1, 0, 0, 0,450,0,0,"",0},
+  {ENT_MOB,"ent_data", "Drone", 56,1248, 128, 37,2,24, 16, 4, 3,680, 1,30,"basic_bullet",1},
+  {ENT_SWARMER,"ent_data", "Drone", 56,1248, 128, 37,1,24, 8, 3.1f, 5,680, 5,30,"basic_bullet",1},
+  {ENT_DRONE,"ent_data", "Drone", 56,1248, 128, 37,1,24, 8, 3.1f, 7,680, 6,27,"basic_bullet",1},
+  {ENT_HUNTER,"ent_data", "Hunter", 64,1248, 128, 7,2,36, 7.6, 2.7f, 9,620, 4,34,"basic_bullet",1},
 };
 
 #define ROOM_INSTANCE_COUNT 3
 
 static const ProjectileInstance room_projectiles[] = {
-  {ENT_BULLET,"projectile_data", "basic_bullet", 16,41, 0,15,25,650,1},
+  {ENT_BULLET,"projectile_data", "basic_bullet", 16,41, 0,18,25,650,1},
 };
 
 #define ROOM_PROJECTILE_COUNT 1
