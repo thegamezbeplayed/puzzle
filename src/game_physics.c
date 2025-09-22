@@ -30,11 +30,11 @@ rigid_body_t* InitRigidBody(ent_t* owner, Vector2 pos, float radius){
   b->forces[FORCE_IMPULSE] = ForceBasic(FORCE_IMPULSE);
   b->forces[FORCE_IMPULSE].on_react = ReactionBumpForce;
   b->forces[FORCE_IMPULSE].threshold = 1.5F;
-  b->forces[FORCE_IMPULSE].friction = Vector2FromXY(0.925,0.925);
+  b->forces[FORCE_IMPULSE].friction = Vector2FromXY(0.9,0.9);
   b->counter_force[FORCE_STEERING] = FORCE_IMPULSE;
   b->counter_force[FORCE_IMPULSE] = FORCE_NONE;
   b->counter_force[FORCE_NONE] = FORCE_NONE;
-  b->restitution = .5;  
+  b->restitution = .45;  
   b->is_static = false;
   b->simulate = false;
   b->col_rate = 4;

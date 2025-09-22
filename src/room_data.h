@@ -18,10 +18,20 @@ typedef enum {
   ENT_MOB,
   ENT_SWARMER,
   ENT_DRONE,
+  ENT_SUPER_DRONE,
+  ENT_BATTLE_DRONE,
   ENT_HUNTER,
   ENT_BULLET,
   ENT_BLANK
 }EntityType;
+
+static EntityType upgrade_next[ENT_BLANK] = {
+  [ENT_MOB]   = ENT_DRONE,
+  [ENT_DRONE]   = ENT_SUPER_DRONE,
+  [ENT_SUPER_DRONE]   = ENT_BATTLE_DRONE,
+  [ENT_BATTLE_DRONE]   = ENT_BLANK,
+  [ENT_HUNTER]   = ENT_BATTLE_DRONE,
+};
 
 typedef struct {
   unsigned char id;
@@ -59,16 +69,18 @@ static const BehaviorData room_behaviors[] = {
   {"idle_state",false,BT_LEAF,LeafStartState,EVENT_SPAWN,STATE_NONE,OBJECT_PAUSE,0,0,{}},
   {"finish_state",false,BT_LEAF,LeafStartState,EVENT_SPAWN,STATE_NONE,OBJECT_FINISH,0,0,{}},
   {"end_state",false,BT_LEAF,LeafStartState,EVENT_SPAWN,STATE_NONE,OBJECT_END,0,0,{}},
+  {"end_state",false,BT_LEAF,LeafStartState,EVENT_SPAWN,STATE_NONE,OBJECT_END,0,0,{}},
   {"Load", true,BT_SEQUENCE,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,3,{"start_event","check_start_event","start_state"}},
   {"spawn_ent",false,BT_LEAF,LeafSpawnEnt,EVENT_SPAWN,STATE_NONE,OBJECT_RUN,0,0,{}},
   {"Run", false,BT_SEQUENCE,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,2,{"spawn_ent","idle_state"}},
   {"Check", true,BT_SELECTOR,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,2,{"Run","finish_state"}},
   {"Prep", true,BT_SEQUENCE,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,3,{"start_spawn","check_spawn_event","run_state"}},
+  {"Finish", true,BT_SEQUENCE,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,3,{"start_event","check_start_event","end_state"}},
 };
-#define ROOM_BEHAVIOR_COUNT 14
+#define ROOM_BEHAVIOR_COUNT 16
 
 static const SpawnerInstance room_spawners[] = {
-  {0, 0,"spawn_data", 64,856, 4, {[ENT_DRONE]=4},74},
+  {0, 0,"spawn_data", 64,856, 3, {[ENT_DRONE]=4},74},
   {1, 0,"spawn_data", 64,64, 4, {[ENT_DRONE]=4},54},
   {2, 0,"spawn_data", 1534,856, 4, {[ENT_DRONE]=4},54},
   {0, 1,"spawn_data", 64,64, 4, {[ENT_DRONE]=4},54},
@@ -76,10 +88,10 @@ static const SpawnerInstance room_spawners[] = {
   {2, 1,"spawn_data", 1534,64, 4, {[ENT_DRONE]=4},54},
   {3, 1,"spawn_data", 64,856, 4, {[ENT_DRONE]=4},74},
   {0, 2,"spawn_data", 64,64, 5, {[ENT_DRONE]=5},54},
-  {1, 2,"spawn_data", 1534,856, 4, {[ENT_HUNTER]=4},54},
-  {2, 2,"spawn_data", 64,64, 5, {[ENT_DRONE]=5},54},
-  {3, 2,"spawn_data", 1534,64, 5, {[ENT_DRONE]=5},54},
-  {4, 2,"spawn_data", 1534,64, 5, {[ENT_DRONE]=5},54}
+  {1, 2,"spawn_data", 1534,856, 3, {[ENT_HUNTER]=3},54},
+  {2, 2,"spawn_data", 64,64, 4, {[ENT_DRONE]=4},54},
+  {3, 2,"spawn_data", 1534,64, 4, {[ENT_DRONE]=4},54},
+  {4, 2,"spawn_data", 1534,64, 5, {[ENT_DRONE]=4},54}
 };
 
 typedef struct {
@@ -92,8 +104,8 @@ typedef struct {
   int sprite_sheet_index;
   int points;
   int health;
-  int speed;
-  int accel;
+  float speed;
+  float accel;
   int damage;
   int	aggro_range;
   int	num_attacks;
@@ -120,7 +132,9 @@ static const ObjectInstance room_instances[] = {
   {ENT_SHIELD,"ent_data", "shield", 64,1664, 608, 43,0,1, 0, 0, 0,450,0,0,"",0},
   {ENT_MOB,"ent_data", "Drone", 56,1248, 128, 37,2,24, 16, 4, 3,680, 1,30,"basic_bullet",1},
   {ENT_SWARMER,"ent_data", "Drone", 56,1248, 128, 37,1,24, 8, 3.1f, 5,680, 5,30,"basic_bullet",1},
-  {ENT_DRONE,"ent_data", "Drone", 56,1248, 128, 37,1,24, 8, 3.1f, 7,680, 6,27,"basic_bullet",1},
+  {ENT_DRONE,"ent_data", "Drone", 54,1248, 128, 37,1,24, 8, 3.1f, 7,680, 6,27,"basic_bullet",1},
+  {ENT_SUPER_DRONE,"ent_data", "Drone", 56,1248, 128, 38,2,32, 8.3, 3.3f, 5,680, 6,27,"basic_bullet",1},
+  {ENT_BATTLE_DRONE,"ent_data", "Drone", 64,1248, 128, 36,4,48, 8.3, 2.1f, 9,690, 4,17,"basic_bullet",1},
   {ENT_HUNTER,"ent_data", "Hunter", 64,1248, 128, 7,2,36, 7.6, 2.7f, 9,620, 4,34,"basic_bullet",1},
 };
 

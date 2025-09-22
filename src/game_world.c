@@ -468,6 +468,7 @@ void GameProcessEnd(){
 }
 
 void AddPoints(float mul,float points, Vector2 pos){
+  //TraceLog(LOG_INFO,"===Add %0.2f Points===",points*mul);
   world.points+=mul*points;
   if(mul < 2)
     return;

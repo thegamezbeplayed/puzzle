@@ -61,6 +61,7 @@ ent_t* InitEnt(ObjectInstance data){
   e->events = InitEvents();
   if(e->team == TEAM_ENEMIES){
     cooldown_t* cd =InitCooldown(data.reload_rate,EVENT_ATTACK_PREPARE,StatMaxOut_Adapter,&e->stats[STAT_AMMO]);
+    cd->is_recycled = true;
     AddEvent(e->events,cd);
 
     e->stats[STAT_AMMO] = InitStatOnMax(STAT_AMMO,data.num_attacks);

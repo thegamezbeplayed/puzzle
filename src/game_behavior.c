@@ -328,11 +328,7 @@ BehaviorStatus BehaviorStartEvent(behavior_params_t *params){
   if(CheckEvent(o->events, params->event))
     return BEHAVIOR_SUCCESS;
 
-  int dur = params->duration;
-  if(LevelCurrent()->event_durations[params->event].ev!=EVENT_NONE)
-    dur = LevelCurrent()->event_durations[params->event].dur.current;
-
-  AddEvent(o->events, InitCooldown(params->duration,params->event,NULL,NULL));
+  ResetEvent(o->events, params->event);
   return BEHAVIOR_SUCCESS;
 }
 
@@ -352,7 +348,7 @@ BehaviorStatus BehaviorSpawnEnt(behavior_params_t *params){
   if(CheckEvent(o->events, params->event))
     return BEHAVIOR_RUNNING;
 
-  if(SpawnEnt(o))
+  //if(SpawnEnt(o))
     return BEHAVIOR_SUCCESS;
 
   return BEHAVIOR_FAILURE;

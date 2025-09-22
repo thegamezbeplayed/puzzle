@@ -15,6 +15,7 @@
 #define GRID_STEP 32
 
 #define MAX_ENTS 64  
+#define MAX_SPAWNS 8  
 #define MAX_ATTACKS 8
 
 #define RATIO(s) ((s).ratio(&(s)))
@@ -196,7 +197,7 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s);
 bool CanChangeState(EntityState old, EntityState s);
 
 typedef struct {
-  EntityType   reference_ents[8];
+  EntityType   reference_ents[MAX_SPAWNS];
   int          num_references;
 }entity_pool_t;
 
@@ -204,7 +205,8 @@ entity_pool_t* InitEntityPool();
 //===ENT_T==>
 //====GAME_OBJECT_T===>
 typedef struct game_object_s{
-  unsigned char   id;
+  unsigned int   id;
+  unsigned int   level_id;
   Vector2         pos;
   ObjectState     state;
   events_t        *events;

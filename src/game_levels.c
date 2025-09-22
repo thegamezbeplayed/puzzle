@@ -5,7 +5,8 @@ difficulty_modifier_t level_mods[MOD_DONE] = {
   {.type = MOD_NONE},
   {.type = MOD_LEVEL_DIFF, .denom = 1,.amount = 0.33f, .modFn = ModifyLevelDifficulty},
   {.type = MOD_LEVEL_POINTS, .denom = 150,.amount = 1, .modFn = ModifyLevelPoints},
-  {.type = MOD_MOB_UPGRADE, .denom = 150,.amount = 1, .modFn = ModifyMobUpgrade},
+  {.type = MOD_MOB_UPGRADE, .denom = 200,.amount = 1, .modFn = ModifyMobUpgrade},
+  {.type = MOD_MOB_COUNT, .denom = 125,.amount = 1, .modFn = ModifyMobCount},
   {.type = MOD_WAVE_INTERVAL, .denom = 100, .amount = -6, .modFn = ModifyWaveInterval},
 };
 
@@ -44,14 +45,19 @@ void OnLevelStateChange(level_t *l, LevelState state){
       break;
     case LEVEL_RUNNING:
       SetObjectState(l->mob_spawners[0],OBJECT_START);
+      break;
     case LEVEL_COMPLETE:
       AddPoints(1,l->points,VECTOR2_CENTER_SCREEN);
+      break;
     default:
       break;
   }
 }
 
 bool CanChangeLevelState(LevelState old, LevelState s){
+  if(old == s)
+    return false;
+
   return true;
 }
 
@@ -94,23 +100,13 @@ void LevelLoadWave(unsigned int index){
 }
 
 void LevelStep(){
-  bool end = true;
   switch(CURRENT_LEVEL->state){
     case LEVEL_RUNNING:
-      for(int i = 0; i< CURRENT_LEVEL->num_spawners; i++){
+      for(int i = 0; i< CURRENT_LEVEL->num_spawners; i++)
         StepObject(CURRENT_LEVEL->mob_spawners[i]);
-        if(CURRENT_LEVEL->spawns->num_references > 0)
-          end = false;
-      }
       break;
     default:
-      end = false;
       break;
-  }
-  if(end){
-  ent_t* any[MAX_ENTS];
-  if(WorldGetEnts(any,FilterEntNotOnTeam,player)==0)
-    SetLevelState(CURRENT_LEVEL,LEVEL_FINISH);
   }
 }
 
@@ -123,6 +119,7 @@ entity_pool_t* InitEntityPool(void) {
 void InitLevel(level_t *l){
   l->current_spawner = 0;
   l->num_spawners = 0;
+  l->spawner_done = 0u;
   for (int i = 0; i < ROOM_LEVEL_WAVE_COUNT; i++) {
     if(room_spawners[i].level != l->luid)
       continue;
@@ -132,16 +129,20 @@ void InitLevel(level_t *l){
     int idx = l->num_spawners;
     l->spawns[idx] = *InitEntityPool(); // or store pointers too
     l->mob_spawners[idx] = InitObjectStatic(room_spawners[i]);
+    l->mob_spawners[idx]->level_id =room_spawners[i].level;
+    
     l->num_spawners++;
   }
 
 }
 
 void GenerateLevels(int num_levels, bool inc_diff){
-  //StatChangeValue(NULL,&event_durations[EVENT_WAVE].dur,-6);
-  for (int i = 0; i < num_levels; i++){
-    //levels.levels[i]->difficulty++;
+  int num_upgrades = 3;
+  for (int i = num_levels-1; i > -1; i--){
     InitLevel(levels.levels[i]);
+    if(num_upgrades <= 0)
+      continue;
+
     for (int j = 0; j < MOD_DONE; j++){
       if(levels.levels[i]->modifiers[j]==0)
         continue;
@@ -151,8 +152,10 @@ void GenerateLevels(int num_levels, bool inc_diff){
         if(r > levels.levels[i]->difficulty)
           continue;
         level_mods[j].level_id = levels.levels[i]->luid;
-        level_mods[j].modFn(&level_mods[j]);
-        TraceLog(LOG_INFO,"Modify level %d with mod %d",i,j);
+        if(level_mods[j].modFn(&level_mods[j])){
+          num_upgrades--;
+          TraceLog(LOG_INFO,"Modify level %d with mod %d",i,j);
+        }
       }
     }
 
@@ -169,6 +172,8 @@ void RegisterPoolRef(unsigned int level_index,unsigned int index, EntityType ref
 }
 
 bool SpawnEnt(game_object_t* spawner){
+  if(spawner->state != OBJECT_RUN)
+    return false;
 
   int ref_ent = ENT_MOB;
   for (int i = ENT_MOB; i < ENT_BLANK; i++){
@@ -195,7 +200,20 @@ bool ModifyWaveInterval(difficulty_modifier_t* self){
 }
 
 bool ModifyMobUpgrade(difficulty_modifier_t* self){
+  level_t *l = levels.levels[self->level_id];
+  for (int i = l->num_spawners-1; i >-1; i--){
+    entity_pool_t *p = &l->spawns[i];
 
+    for (int j = p->num_references-1; j > -1; j--){
+      if(upgrade_next[p->reference_ents[j]] == ENT_BLANK)
+        continue;
+
+      p->reference_ents[j] = upgrade_next[p->reference_ents[j]];
+      return true;
+    }
+  }
+
+  return false;
 }
 
 bool ModifyLevelDifficulty(difficulty_modifier_t* self){
@@ -208,4 +226,27 @@ bool ModifyLevelPoints(difficulty_modifier_t* self){
   levels.levels[self->level_id]->points+=self->amount;
 
   return true;
+}
+
+bool ModifyMobCount(difficulty_modifier_t* self){
+ level_t *l = levels.levels[self->level_id];
+  for (int i = l->num_spawners-1; i >-1; i--){
+    entity_pool_t *p = &l->spawns[i];
+
+    if(p->num_references >= MAX_SPAWNS)
+      continue;
+
+    p->reference_ents[p->num_references++] = p->reference_ents[0];
+    return true;
+  }
+
+  return false;
+}
+
+void LevelSyncSpawners(unsigned int level_index, unsigned int spawner_index){
+  levels.levels[level_index]->spawner_done |= (1u << spawner_index);
+
+    if (levels.levels[level_index]->spawner_done == (1u << levels.levels[level_index]->num_spawners) - 1) {
+        SetLevelState(levels.levels[level_index], LEVEL_FINISH);
+    }
 }
