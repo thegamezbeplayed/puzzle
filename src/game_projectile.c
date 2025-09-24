@@ -99,7 +99,7 @@ void ProjectileShoot(ent_t* owner, Vector2 pos, Vector2 dir,int damage){
   PhysicsInitOnce(p->body);
   EntInitOnce(p);
   PhysicsAccelDir(p->body,FORCE_STEERING,dir);
-  p->attacks[0].damage = damage;
+  p->attacks[ATTACK_THORNS].damage = damage;
 }
 
 bool ProjectileCollide(rigid_body_t* a, rigid_body_t* b){

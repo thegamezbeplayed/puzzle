@@ -1,13 +1,15 @@
 #include "game_process.h"
 #include "game_tools.h"
 
+float total_upgrades = 3.66;
+
 difficulty_modifier_t level_mods[MOD_DONE] = {
   {.type = MOD_NONE},
   {.type = MOD_LEVEL_DIFF, .denom = 1,.amount = 0.33f, .modFn = ModifyLevelDifficulty},
-  {.type = MOD_LEVEL_POINTS, .denom = 150,.amount = 1, .modFn = ModifyLevelPoints},
-  {.type = MOD_MOB_UPGRADE, .denom = 200,.amount = 1, .modFn = ModifyMobUpgrade},
-  {.type = MOD_MOB_COUNT, .denom = 125,.amount = 1, .modFn = ModifyMobCount},
-  {.type = MOD_WAVE_INTERVAL, .denom = 100, .amount = -6, .modFn = ModifyWaveInterval},
+  {.type = MOD_LEVEL_POINTS, .denom = 250,.amount = 1, .modFn = ModifyLevelPoints},
+  {.type = MOD_MOB_UPGRADE, .denom = 180,.amount = 1, .modFn = ModifyMobUpgrade},
+  {.type = MOD_MOB_COUNT, .denom = 120,.amount = 1, .modFn = ModifyMobCount},
+  {.type = MOD_WAVE_INTERVAL, .denom = 80, .amount = -6, .modFn = ModifyWaveInterval},
 };
 
 level_order_t levels;
@@ -30,6 +32,13 @@ void SetLevelState(level_t *l, LevelState state){
   l->state = state;
 
   OnLevelStateChange(l, state);
+}
+
+level_t* GetLevel(unsigned int index){
+  if(index < 4)
+    return levels.levels[index];
+
+  return NULL;
 }
 
 void OnLevelStateChange(level_t *l, LevelState state){
@@ -123,7 +132,7 @@ void InitLevel(level_t *l){
   for (int i = 0; i < ROOM_LEVEL_WAVE_COUNT; i++) {
     if(room_spawners[i].level != l->luid)
       continue;
-    if(l->state == LEVEL_NONE)
+    if(l->state != LEVEL_COMPLETE)
       memcpy(l->event_durations, event_durations, sizeof(l->event_durations));
     
     int idx = l->num_spawners;
@@ -137,10 +146,10 @@ void InitLevel(level_t *l){
 }
 
 void GenerateLevels(int num_levels, bool inc_diff){
-  int num_upgrades = 3;
+  int num_upgrades = (int) total_upgrades;
   for (int i = num_levels-1; i > -1; i--){
     InitLevel(levels.levels[i]);
-    if(num_upgrades <= 0)
+    if(num_upgrades < 0)
       continue;
 
     for (int j = 0; j < MOD_DONE; j++){
@@ -149,17 +158,17 @@ void GenerateLevels(int num_levels, bool inc_diff){
 
       for (int k = 0; k < levels.levels[i]->modifiers[j]; k++){
         int r = GetRandomValue(0,level_mods[j].denom);
-        if(r > levels.levels[i]->difficulty)
+        if(r > levels.levels[i]->difficulty){
+          total_upgrades += levels.levels[i]->difficulty;
           continue;
+        }
         level_mods[j].level_id = levels.levels[i]->luid;
         if(level_mods[j].modFn(&level_mods[j])){
           num_upgrades--;
-          TraceLog(LOG_INFO,"Modify level %d with mod %d",i,j);
         }
       }
     }
 
-    TraceLog(LOG_INFO,"Reset Level %d diffuclty %0.1f",i,levels.levels[i]->difficulty);
   }
 
   LevelBegin(levels.levels[0]);
@@ -196,7 +205,8 @@ bool SpawnEnt(game_object_t* spawner){
 
 bool ModifyWaveInterval(difficulty_modifier_t* self){
   level_t *l = levels.levels[self->level_id];
-  return StatChangeValue(NULL,&l->event_durations[EVENT_WAVE].dur,-6);
+  TraceLog(LOG_INFO,"[MOD]====level %d spawn rate now %d===[MOD]",self->level_id, l->event_durations[EVENT_WAVE].dur.current + self->amount);
+  return StatChangeValue(NULL,&l->event_durations[EVENT_WAVE].dur,self->amount);
 }
 
 bool ModifyMobUpgrade(difficulty_modifier_t* self){
@@ -209,6 +219,7 @@ bool ModifyMobUpgrade(difficulty_modifier_t* self){
         continue;
 
       p->reference_ents[j] = upgrade_next[p->reference_ents[j]];
+      TraceLog(LOG_INFO,"[MOD]====level %d mob upgraded===[MOD]",self->level_id);
       return true;
     }
   }
@@ -218,13 +229,13 @@ bool ModifyMobUpgrade(difficulty_modifier_t* self){
 
 bool ModifyLevelDifficulty(difficulty_modifier_t* self){
   levels.levels[self->level_id]->difficulty+=self->amount;
-
+  TraceLog(LOG_INFO,"[MOD]====level %d difficulty now %0.1f===[MOD]",self->level_id, levels.levels[self->level_id]->difficulty);
   return true;
 }
 
 bool ModifyLevelPoints(difficulty_modifier_t* self){
   levels.levels[self->level_id]->points+=self->amount;
-
+  TraceLog(LOG_INFO,"[MOD]====level %d points now %0.0f ===[MOD]",self->level_id, levels.levels[self->level_id]->points);
   return true;
 }
 
@@ -237,6 +248,8 @@ bool ModifyMobCount(difficulty_modifier_t* self){
       continue;
 
     p->reference_ents[p->num_references++] = p->reference_ents[0];
+    self->denom += p->num_references;
+    TraceLog(LOG_INFO,"[MOD]====level %d mob count now %d===[MOD]",self->level_id, p->num_references );
     return true;
   }
 

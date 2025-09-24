@@ -14,18 +14,37 @@ typedef struct{
 }render_text_t;
 
 typedef enum {
+  RANGE_NONE =0,
+  RANGE_COL = 64,
+  RANGE_CLOSE = 96,
+  RANGE_COMMON = 480,
+  RANGE_FAR = 640
+}RangeLengths;
+
+typedef enum{
+  INTERVAL_NONE =0,
+  INTERVAL_IMEDIATE = 6,
+  INTERVAL_FAST = 18,
+  INTERVAL_NORMAL = 24,
+  INTERVAL_SLOW = 30
+}IntervalRates;
+typedef enum {
   ATTACK_MELEE,
-  ATTACK_RANGED
+  ATTACK_RANGED,
+  ATTACK_THORNS,
+  ATTACK_BLANK
 } AttackType;
 //===STATS===>
 typedef enum{
   STAT_HEALTH,
   STAT_DAMAGE,
+  STAT_POWER,
   STAT_SPEED,
   STAT_ACCEL,
   STAT_POINTS,
   STAT_DURATION,
   STAT_AMMO,
+  STAT_RANGE,
   STAT_BLANK//sentinel
 }StatType;
 

@@ -172,6 +172,7 @@ void AddPoints(float mul,float points,Vector2 pos);
 const char* GetPoints();
 int LevelGetCurrentWaveNum();
 level_t* LevelCurrent();
+level_t* GetLevel(unsigned int index);
 void InitLevelEvents();
 void GenerateLevels(int num_levels, bool inc_diff);
 void LevelStep();

@@ -57,20 +57,14 @@ ent_t* InitEnt(ObjectInstance data){
 
   e->stats[STAT_SPEED] = InitStatOnMax(STAT_SPEED,data.speed);
   e->stats[STAT_ACCEL] = InitStatOnMax(STAT_ACCEL,data.accel);
+  e->stats[STAT_POWER] = InitStatOnMax(STAT_POWER,data.damage);
 
   e->events = InitEvents();
   if(e->team == TEAM_ENEMIES){
-    cooldown_t* cd =InitCooldown(data.reload_rate,EVENT_ATTACK_PREPARE,StatMaxOut_Adapter,&e->stats[STAT_AMMO]);
-    cd->is_recycled = true;
-    AddEvent(e->events,cd);
-
-    e->stats[STAT_AMMO] = InitStatOnMax(STAT_AMMO,data.num_attacks);
-    e->stats[STAT_AMMO].on_stat_empty = EntReload;
-
-    ProjectileInstance instance = ProjectileGetData(data.attacks);
-    e->attacks[0] = InitAttack(e,instance);
-    e->attacks[0].damage*=data.damage;
-    e->num_attacks = 1;
+    for(int i = 0; i < ATTACK_BLANK;i++){
+      e->attacks[i] = InitAttack(e,data.attacks[i]);
+      e->num_attacks++;
+    }
     e->stats[STAT_POINTS] = InitStatOnMax(STAT_POINTS,data.points);
     e->control = InitController(data);
     e->control->ranges[RANGE_AGGRO] = data.aggro_range;
@@ -173,23 +167,49 @@ void EntDestroy(ent_t* e){
   e->control = NULL;
 }
 
-attack_t InitAttack(ent_t* owner, ProjectileInstance data){
+attack_t InitAttack(ent_t* owner, AttackData data){
   attack_t a = (attack_t){0};
 
-  strcpy(a.name,data.name);
   a.owner = owner;
   a.duid = owner->uid;
-  a.damage = data.damage;
-  a.duration = data.duration;
-  a.attack_type = ATTACK_RANGED;
-  a.reach = data.attack_range;
+  a.damage = data.base_damage + data.damage_mod * owner->stats[STAT_POWER].current;
+  //a.duration = data.duration;
+  a.attack_type = data.type;
+  a.reach = InitStatOnMax(STAT_RANGE,data.range);
+  
+  if(data.type == ATTACK_RANGED){
+    owner->stats[STAT_AMMO] = InitStatOnMax(STAT_AMMO,data.ammo);
+    owner->stats[STAT_AMMO].on_stat_empty = EntReload;
+    a.reach.min = RANGE_CLOSE;
+    cooldown_t* cd =InitCooldown(data.reload,EVENT_ATTACK_PREPARE,StatMaxOut_Adapter,&owner->stats[STAT_AMMO]);
+    cd->is_recycled = true;
+    AddEvent(owner->events,cd);
+    a.attack = AttackShoot;
+    //ProjectileInstance instance = ProjectileGetData(data.attacks);
+  }
+  else if(data.type == ATTACK_THORNS){
+    owner->body->forces[FORCE_STEERING].on_react = CollisionDamage;
+  }
   //a.attack = (AttackFunc)data.fn;
-  cooldown_t* cd =InitCooldown(data.fire_rate,EVENT_ATTACK_RATE,NULL,NULL); 
+  cooldown_t* cd =InitCooldown(data.rate,EVENT_ATTACK_RATE,NULL,NULL); 
   cd->is_recycled = true;
   a.params = &empty_attack_params;
   int cId = AddEvent(owner->events,cd); 
   a.cooldown = &owner->events->cooldowns[cId];
   return a;
+}
+
+bool AttackShoot(attack_t* a, ent_t *e){
+  ProjectileShoot(e, e->pos, a->params->dir, a->damage);
+
+  a->cooldown->is_complete = false;
+  a->cooldown->elapsed = 0;
+  StatChangeValue(e,&e->stats[STAT_AMMO],-1);
+  return true;
+}
+
+bool AttackMelee(attack_t* a, ent_t *e){
+
 }
 
 void EntPrepStep(ent_t* e){
@@ -207,6 +227,9 @@ bool AttackPrepare(attack_t* a){
     target = a->owner->control->destination;
 
   if(v2_compare(target, VEC_UNSET))
+    return false;
+
+  if(Vector2Distance(target,a->owner->pos)< a->reach.min)
     return false;
 
   a->params->dir = VectorDirectionBetween(a->owner->pos, target);

@@ -114,14 +114,13 @@ force_t ForceBasic(ForceType type);
 typedef struct{
   Vector2 dir;
 }attack_params_t;
+typedef struct attack_s attack_t;
+typedef bool (*AttackFunc)(struct attack_s* a, struct ent_s* e);
 
-typedef bool (*AttackFunc)(attack_params_t* params);
-
-typedef struct {
-  char              name[MAX_NAME_LEN];
+typedef struct attack_s{
   int               duid;
   int               duration;
-  int               reach;
+  stat_t            reach;
   int               damage;
   cooldown_t*       cooldown;
   AttackType        attack_type;
@@ -131,9 +130,11 @@ typedef struct {
   struct ent_s* owner;
 }attack_t;
 
-attack_t InitAttack(ent_t* owner,ProjectileInstance data);
+attack_t InitAttack(ent_t* owner,AttackData data);
 bool AttackPrepare(attack_t* a);
-bool EntAttack(attack_params_t* params);
+bool AttackShoot(attack_t *a, ent_t* e);
+bool AttackDefault(attack_t *a, ent_t* e);
+
 typedef enum{
   RANGE_AGGRO,
   RANGE_LOITER,
@@ -165,7 +166,7 @@ typedef struct ent_s{
   int                   lastdamage_sourceid;
   int                   num_attacks;
   int                   active_attack_id;
-  attack_t              attacks[MAX_ATTACKS];
+  attack_t              attacks[ATTACK_BLANK];
   stat_t                stats[STAT_BLANK];
   float                 facing;
   sprite_t              *sprite;
@@ -215,6 +216,7 @@ typedef struct game_object_s{
 bool SpawnEnt(game_object_t* spawner);
 game_object_t* InitObjectStatic(SpawnerInstance inst);
 void SetObjectState(game_object_t *obj, ObjectState state);
+void StepObjectState(game_object_t *obj);
 void StepObject(game_object_t *obj);
 bool CanChangeObjectState(ObjectState old, ObjectState s);
 void RegisterPoolRef(unsigned int level_index, unsigned int index, EntityType ref);

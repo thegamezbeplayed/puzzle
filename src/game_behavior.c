@@ -7,11 +7,11 @@ static bt_register_entry_t BT_Registry[MAX_BEHAVIOR_TREE];
 static int registry_count = 0;
 
 void BT_RegisterTree(const char *name, JNode *root) {
-    if (registry_count < MAX_BEHAVIOR_TREE) {
-        BT_Registry[registry_count].name = strdup(name);
-        BT_Registry[registry_count].root = root;
-        registry_count++;
-    }
+  if (registry_count < MAX_BEHAVIOR_TREE) {
+    BT_Registry[registry_count].name = strdup(name);
+    BT_Registry[registry_count].root = root;
+    registry_count++;
+  }
 }
 
 behavior_tree_node_t *BehaviorGetTree(const char *name) {
@@ -74,39 +74,39 @@ behavior_tree_node_t *BuildTreeNode(const char *name) {
 }
 
 behavior_tree_node_t* BuildFromJNode(const JNode *jn) {
-    if (jn->type == JNODE_LEAF) {
-        // find leaf by name in registry; pass jn->params
-        for (int i=0; i<g_bt_leaves_count; ++i) {
-            if (strcmp(g_bt_leaves[i].name, jn->name) == 0) {
-                // if your factories need params, change factory signature:
-                // behavior_tree_node_t* (*factory)(behavior_params_t *params)
-                behavior_params_t *params = BuildBehaviorParams(jn->params); 
+  if (jn->type == JNODE_LEAF) {
+    // find leaf by name in registry; pass jn->params
+    for (int i=0; i<g_bt_leaves_count; ++i) {
+      if (strcmp(g_bt_leaves[i].name, jn->name) == 0) {
+        // if your factories need params, change factory signature:
+        // behavior_tree_node_t* (*factory)(behavior_params_t *params)
+        behavior_params_t *params = BuildBehaviorParams(jn->params); 
 
-              return g_bt_leaves[i].factory(params);
-            }
-        }
-        return NULL; // unknown leaf
+        return g_bt_leaves[i].factory(params);
+      }
     }
+    return NULL; // unknown leaf
+  }
 
-    // composite:
-    behavior_tree_node_t **kids = malloc(sizeof(*kids) * jn->child_count);
-    for (int i=0; i<jn->child_count; ++i) {
-        kids[i] = BuildFromJNode(jn->children[i]);
-    }
+  // composite:
+  behavior_tree_node_t **kids = malloc(sizeof(*kids) * jn->child_count);
+  for (int i=0; i<jn->child_count; ++i) {
+    kids[i] = BuildFromJNode(jn->children[i]);
+  }
 
-    switch(jn->type){
-      case JNODE_SEQUENCE:
-        return BehaviorCreateSequence(kids, jn->child_count);
-        break;
-      case JNODE_SELECTOR:
-        return BehaviorCreateSelector(kids, jn->child_count);
-        break;
-      case JNODE_CONCURRENT:
-        return BehaviorCreateConcurrent(kids, jn->child_count);
-        break;
-      default:
-        break;
-    }
+  switch(jn->type){
+    case JNODE_SEQUENCE:
+      return BehaviorCreateSequence(kids, jn->child_count);
+      break;
+    case JNODE_SELECTOR:
+      return BehaviorCreateSelector(kids, jn->child_count);
+      break;
+    case JNODE_CONCURRENT:
+      return BehaviorCreateConcurrent(kids, jn->child_count);
+      break;
+    default:
+      break;
+  }
 }
 
 behavior_params_t* BuildBehaviorParams(json_object* params){
@@ -269,9 +269,13 @@ BehaviorStatus BehaviorCanAttackTarget(behavior_params_t *params){
   if(e->stats[STAT_AMMO].current <1 || CheckEvent(e->events, EVENT_ATTACK_RATE))
     return BEHAVIOR_FAILURE;
 
-  for(int i = 0; i < e->num_attacks; i++){
+
+  for(int i = 0; i < ATTACK_THORNS; i++){
+    if(e->attacks[i].attack_type == ATTACK_BLANK)
+      continue;
+
     if(e->attacks[i].cooldown->is_complete){
-      if(PhysicsSimpleDistCheck(e->body,e->control->target->body)>e->attacks[i].reach)
+      if(PhysicsSimpleDistCheck(e->body,e->control->target->body)>e->attacks[i].reach.current)
 	continue;
 
       return BEHAVIOR_SUCCESS;
@@ -287,17 +291,21 @@ BehaviorStatus BehaviorAttackTarget(behavior_params_t *params){
   if(!e)
     return BEHAVIOR_FAILURE;
 
-  for(int i = 0; i < e->num_attacks; i++){
-    if(!e->attacks[i].cooldown->is_complete)
+  for(int i = 0; i <ATTACK_THORNS; i++){
+    if(e->attacks[i].attack_type == ATTACK_BLANK)
       continue;
 
+    if(!e->attacks[i].cooldown->is_complete)
+      continue;
+    
     if(!AttackPrepare(&e->attacks[i]))
       continue;
 
-    ProjectileShoot(e, e->pos, e->attacks[i].params->dir, e->attacks[i].damage); 
+    e->attacks[i].attack(&e->attacks[i],e);
+    //ProjectileShoot(e, e->pos, e->attacks[i].params->dir, e->attacks[i].damage); 
 
-    e->attacks[i].cooldown->is_complete = false;
-    StatChangeValue(e,&e->stats[STAT_AMMO],-1);    
+    //e->attacks[i].cooldown->is_complete = false;
+    //StatChangeValue(e,&e->stats[STAT_AMMO],-1);    
     return BEHAVIOR_SUCCESS;
     /*if(e->attacks[i].attack(e->attacks[i].params))
     return BEHAVIOR_SUCCESS;
@@ -320,6 +328,24 @@ BehaviorStatus BehaviorCheckEvent(behavior_params_t *params){
   return BEHAVIOR_SUCCESS;
 }
 
+BehaviorStatus BehaviorAddEvent(behavior_params_t *params){
+  struct game_object_s* o = params->obj;
+  if(!o || !o->control)
+    return BEHAVIOR_FAILURE;
+
+  if(CheckEvent(o->events, params->event))
+    return BEHAVIOR_SUCCESS;
+
+  int dur = params->duration;
+  CooldownCallback cb = NULL;
+
+  if(LevelCurrent()->event_durations[params->event].ev!=EVENT_NONE)
+    dur = LevelCurrent()->event_durations[params->event].dur.current;
+
+  AddEvent(o->events, InitCooldown(dur,params->event,cb,o));
+  return BEHAVIOR_SUCCESS;
+}
+
 BehaviorStatus BehaviorStartEvent(behavior_params_t *params){
   struct game_object_s* o = params->obj;
   if(!o || !o->control)
@@ -328,7 +354,14 @@ BehaviorStatus BehaviorStartEvent(behavior_params_t *params){
   if(CheckEvent(o->events, params->event))
     return BEHAVIOR_SUCCESS;
 
-  ResetEvent(o->events, params->event);
+  int dur = params->duration;
+  CooldownCallback cb = NULL;
+
+  if(LevelCurrent()->event_durations[params->event].ev!=EVENT_NONE)
+    dur = LevelCurrent()->event_durations[params->event].dur.current;
+
+  AddEvent(o->events, InitCooldown(dur,params->event,cb,o));
+
   return BEHAVIOR_SUCCESS;
 }
 

@@ -411,7 +411,7 @@ void CollisionReflect(rigid_body_t* a, rigid_body_t* b, ForceType t){
 
 void CollisionDamage(rigid_body_t* a, rigid_body_t* b, ForceType t){
   b->owner->lastdamage_sourceid = b->buid;
-  DamageEnt(b->owner,a->owner->attacks[0]);
+  DamageEnt(b->owner,a->owner->attacks[ATTACK_THORNS]);
   AudioPlayRandomSfx(SFX_ACTION,ACTION_SHOT);
 }
 

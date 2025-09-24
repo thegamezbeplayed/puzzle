@@ -141,6 +141,7 @@ BehaviorStatus BehaviorMoveToDestination(behavior_params_t *params);
 BehaviorStatus BehaviorCanAttackTarget(behavior_params_t *params);
 BehaviorStatus BehaviorAttackTarget(behavior_params_t *params);
 BehaviorStatus BehaviorStartEvent(behavior_params_t *params);
+BehaviorStatus BehaviorAddEvent(behavior_params_t *params);
 BehaviorStatus BehaviorCheckEvent(behavior_params_t *params);
 BehaviorStatus BehaviorStartState(behavior_params_t *params);
 BehaviorStatus BehaviorSpawnEnt(behavior_params_t *params);
@@ -156,6 +157,7 @@ static inline behavior_tree_node_t* LeafMoveToDestination(behavior_params_t *par
 static inline behavior_tree_node_t* LeafCanAttackTarget(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCanAttackTarget,params); }
 static inline behavior_tree_node_t* LeafAttackTarget(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorAttackTarget,params); }
 static inline behavior_tree_node_t* LeafStartEvent(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorStartEvent,params); }
+static inline behavior_tree_node_t* LeafAddEvent(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorAddEvent,params); }
 static inline behavior_tree_node_t* LeafCheckEvent(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCheckEvent,params); }
 static inline behavior_tree_node_t* LeafStartState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorStartState,params); }
 static inline behavior_tree_node_t* LeafSpawnEnt(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorSpawnEnt,params); }

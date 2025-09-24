@@ -70,12 +70,12 @@ static const BehaviorData room_behaviors[] = {
   {"finish_state",false,BT_LEAF,LeafStartState,EVENT_SPAWN,STATE_NONE,OBJECT_FINISH,0,0,{}},
   {"end_state",false,BT_LEAF,LeafStartState,EVENT_SPAWN,STATE_NONE,OBJECT_END,0,0,{}},
   {"end_state",false,BT_LEAF,LeafStartState,EVENT_SPAWN,STATE_NONE,OBJECT_END,0,0,{}},
-  {"Load", true,BT_SEQUENCE,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,3,{"start_event","check_start_event","start_state"}},
   {"spawn_ent",false,BT_LEAF,LeafSpawnEnt,EVENT_SPAWN,STATE_NONE,OBJECT_RUN,0,0,{}},
-  {"Run", false,BT_SEQUENCE,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,2,{"spawn_ent","idle_state"}},
+  {"Load", true,BT_SEQUENCE,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,3,{"start_event","check_start_event","start_state"}},
+  {"Run", false,BT_SEQUENCE,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,2,{"check_spawn_event","idle_state"}},
   {"Check", true,BT_SELECTOR,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,2,{"Run","finish_state"}},
   {"Prep", true,BT_SEQUENCE,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,3,{"start_spawn","check_spawn_event","run_state"}},
-  {"Finish", true,BT_SEQUENCE,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,3,{"start_event","check_start_event","end_state"}},
+  {"Finish", true,BT_SEQUENCE,NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,3,{"add_event","check_start_event","end_state"}},
 };
 #define ROOM_BEHAVIOR_COUNT 16
 
@@ -85,13 +85,44 @@ static const SpawnerInstance room_spawners[] = {
   {2, 0,"spawn_data", 1534,856, 4, {[ENT_DRONE]=4},54},
   {0, 1,"spawn_data", 64,64, 4, {[ENT_DRONE]=4},54},
   {1, 1,"spawn_data", 1534,64, 4, {[ENT_DRONE]=4},54},
-  {2, 1,"spawn_data", 1534,64, 4, {[ENT_DRONE]=4},54},
+  {2, 1,"spawn_data", 950,64, 4, {[ENT_DRONE]=4},54},
   {3, 1,"spawn_data", 64,856, 4, {[ENT_DRONE]=4},74},
   {0, 2,"spawn_data", 64,64, 5, {[ENT_DRONE]=5},54},
   {1, 2,"spawn_data", 1534,856, 3, {[ENT_HUNTER]=3},54},
   {2, 2,"spawn_data", 64,64, 4, {[ENT_DRONE]=4},54},
   {3, 2,"spawn_data", 1534,64, 4, {[ENT_DRONE]=4},54},
-  {4, 2,"spawn_data", 1534,64, 5, {[ENT_DRONE]=4},54}
+  {4, 2,"spawn_data", 950,64, 5, {[ENT_DRONE]=4},54}
+};
+
+typedef struct {
+  EntityType  ent_ref;
+  const char* engine_instance;
+  const char* name;
+  int	size;
+  int sprite_sheet_index;
+  int duration;
+  int fire_rate;
+  int speed;
+  int	attack_range;
+  int damage;
+} ProjectileInstance;
+
+typedef struct{
+  AttackType type;
+  int        ammo;
+  int        range;
+  int        rate;
+  int        reload;
+  int        base_damage;
+  float      damage_mod;
+  EntityType bul;
+}AttackData;
+
+static const AttackData attack_data[]={
+  {ATTACK_RANGED,5,RANGE_FAR,INTERVAL_FAST,INTERVAL_SLOW,1,1,ENT_BULLET},
+  {ATTACK_THORNS,1,RANGE_COL,INTERVAL_IMEDIATE,INTERVAL_NONE,1,0,ENT_BLANK},
+  {ATTACK_MELEE,1,RANGE_CLOSE,INTERVAL_SLOW,INTERVAL_SLOW,1,1,ENT_BLANK},
+  {ATTACK_BLANK,0,0,0,0,0,0,ENT_BLANK}
 };
 
 typedef struct {
@@ -108,34 +139,19 @@ typedef struct {
   float accel;
   int damage;
   int	aggro_range;
-  int	num_attacks;
-  int reload_rate;
-  const char* attacks;
+  AttackData attacks[ATTACK_BLANK];
   int	team_enum;
 } ObjectInstance;
 
-typedef struct {
-  EntityType  ent_ref;
-  const char* engine_instance;
-  const char* name;
-  int	size;
-  int sprite_sheet_index;
-  int duration;
-  int fire_rate;
-  int speed;
-  int	attack_range;
-  int damage;
-} ProjectileInstance;
-
 static const ObjectInstance room_instances[] = {
-  {ENT_PLAYER,"ent_data", "player", 72,416, 288, 0,0, 200,15, 0, 0,450,1,0,"basic_bullet",0},
-  {ENT_SHIELD,"ent_data", "shield", 64,1664, 608, 43,0,1, 0, 0, 0,450,0,0,"",0},
-  {ENT_MOB,"ent_data", "Drone", 56,1248, 128, 37,2,24, 16, 4, 3,680, 1,30,"basic_bullet",1},
-  {ENT_SWARMER,"ent_data", "Drone", 56,1248, 128, 37,1,24, 8, 3.1f, 5,680, 5,30,"basic_bullet",1},
-  {ENT_DRONE,"ent_data", "Drone", 54,1248, 128, 37,1,24, 8, 3.1f, 7,680, 6,27,"basic_bullet",1},
-  {ENT_SUPER_DRONE,"ent_data", "Drone", 56,1248, 128, 38,2,32, 8.3, 3.3f, 5,680, 6,27,"basic_bullet",1},
-  {ENT_BATTLE_DRONE,"ent_data", "Drone", 64,1248, 128, 36,4,48, 8.3, 2.1f, 9,690, 4,17,"basic_bullet",1},
-  {ENT_HUNTER,"ent_data", "Hunter", 64,1248, 128, 7,2,36, 7.6, 2.7f, 9,620, 4,34,"basic_bullet",1},
+  {ENT_PLAYER,"ent_data", "player", 72,416, 288, 0,0, 200,15, 0, 0,450,{},0},
+  {ENT_SHIELD,"ent_data", "shield", 64,1664, 608, 43,0,1, 0, 0, 0,450,{},0},
+  {ENT_MOB,"ent_data", "Drone", 56, -1, -1, 37,2,24, 16, 4, 3,680,{},1},
+  {ENT_SWARMER,"ent_data", "Drone", 56,-1, -1, 37,1,24, 8, 3.1f, 5,680,{[ATTACK_RANGED]=attack_data[0],[ATTACK_THORNS]=attack_data[1],[ATTACK_MELEE]=attack_data[3]},1},
+  {ENT_DRONE,"ent_data", "Drone", 54,-1, -1, 37,2,24, 8, 3.1f, 5,680,{[ATTACK_RANGED]=attack_data[0],[ATTACK_THORNS]=attack_data[1],[ATTACK_MELEE]=attack_data[3]},1},
+  {ENT_SUPER_DRONE,"ent_data", "Super Drone", 60,-1, -1, 38,3,30, 8, 3.1f, 5,680,{[ATTACK_RANGED]=attack_data[0],[ATTACK_THORNS]=attack_data[1]},1},
+  {ENT_BATTLE_DRONE,"ent_data", "Battle Drone", 60,-1, -1, 36, 4,36, 8, 3.1f, 5,680,{[ATTACK_RANGED]=attack_data[0],[ATTACK_THORNS]=attack_data[1]},1},
+  {ENT_HUNTER,"ent_data", "Hunter", 64,-1, -1, 7,2,36, 7.6, 2.7f, 9,620,{[ATTACK_RANGED]=attack_data[0],[ATTACK_THORNS]=attack_data[3],[ATTACK_MELEE]=attack_data[2]},1},
 };
 
 #define ROOM_INSTANCE_COUNT 3
