@@ -3,7 +3,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <json-c/json.h>
 #include "game_common.h"
 
 #define MAX_BEHAVIOR_TREE 8
@@ -13,8 +12,6 @@
 #define CALL_FUNC(type, ptr, ...) ((type)(ptr))(__VA_ARGS__)
 #define MAKE_ADAPTER(name, T) \
     static void name##_Adapter(void *p) { name((T)p); }
-void LoadJson(const char* filename, struct json_object** out);
-void LoadBehaviorTrees(json_object *root);
 
 //====FILE & STRINGS====>
 char* GetFileStem(const char* filename);
@@ -23,33 +20,15 @@ char* GetFileStem(const char* filename);
 static inline void DO_NOTHING(void){}
 //<===BEHAVIOR TREES
 
-typedef enum {
-  JNODE_LEAF,
-  JNODE_SEQUENCE,
-  JNODE_SELECTOR,
-  JNODE_CONCURRENT
-} JNodeType;
-
-typedef struct JNode {
-    JNodeType    type;
-    const char   *name;     // for leaf
-    json_object  *params;         // optional
-    struct JNode **children;
-    int          child_count;
-} JNode;
-JNode* ParseJNode(struct json_object* root);
-
 //forward declare
 typedef struct behavior_tree_node_s behavior_tree_node_t;
 
 typedef struct {
     const char           *name;
-    JNode                *root;
     behavior_tree_node_t *tree;
 } bt_register_entry_t;
 
 behavior_tree_node_t *BehaviorGetTree(const char *name);
-void BT_RegisterTree(const char *name, JNode *root);
 
 typedef enum{
   BEHAVIOR_SUCCESS,
@@ -69,11 +48,10 @@ typedef struct {
     behavior_tree_node_t *root;
 } TreeCacheEntry;
 
-extern TreeCacheEntry tree_cache[10];
+extern TreeCacheEntry tree_cache[16];
 extern int tree_cache_count;
 
 behavior_tree_node_t *BuildTreeNode(const char *name);
-behavior_tree_node_t* BuildFromJNode(const JNode *jn);
 static behavior_tree_node_t* BehaviorFindLeafFactory(const char *name);
 
 typedef BehaviorStatus (*BehaviorTreeTickFunc)(behavior_tree_node_t* self, void* context);
@@ -87,8 +65,6 @@ typedef struct behavior_params_s{
   CooldownCallback      eventFn;
   int                   duration;
 }behavior_params_t;
-
-behavior_params_t* BuildBehaviorParams(json_object* params);
 
 typedef struct behavior_tree_node_s{
   BehaviorTreeType      bt_type;

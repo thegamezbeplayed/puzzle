@@ -5,8 +5,6 @@
 #if defined(PLATFORM_WEB)
 #include <emscripten/emscripten.h>
 #endif
-static const int screenWidth = 1920;
-static const int screenHeight = 1080;
 
 double currentTime = 0.0;           // Current time measure
 double updateDrawTime = 0.0;        // Update + Draw time

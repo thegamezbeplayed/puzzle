@@ -1,5 +1,6 @@
 #ifndef __GAME_PROJECTILE__
 #define __GAME_PROJECTILE__
+#include <stdint.h>
 #include "game_types.h"
 
 #define MAX_PROJECTILES 1024

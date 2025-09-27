@@ -24,9 +24,10 @@ typedef enum {
 typedef enum{
   INTERVAL_NONE =0,
   INTERVAL_IMEDIATE = 6,
-  INTERVAL_FAST = 18,
-  INTERVAL_NORMAL = 24,
-  INTERVAL_SLOW = 30
+  INTERVAL_FAST = 21,
+  INTERVAL_NORMAL = 27,
+  INTERVAL_SLOW = 36,
+  INTERVAL_SLOWER = 54
 }IntervalRates;
 typedef enum {
   ATTACK_MELEE,

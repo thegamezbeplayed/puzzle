@@ -6,29 +6,13 @@
 static bt_register_entry_t BT_Registry[MAX_BEHAVIOR_TREE];
 static int registry_count = 0;
 
-void BT_RegisterTree(const char *name, JNode *root) {
-  if (registry_count < MAX_BEHAVIOR_TREE) {
-    BT_Registry[registry_count].name = strdup(name);
-    BT_Registry[registry_count].root = root;
-    registry_count++;
-  }
-}
-
 behavior_tree_node_t *BehaviorGetTree(const char *name) {
    for (int i = 0; i < tree_cache_count; i++){
     if (strcmp(tree_cache[i].name, name) == 0)
       return tree_cache[i].root;
   }
 
-  for (int i = 0; i < registry_count; i++) {
-    if (strcmp(BT_Registry[i].name, name) == 0){
-      if(!BT_Registry[i].tree)
-        BT_Registry[i].tree = BuildFromJNode(BT_Registry[i].root);
-
-      return BT_Registry[i].tree;
-    }
-  }
-  return NULL;
+   return NULL;
 }
 
 behavior_tree_node_t *BuildTreeNode(const char *name) {
@@ -71,59 +55,6 @@ behavior_tree_node_t *BuildTreeNode(const char *name) {
     }
   }
   return NULL;
-}
-
-behavior_tree_node_t* BuildFromJNode(const JNode *jn) {
-  if (jn->type == JNODE_LEAF) {
-    // find leaf by name in registry; pass jn->params
-    for (int i=0; i<g_bt_leaves_count; ++i) {
-      if (strcmp(g_bt_leaves[i].name, jn->name) == 0) {
-        // if your factories need params, change factory signature:
-        // behavior_tree_node_t* (*factory)(behavior_params_t *params)
-        behavior_params_t *params = BuildBehaviorParams(jn->params); 
-
-        return g_bt_leaves[i].factory(params);
-      }
-    }
-    return NULL; // unknown leaf
-  }
-
-  // composite:
-  behavior_tree_node_t **kids = malloc(sizeof(*kids) * jn->child_count);
-  for (int i=0; i<jn->child_count; ++i) {
-    kids[i] = BuildFromJNode(jn->children[i]);
-  }
-
-  switch(jn->type){
-    case JNODE_SEQUENCE:
-      return BehaviorCreateSequence(kids, jn->child_count);
-      break;
-    case JNODE_SELECTOR:
-      return BehaviorCreateSelector(kids, jn->child_count);
-      break;
-    case JNODE_CONCURRENT:
-      return BehaviorCreateConcurrent(kids, jn->child_count);
-      break;
-    default:
-      break;
-  }
-}
-
-behavior_params_t* BuildBehaviorParams(json_object* params){
-  behavior_params_t* result = malloc(sizeof(behavior_params_t));
-  *result = (behavior_params_t){0};
-
-  if(params == NULL)
-    return result; 
-
-  json_object_object_foreach(params, key, val){
-    const char* str = json_object_get_string(val);
-    if(strcmp(key,"state") == 0)
-      result->state = EntityStateLookup(str);
-
-  }
-
-  return result;
 }
 
 behavior_tree_node_t* InitBehaviorTree( const char* name){
@@ -216,7 +147,7 @@ BehaviorStatus BehaviorAcquireTarget(behavior_params_t *params){
   if(!e || !e->control)
     return BEHAVIOR_FAILURE;
 
-  if(EntTargetable(e->control->target))
+  if(e->control->target)
     return BEHAVIOR_SUCCESS;
 
   e->control->target = NULL;
@@ -247,8 +178,8 @@ BehaviorStatus BehaviorMoveToTarget(behavior_params_t *params){
   struct ent_s* e = params->owner;
   if(!e || !e->control)
     return BEHAVIOR_FAILURE;
-
-  if(!EntTargetable(e->control->target))
+ 
+  if(!e->control->target || e->control->target->state == STATE_DIE)
     return BEHAVIOR_FAILURE;
 
   if(PhysicsSimpleDistCheck(e->body,e->control->target->body) < e->control->ranges[RANGE_NEAR])
@@ -263,7 +194,7 @@ BehaviorStatus BehaviorCanAttackTarget(behavior_params_t *params){
   if(!e || !e->control)
     return BEHAVIOR_FAILURE;
 
-  if(!e->control->target && !e->control->target->body && !EntTargetable(e->control->target))
+  if(!e->control->target && !e->control->target->body)
     return BEHAVIOR_FAILURE;
 
   if(e->stats[STAT_AMMO].current <1 || CheckEvent(e->events, EVENT_ATTACK_RATE))

@@ -125,6 +125,10 @@ entity_pool_t* InitEntityPool(void) {
     return pool;
 }
 
+void FreeLevels(){
+  levels = (level_order_t){0};
+}
+
 void InitLevel(level_t *l){
   l->current_spawner = 0;
   l->num_spawners = 0;

@@ -7,7 +7,6 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(JSONC REQUIRED json-c)
 
 set(CMAKE_C_STANDARD 99)
 
@@ -32,13 +31,11 @@ add_subdirectory(src)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/resources)
 add_subdirectory(resources)
 target_link_libraries(${PROJECT_NAME} raylib
-  ${JSONC_LIBRARIES}
 )
 # Let CMake inherit the include dirs from raylib
 target_include_directories(${PROJECT_NAME}
     PRIVATE
     includes
-        ${JSONC_INCLUDE_DIRS}
 )
 # Libraries & link dirs
 

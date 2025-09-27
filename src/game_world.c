@@ -4,7 +4,7 @@
 #include "game_tools.h"
 
 game_process_t game_process;
-TreeCacheEntry tree_cache[10] = {0};
+TreeCacheEntry tree_cache[16] = {0};
 int tree_cache_count = 0;
 
 void print_mem_usage() {
@@ -233,6 +233,9 @@ void WorldInitOnce(){
 }
 
 void WorldPreUpdate(){
+  if(!player || player->state == STATE_DIE)
+   GameTransitionScreen();
+
   InteractionStep();
   for(int i = 0; i < world.num_col; i++){
     if(world.cols[i]->owner!=NULL){
@@ -302,18 +305,17 @@ void InitWorld(world_data_t data){
 
 void FreeWorld(){
   for (int i = 0; i < world.num_spr; i++){
-    FreeSprite(world.sprs[i]);
+    RemoveSprite(i);
   }
   world.num_spr = 0;
 
   for (int i = 0; i < world.num_col; i++){
-    FreeRigidBody(world.cols[i]);
+    RemoveBody(i);
   }
   world.num_col = 0;
 
   for (int i = 0; i < world.num_ent; i++){
-    EntDestroy(world.ents[i]);
-    free(world.ents[i]);
+    RemoveEnt(i);
   }
   world.num_ent = 0;
 
@@ -351,17 +353,10 @@ void WorldRender(){
 }
 
 void InitGameProcess(){
-  struct json_object* rawJNode = NULL;
-
-  LoadJson("resources/bt.json",&rawJNode);
-
-  if(rawJNode!=NULL){
-    LoadBehaviorTrees(rawJNode);
-  }
-
-  for(int i = 0; i < ROOM_BEHAVIOR_COUNT; i++)
+  for(int i = 0; i < ROOM_BEHAVIOR_COUNT; i++){
     if(room_behaviors[i].is_root)
       RegisterBehaviorTree(room_behaviors[i]);
+  }
 
   for(int s = 0; s<SCREEN_DONE; s++){
     for(int u = 0; u<UPDATE_DONE;u++){
@@ -382,7 +377,7 @@ void InitGameProcess(){
   game_process.update_steps[SCREEN_TITLE][UPDATE_DRAW] = DrawTitleScreen;
   game_process.update_steps[SCREEN_TITLE][UPDATE_FRAME] = UpdateTitleScreen;
 
-  game_process.next[SCREEN_GAMEPLAY] = SCREEN_TITLE;
+  game_process.next[SCREEN_GAMEPLAY] = SCREEN_ENDING;
   game_process.init[SCREEN_GAMEPLAY] = InitGameplayScreen;
   game_process.finish[SCREEN_GAMEPLAY] = UnloadGameplayScreen;
   game_process.update_steps[SCREEN_GAMEPLAY][UPDATE_FIXED] = FixedUpdate;
@@ -390,7 +385,11 @@ void InitGameProcess(){
   game_process.update_steps[SCREEN_GAMEPLAY][UPDATE_DRAW] = DrawGameplayScreen;
   game_process.update_steps[SCREEN_GAMEPLAY][UPDATE_FRAME] = UpdateGameplayScreen;
   game_process.update_steps[SCREEN_GAMEPLAY][UPDATE_POST] = PostUpdate;
-    
+   
+  game_process.next[SCREEN_ENDING] = SCREEN_TITLE;
+  game_process.init[SCREEN_ENDING] = InitEndScreen;
+  game_process.finish[SCREEN_ENDING] = UnloadEndScreen;
+
   game_process.screen = SCREEN_TITLE;
   game_process.state[SCREEN_GAMEPLAY] = GAME_LOADING;
   game_process.events = InitEvents();
@@ -465,6 +464,7 @@ void GameProcessSync(bool wait){
 void GameProcessEnd(){
   UnloadEvents(game_process.events);
   FreeWorld();
+  FreeLevels();
 }
 
 void AddPoints(float mul,float points, Vector2 pos){

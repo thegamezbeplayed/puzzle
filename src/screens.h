@@ -25,6 +25,8 @@
 
 #ifndef SCREENS_H
 #define SCREENS_H
+static const int screenWidth = 1920;
+static const int screenHeight = 1080;
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -88,11 +90,11 @@ void PostUpdate(void);
 //----------------------------------------------------------------------------------
 // Ending Screen Functions Declaration
 //----------------------------------------------------------------------------------
-void InitEndingScreen(void);
-void UpdateEndingScreen(void);
-void DrawEndingScreen(void);
-void UnloadEndingScreen(void);
-int FinishEndingScreen(void);
+void InitEndScreen(void);
+void UpdateEndScreen(void);
+void DrawEndScreen(void);
+void UnloadEndScreen(void);
+int FinishEndScreen(void);
 
 #ifdef __cplusplus
 }

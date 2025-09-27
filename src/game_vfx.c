@@ -42,8 +42,9 @@ void LoadShaders(){
 }
 
 void ShaderSetUniforms(gl_shader_t *s, Texture2D texture){
-    float outlineSize = 2.0f;
-    float outlineColor[4] = { 1.0f, 0.0f, 0.0f, 1.0f };     // Normalized RED color
+  if(s->stype != SHADER_OUTLINE)
+    return;
+  float outlineSize = 4.0f;
     float textureSize[2] = { (float)texture.width, (float)texture.height };
 
     // Get shader locations
@@ -52,7 +53,7 @@ void ShaderSetUniforms(gl_shader_t *s, Texture2D texture){
     int textureSizeLoc = GetShaderLocation(s->shader, "textureSize");
 
     SetShaderValue(s->shader, outlineSizeLoc, &outlineSize, SHADER_UNIFORM_FLOAT);
-    SetShaderValue(s->shader, outlineColorLoc, outlineColor, SHADER_UNIFORM_VEC4);
+   SetShaderValue(s->shader, outlineColorLoc, s->uniforms[UNIFORM_OUTLINECOLOR].val, SHADER_UNIFORM_VEC4);
     SetShaderValue(s->shader, textureSizeLoc, textureSize, SHADER_UNIFORM_VEC2);
 
 

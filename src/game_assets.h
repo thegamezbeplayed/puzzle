@@ -14,6 +14,10 @@ void InitResources();
 //====SHADERS===>
 typedef enum{
   SHADER_NONE,
+  SHADER_BASE,
+  SHADER_BLOOM,
+  SHADER_BLUR,
+  SHADER_INVERT,
   SHADER_OUTLINE,
   SHADER_DONE
 }ShaderType;
@@ -24,26 +28,46 @@ typedef struct{
 }ShaderTypeAlias;
 
 typedef enum {
-    UNIFORM_TEXSIZE,
-    UNIFORM_OUTLINESIZE,
-    UNIFORM_OUTLINECOLOR,
-    UNIFORM_COUNT,
-    UNIFORM_NONE
+  UNIFORM_TEXSIZE,
+  UNIFORM_OUTLINESIZE,
+  UNIFORM_OUTLINECOLOR,
+  UNIFORM_COUNT,
+  UNIFORM_NONE
 } ShaderUniform;
 
+typedef enum{
+  STANDARD_INT,
+  STANDARD_FLOAT,
+  STANDARD_UINT,
+  STANDARD_BOOL,
+  STANDARD_VEC2,
+  STANDARD_VEC3,
+  STANDARD_VEC4,
+}UniformTypes;
+
+typedef struct{
+  ShaderUniform uniform;
+  UniformTypes  type;
+  void*         val;
+}shader_uniform_t;
+
 static ShaderTypeAlias shader_alias[SHADER_DONE] = {
+  {"base", SHADER_BASE},
+  {"bloom", SHADER_BLOOM},
+  {"blur", SHADER_BLUR},
+  {"invert", SHADER_INVERT},
   {"outline", SHADER_OUTLINE},
 };
 
 ShaderType ShaderTypeLookup(const char* name);
 
 typedef struct{
-  ShaderType    stype;
-  int           version;
-  Shader        shader;
-  const char*   vs_path;
-  const char*   fs_path;
-  bool          uniforms[UNIFORM_NONE];
+  ShaderType        stype;
+  int               version;
+  Shader            shader;
+  const char*       vs_path;
+  const char*       fs_path;
+  shader_uniform_t  uniforms[UNIFORM_NONE];
 }gl_shader_t;
 extern gl_shader_t shaders[SHADER_DONE];
 
@@ -146,9 +170,11 @@ void LoadrtpAtlasSprite(sprite_sheet_data_t *out);
 typedef struct {
   int             suid;
   Texture2D       *sheet;
+  RenderTexture2D       chain1;
+  RenderTexture2D       chain2;
   sprite_slice_t* slice;
   Color           color;
-  gl_shader_t*    gls;//[SHADER_DONE];
+  gl_shader_t*    gls[SHADER_DONE];
   //anim_t          *animation;
   //AnimType        active_anim;
   bool            mirror;
@@ -160,7 +186,7 @@ typedef struct {
   struct ent_s    *owner;
 } sprite_t;
 
-void DrawSlice(Texture2D tex, sprite_t *spr, Vector2 position,float rot);
+void DrawSlice(sprite_t *spr, Vector2 position,float rot);
 sprite_t* InitSprite(const char* tag, sprite_sheet_data_t* spritesheet);
 sprite_t* InitSpriteByIndex(int index, sprite_sheet_data_t* spritesheet);
 bool FreeSprite(sprite_t* s);

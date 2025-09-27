@@ -94,8 +94,8 @@ GuiHudBarState InitGuiHudBar(void)
 
     state.ProgressBar002Value = 0.0f;
 
-    state.layoutRecs[0] = (Rectangle){ 120, 40, 216, 48 };
-    state.layoutRecs[1] = (Rectangle){ 528, 0, 168, 48 };
+    state.layoutRecs[0] = (Rectangle){ 120, 16, 216, 48 };
+    state.layoutRecs[1] = (Rectangle){ 528, 16, 168, 48 };
     state.layoutRecs[2] = (Rectangle){ 360, 16, 144, 16 };
 
     // Custom variables initialization

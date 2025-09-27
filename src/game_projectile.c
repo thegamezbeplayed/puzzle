@@ -157,6 +157,12 @@ void ProjectileSync(ent_t* p){
     ProjectileCollision(p->body,others[i]->body);
   
   EntSync(p);
+  if(p->state == STATE_DIE){
+    if(!SetState(p,STATE_END,NULL))
+      return;
+
+    DespawnProjectile(&projectile_pool, p);
+  }
 }
 
 void ProjectilesRender(){

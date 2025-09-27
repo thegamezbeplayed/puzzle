@@ -40,11 +40,25 @@ ent_t* InitEnt(ObjectInstance data){
   strcpy(e->name,data.name);
   e->sprite = InitSpriteByIndex(data.sprite_sheet_index,&spritedata);
   e->sprite->owner = e;  
-
+  e->sprite->color = data.color;
   e->sprite->slice->scale = data.size / e->sprite->slice->bounds.width;
 
-  e->sprite->gls = &shaders[SHADER_OUTLINE];
-  ShaderSetUniforms(e->sprite->gls, *e->sprite->sheet);
+  e->sprite->chain1 = LoadRenderTexture(e->sprite->slice->bounds.width,e->sprite->slice->bounds.height);
+  e->sprite->chain2 = LoadRenderTexture(e->sprite->slice->bounds.width,e->sprite->slice->bounds.height);
+
+  for(int i = 0; i < SHADER_DONE;i++){
+    e->sprite->gls[i] = malloc(sizeof(gl_shader_t));
+    *e->sprite->gls[i] = shaders[i];
+    if(!data.shaders[i])
+      e->sprite->gls[i]->stype = SHADER_NONE;
+  }
+  Vector4* col = malloc(sizeof(Vector4));
+  *col =  ColorNormalize(e->sprite->color);
+  e->sprite->gls[SHADER_OUTLINE]->uniforms[UNIFORM_OUTLINECOLOR] = (shader_uniform_t){
+    UNIFORM_OUTLINECOLOR,
+      STANDARD_VEC4,
+      col
+  };
   float radius = data.size * 0.5f;
   pos = Vector2Add(pos,e->sprite->slice->center);
   e->pos = pos;
@@ -113,15 +127,28 @@ ent_t InitEntProjectile( ProjectileInstance data){
     e.sprite->owner = NULL;
     pos = Vector2Add(pos,e.sprite->slice->center);
     e.sprite->layer = LAYER_BG;
+  e.sprite->chain1 = LoadRenderTexture(e.sprite->slice->bounds.width,e.sprite->slice->bounds.height);
+  e.sprite->chain2 = LoadRenderTexture(e.sprite->slice->bounds.width,e.sprite->slice->bounds.height);
+
   }
   e.name = "bullet";
+
+  e.stats[STAT_HEALTH] = InitStatOnMax(STAT_HEALTH,1);
+  e.stats[STAT_HEALTH].on_stat_empty = EntKill;
 
   e.stats[STAT_SPEED] = InitStatOnMax(STAT_SPEED,data.speed);
 
   e.stats[STAT_ACCEL] = InitStatOnMax(STAT_ACCEL,data.speed);
 
   e.pos = pos;
-  float radius = e.sprite->slice->bounds.height * 0.5f;
+ for(int i = 0; i < SHADER_DONE;i++){
+    e.sprite->gls[i] = malloc(sizeof(gl_shader_t));
+    *e.sprite->gls[i] = shaders[i];
+    if(!data.shaders[i] )
+      e.sprite->gls[i]->stype = SHADER_NONE;
+  }
+
+ float radius = e.sprite->slice->bounds.height * 0.5f;
   e.events = InitEvents();
   e.team = TEAM_ENEMIES;
   e.state = STATE_SPAWN;
@@ -146,7 +173,9 @@ bool EntReload(ent_t* e){
 }
 
 void EntDestroy(ent_t* e){
-  SetState(e, STATE_END,EntAddPoints);//when animations are used do this after the death animation
+  if(!e || !SetState(e, STATE_END,EntAddPoints))
+    return;
+ 
   if(e->sprite!=NULL){
     e->sprite->owner = NULL;
     e->sprite->is_visible = false;
@@ -177,18 +206,31 @@ attack_t InitAttack(ent_t* owner, AttackData data){
   a.attack_type = data.type;
   a.reach = InitStatOnMax(STAT_RANGE,data.range);
   
-  if(data.type == ATTACK_RANGED){
-    owner->stats[STAT_AMMO] = InitStatOnMax(STAT_AMMO,data.ammo);
-    owner->stats[STAT_AMMO].on_stat_empty = EntReload;
-    a.reach.min = RANGE_CLOSE;
-    cooldown_t* cd =InitCooldown(data.reload,EVENT_ATTACK_PREPARE,StatMaxOut_Adapter,&owner->stats[STAT_AMMO]);
-    cd->is_recycled = true;
-    AddEvent(owner->events,cd);
-    a.attack = AttackShoot;
-    //ProjectileInstance instance = ProjectileGetData(data.attacks);
-  }
-  else if(data.type == ATTACK_THORNS){
-    owner->body->forces[FORCE_STEERING].on_react = CollisionDamage;
+  switch(data.type){
+    case ATTACK_RANGED:
+      owner->stats[STAT_AMMO] = InitStatOnMax(STAT_AMMO,data.ammo);
+      owner->stats[STAT_AMMO].on_stat_empty = EntReload;
+      a.reach.min = RANGE_CLOSE;
+      cooldown_t* cd =InitCooldown(data.reload,EVENT_ATTACK_PREPARE,StatMaxOut_Adapter,&owner->stats[STAT_AMMO]);
+      cd->is_recycled = true;
+      AddEvent(owner->events,cd);
+      a.attack = AttackShoot;
+      break;
+    case ATTACK_THORNS:
+      owner->body->forces[FORCE_STEERING].on_react = CollisionDamage;
+      owner->body->forces[FORCE_STEERING].on_resolution = RecoilDamage;
+      break;
+    case ATTACK_MELEE:
+      a.attack = AttackMelee;
+      owner->body->forces[FORCE_KINEMATIC] = ForceBasic(FORCE_KINEMATIC);
+      owner->body->forces[FORCE_KINEMATIC].on_react = CollisionMelee;
+      owner->body->forces[FORCE_KINEMATIC].on_resolution = ForceDisable;
+      owner->body->forces[FORCE_KINEMATIC].max_velocity = data.speed;
+      owner->body->forces[FORCE_KINEMATIC].accel = Vector2FromXY(data.accel,data.accel);
+
+      break;
+    default:
+      break;
   }
   //a.attack = (AttackFunc)data.fn;
   cooldown_t* cd =InitCooldown(data.rate,EVENT_ATTACK_RATE,NULL,NULL); 
@@ -209,7 +251,9 @@ bool AttackShoot(attack_t* a, ent_t *e){
 }
 
 bool AttackMelee(attack_t* a, ent_t *e){
-
+  PhysicsAccelDir(e->body,FORCE_KINEMATIC,a->params->dir);;
+  a->cooldown->is_complete = false;
+  a->cooldown->elapsed = 0;
 }
 
 void EntPrepStep(ent_t* e){
@@ -229,7 +273,8 @@ bool AttackPrepare(attack_t* a){
   if(v2_compare(target, VEC_UNSET))
     return false;
 
-  if(Vector2Distance(target,a->owner->pos)< a->reach.min)
+  float dist =Vector2Distance(target,a->owner->pos); 
+  if(dist < a->reach.min || dist > a->reach.current)
     return false;
 
   a->params->dir = VectorDirectionBetween(a->owner->pos, target);
@@ -257,7 +302,7 @@ stat_t InitStatEmpty(){
 stat_t InitStatOnMax(StatType attr, float val){
   return (stat_t){
     .attribute = attr,
-      .min = 0,
+      .min = 0.0f,
       .max = val,
       .current = val,
       .ratio = StatGetRatio
@@ -411,8 +456,8 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s){
       break;
     case STATE_DIE:
       ParticleExplosion(e->pos,e->body->velocity,e->body->collision_bounds.radius,e->sprite->color);
-        AudioPlayRandomSfx(SFX_ACTION,ACTION_BOOM);
-        break;
+      AudioPlayRandomSfx(SFX_ACTION,ACTION_BOOM);
+      break;
     default:
       break;
   }

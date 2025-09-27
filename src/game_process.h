@@ -166,6 +166,7 @@ typedef struct{
 extern level_order_t levels;
 
 void InitLevel();
+void FreeLevels();
 void LevelAddSpawn(unsigned int index, EntityType ref, int count);
 game_object_t* LevelGetSpawner(unsigned int index);
 void AddPoints(float mul,float points,Vector2 pos);

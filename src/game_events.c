@@ -222,7 +222,7 @@ void StepEvents(events_t* pool){
       pool->cooldown_used[i] = false;
       continue;
     }
-    
+   /* 
     if(pool->cooldowns[i].is_complete){
       if(!pool->cooldowns[i].is_recycled)
         continue;
@@ -232,7 +232,7 @@ void StepEvents(events_t* pool){
 
       continue;
     }
-    
+    */
     if(pool->cooldowns[i].elapsed >= pool->cooldowns[i].duration){
       pool->cooldowns[i].is_complete = true;
       pool->cooldowns[i].elapsed = 0;

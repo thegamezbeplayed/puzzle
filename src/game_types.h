@@ -56,6 +56,7 @@ typedef struct {
   bool       is_active;
   //int        steps;
   ForceReactionCallback on_react;
+  ForceReactionCallback on_resolution;
 }force_t;
 //===RIGID_BODY===>
 typedef bool (*CollisionCallback)(rigid_body_t* a, rigid_body_t* b, ent_t *e);
@@ -107,6 +108,10 @@ bool CheckCollision(rigid_body_t *a, rigid_body_t *b, int len);
 bool RigidBodyCollide(rigid_body_t* a, rigid_body_t* b, ent_t *e);
 void CollisionReflect(rigid_body_t* a, rigid_body_t* b, ForceType t);
 void CollisionDamage(rigid_body_t* a, rigid_body_t* b, ForceType t);
+void RecoilDamage(rigid_body_t* a, rigid_body_t* b, ForceType t);
+void CollisionMelee(rigid_body_t* a, rigid_body_t* b, ForceType t);
+void ForceDisable(rigid_body_t* a, rigid_body_t* b, ForceType t);
+
 force_t ForceFromVector2(ForceType type, Vector2 vec);
 force_t ForceEmpty(ForceType type);
 force_t ForceBasic(ForceType type);
@@ -133,6 +138,7 @@ typedef struct attack_s{
 attack_t InitAttack(ent_t* owner,AttackData data);
 bool AttackPrepare(attack_t* a);
 bool AttackShoot(attack_t *a, ent_t* e);
+bool AttackMelee(attack_t *a, ent_t* e);
 bool AttackDefault(attack_t *a, ent_t* e);
 
 typedef enum{
@@ -185,9 +191,6 @@ bool FreeEnt(ent_t* e);
 bool EntReload(ent_t* e);
 void EntAddPoints(ent_t* e,EntityState old, EntityState s);
 void DamageEnt(ent_t *e, attack_t a);
-static inline bool EntTargetable(ent_t* e){
-  return (e && e->state <= STATE_DIE);
-}
 void EntPrepStep(ent_t *e);
 void EntControlStep(ent_t *e);
 typedef void (*StateChangeCallback)(ent_t *e, EntityState old, EntityState s);

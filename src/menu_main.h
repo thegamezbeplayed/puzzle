@@ -99,9 +99,9 @@ GuiMenuMainState InitGuiMenuMain(void)
     // Initilize controls variables
 
     // Init controls rectangles
-    state.layoutRecs[0] = (Rectangle){ 0, 0, 576, 584 };// GroupBox: GroupBox000
-    state.layoutRecs[1] = (Rectangle){ 216, 256, 120, 24 };// Button: Button002
-    state.layoutRecs[2] = (Rectangle){ 216, 160, 120, 24 };// Button: Button002
+    state.layoutRecs[0] = (Rectangle){ 32, 32, screenWidth-64, screenHeight-64};// GroupBox: GroupBox000
+    state.layoutRecs[1] = (Rectangle){ (screenWidth/2)-120, screenHeight/2, 120, 24 };// Button: Button002
+    state.layoutRecs[2] = (Rectangle){ (screenWidth/2)-120, (screenHeight/2)+100, 120, 24 };// Button: Button002
 
     // Custom variables initialization
 
@@ -121,7 +121,7 @@ static void Button002()
 void GuiMenuMain(GuiMenuMainState *state)
 {
     // Draw controls
-    GuiGroupBox(state->layoutRecs[0], "Bouncing balls");
+    GuiGroupBox(state->layoutRecs[0], "Bullet Shine");
     if (GuiButton(state->layoutRecs[1], "PLAY")) Button001(); 
     if (GuiButton(state->layoutRecs[2], "EXIT")) Button002(); 
 }
