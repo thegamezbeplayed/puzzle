@@ -32,7 +32,7 @@ typedef enum {
   FORCE_IMPULSE,
   FORCE_AVOID,
   FORCE_KINEMATIC,
-  //FORCE_JUMP,
+  FORCE_MELEE,
   FORCE_NONE
 }ForceType;
 
@@ -65,6 +65,7 @@ void ReactionAvoidForce(rigid_body_t* a, rigid_body_t* b, ForceType t);
 void CollisionBoundsAvoid(rigid_body_t* a, rigid_body_t* b, ForceType t);
 bool CheckStep(rigid_body_t* b, Vector2 vel, float dist, Vector2* out);
 bool CheckCanSeeTarget(rigid_body_t* a, rigid_body_t *b, float range);
+bool CheckRigidBodyHasOwner(rigid_body_t* a);
 
 typedef struct rigid_body_s {
   int           buid; //body uid
@@ -176,6 +177,7 @@ typedef struct ent_s{
   stat_t                stats[STAT_BLANK];
   float                 facing;
   sprite_t              *sprite;
+  debug_info_t          *debug_info;
 } ent_t;
 
 ent_t InitEntRef(ObjectInstance ref);
@@ -202,6 +204,7 @@ bool CanChangeState(EntityState old, EntityState s);
 
 typedef struct {
   EntityType   reference_ents[MAX_SPAWNS];
+  unsigned int current_ref;
   int          num_references;
 }entity_pool_t;
 

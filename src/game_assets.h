@@ -12,6 +12,12 @@ struct ent_s;
 void InitResources();
 
 //====SHADERS===>
+typedef struct{
+  bool              has_chain[ENT_BLANK];
+  RenderTexture2D   chain1[ENT_BLANK];
+  RenderTexture2D   chain2[ENT_BLANK];
+}texture_chain_t;
+
 typedef enum{
   SHADER_NONE,
   SHADER_BASE,
@@ -71,20 +77,30 @@ typedef struct{
 }gl_shader_t;
 extern gl_shader_t shaders[SHADER_DONE];
 
+void InitShaderChainCache(EntityType,int maxWidth, int maxHeight);
 void InitShaders();
 void LoadShaders();
 void ShaderSetUniforms(gl_shader_t *s, Texture2D texture);
 //<=====SHADERS====
 
 typedef struct{
-  Music music;
-  float elapsed;
-  float duration;
+  int     duration;
+  int     elapsed;
+  float   vol;
+  bool    increase;
+}audio_fade_t;
+
+typedef struct{
+  Music        music;
+  events_t     *events;
+  audio_fade_t *fade;
 }music_track_t;
 
 typedef struct{
-  int           index;
+  unsigned int  index;
   int           num_songs;
+  unsigned int  current_index;
+  float         volume;
   music_track_t track[MAX_SONGS];
 }music_group_t;
 
@@ -129,17 +145,27 @@ static sfx_info_t sfx_catalog[]={
 
 typedef struct{
   int         num_types;
+  float       volume;
   sfx_sound_t items[END_SFX];
 }sfx_group_t;
 
 typedef struct{
-  music_group_t   tracks;
+  music_group_t   tracks[6];
+  float           volume;
+  int             current_track;
+  int             concurrent_track;
+  int             num_tracks;
   sfx_group_t     sfx[SFX_DONE];
   events_t        *timers[SFX_DONE];
 }audio_manager_t;
+
 void InitAudio();
+int AudioBuildMusicTracks(const char* subdir);
 void AudioStep();
 void AudioPlayRandomSfx(SfxGroup group, SfxType type);
+void AudioPlayMusic(int index);
+bool AudioPlayNext(music_group_t* t);
+void AudioMusicFade(music_track_t* t);
 
 typedef enum{
   LAYER_ROOT,
@@ -170,14 +196,9 @@ void LoadrtpAtlasSprite(sprite_sheet_data_t *out);
 typedef struct {
   int             suid;
   Texture2D       *sheet;
-  RenderTexture2D       chain1;
-  RenderTexture2D       chain2;
   sprite_slice_t* slice;
   Color           color;
   gl_shader_t*    gls[SHADER_DONE];
-  //anim_t          *animation;
-  //AnimType        active_anim;
-  bool            mirror;
   bool            is_visible;
   float           rot;
   Vector2         offset;
@@ -192,5 +213,6 @@ sprite_t* InitSpriteByIndex(int index, sprite_sheet_data_t* spritesheet);
 bool FreeSprite(sprite_t* s);
 void DrawSprite(sprite_t* s);
 void DrawSpriteAtPos(sprite_t*s , Vector2 pos);
+EntityType SpriteEntType(sprite_t *spr);
 //====SPRITE_T>>
 #endif

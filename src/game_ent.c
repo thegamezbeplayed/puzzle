@@ -43,8 +43,7 @@ ent_t* InitEnt(ObjectInstance data){
   e->sprite->color = data.color;
   e->sprite->slice->scale = data.size / e->sprite->slice->bounds.width;
 
-  e->sprite->chain1 = LoadRenderTexture(e->sprite->slice->bounds.width,e->sprite->slice->bounds.height);
-  e->sprite->chain2 = LoadRenderTexture(e->sprite->slice->bounds.width,e->sprite->slice->bounds.height);
+  InitShaderChainCache(e->type,e->sprite->slice->bounds.width,e->sprite->slice->bounds.height);
 
   for(int i = 0; i < SHADER_DONE;i++){
     e->sprite->gls[i] = malloc(sizeof(gl_shader_t));
@@ -72,7 +71,9 @@ ent_t* InitEnt(ObjectInstance data){
   e->stats[STAT_SPEED] = InitStatOnMax(STAT_SPEED,data.speed);
   e->stats[STAT_ACCEL] = InitStatOnMax(STAT_ACCEL,data.accel);
   e->stats[STAT_POWER] = InitStatOnMax(STAT_POWER,data.damage);
-
+  e->debug_info = malloc(sizeof(debug_info_t));
+  e->debug_info->show[DEBUG_HEALTH]=true;
+  e->debug_info->offset = Vector2Y(data.size);
   e->events = InitEvents();
   if(e->team == TEAM_ENEMIES){
     for(int i = 0; i < ATTACK_BLANK;i++){
@@ -123,12 +124,11 @@ ent_t InitEntProjectile( ProjectileInstance data){
 
   e.sprite = InitSpriteByIndex(data.sprite_sheet_index,&spritedata);
   if(e.sprite!=NULL){
-    e.sprite->slice->scale = data.size / e.sprite->slice->bounds.width;
+    e.sprite->slice->scale =data.size / e.sprite->slice->bounds.width;
     e.sprite->owner = NULL;
     pos = Vector2Add(pos,e.sprite->slice->center);
     e.sprite->layer = LAYER_BG;
-  e.sprite->chain1 = LoadRenderTexture(e.sprite->slice->bounds.width,e.sprite->slice->bounds.height);
-  e.sprite->chain2 = LoadRenderTexture(e.sprite->slice->bounds.width,e.sprite->slice->bounds.height);
+    InitShaderChainCache(e.type,e.sprite->slice->bounds.width,e.sprite->slice->bounds.height);
 
   }
   e.name = "bullet";
@@ -222,11 +222,11 @@ attack_t InitAttack(ent_t* owner, AttackData data){
       break;
     case ATTACK_MELEE:
       a.attack = AttackMelee;
-      owner->body->forces[FORCE_KINEMATIC] = ForceBasic(FORCE_KINEMATIC);
-      owner->body->forces[FORCE_KINEMATIC].on_react = CollisionMelee;
-      owner->body->forces[FORCE_KINEMATIC].on_resolution = ForceDisable;
-      owner->body->forces[FORCE_KINEMATIC].max_velocity = data.speed;
-      owner->body->forces[FORCE_KINEMATIC].accel = Vector2FromXY(data.accel,data.accel);
+      owner->body->forces[FORCE_MELEE] = ForceBasic(FORCE_MELEE);
+      owner->body->forces[FORCE_MELEE].on_react = CollisionMelee;
+      owner->body->forces[FORCE_MELEE].on_resolution = ForceDisable;
+      owner->body->forces[FORCE_MELEE].max_velocity = data.speed;
+      owner->body->forces[FORCE_MELEE].accel = Vector2FromXY(data.accel,data.accel);
 
       break;
     default:
@@ -251,7 +251,7 @@ bool AttackShoot(attack_t* a, ent_t *e){
 }
 
 bool AttackMelee(attack_t* a, ent_t *e){
-  PhysicsAccelDir(e->body,FORCE_KINEMATIC,a->params->dir);;
+  PhysicsAccelDir(e->body,FORCE_MELEE,a->params->dir);;
   a->cooldown->is_complete = false;
   a->cooldown->elapsed = 0;
 }
@@ -379,6 +379,8 @@ void EntSync(ent_t* e){
   e->sprite->pos = e->pos;// + abs(ent->sprite->offset.y);
 
   e->sprite->rot = 90+e->facing;
+  if(DEBUG && e->debug_info)
+    DebugSync(e,e->debug_info);
 }
 
 void EntControlStep(ent_t *e){
@@ -468,3 +470,28 @@ bool CheckEntOutOfBounds(ent_t* e, Rectangle bounds){
   return (CheckCollisionPointRec(e->pos, bounds));
 }
 
+void DebugSync(struct ent_s* e,debug_info_t* d){
+  d->pos = e->pos;
+  for(int i = 0; i < DEBUG_DONE; i++){
+    if(!d->show[i])
+      continue;
+
+    switch(i){
+      case DEBUG_HEALTH:
+        strcpy(d->debug_text,TextFormat("%0.1f", e->stats[STAT_HEALTH].ratio(&e->stats[STAT_HEALTH])));
+        break;
+      default:
+        break;
+    }
+
+  }  
+}
+
+void DebugShowText(debug_info_t* d){
+  Vector2 pos = Vector2Add(d->pos,d->offset);
+  DrawText(d->debug_text, pos.x,pos.y, 16, RED);
+}
+
+EntityType SpriteEntType(sprite_t *spr) {
+    return spr->owner ? spr->owner->type : ENT_BLANK;
+}

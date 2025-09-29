@@ -51,7 +51,6 @@ void InitGameplayScreen(void){
 }
 
 void PreUpdate(void){
-  AudioStep();
   WorldPreUpdate();
 }
 

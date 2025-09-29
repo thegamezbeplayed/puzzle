@@ -3,7 +3,18 @@
 
 #include "raylib.h"
 
-#define MAX_EVENTS 16
+typedef enum {
+  ENT_PLAYER,
+  ENT_SHIELD,
+  ENT_MOB,
+  ENT_SWARMER,
+  ENT_DRONE,
+  ENT_SUPER_DRONE,
+  ENT_BATTLE_DRONE,
+  ENT_HUNTER,
+  ENT_BULLET,
+  ENT_BLANK
+}EntityType;
 
 typedef struct{
   const char* text;
@@ -18,16 +29,19 @@ typedef enum {
   RANGE_COL = 64,
   RANGE_CLOSE = 96,
   RANGE_COMMON = 480,
-  RANGE_FAR = 640
+  RANGE_AVERAGE = 540,
+  RANGE_FAR = 630
 }RangeLengths;
 
 typedef enum{
   INTERVAL_NONE =0,
   INTERVAL_IMEDIATE = 6,
-  INTERVAL_FAST = 21,
-  INTERVAL_NORMAL = 27,
-  INTERVAL_SLOW = 36,
-  INTERVAL_SLOWER = 54
+  INTERVAL_FAST = 24,
+  INTERVAL_AVERAGE = 30,
+  INTERVAL_NORMAL = 36,
+  INTERVAL_SLOW = 45,
+  INTERVAL_SLOWER = 54,
+  INTERVAL_SLOWEST = 69,
 }IntervalRates;
 typedef enum {
   ATTACK_MELEE,
@@ -84,8 +98,12 @@ typedef enum{
   EVENT_ATTACK_RATE,
   EVENT_ATTACK_PREPARE,
   EVENT_PLAY_SFX,
+  EVENT_SONG_END,
+  EVENT_SONG_FADE_IN,
+  EVENT_SONG_FADE_OUT,
   EVENT_FINISH,
-  EVENT_NONE
+  EVENT_NONE,
+  MAX_EVENTS
 } EventType;
 
 typedef struct {
@@ -113,7 +131,9 @@ typedef struct{
   bool              is_complete;
   bool              is_recycled;
   void*             on_end_params;
+  void*             on_step_params;
   CooldownCallback  on_end;
+  CooldownCallback  on_step;
 }cooldown_t;
 cooldown_t* InitCooldown(int dur, EventType type, CooldownCallback on_end_callback, void* params);
 void UnloadCooldown(cooldown_t* cd);

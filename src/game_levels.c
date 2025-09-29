@@ -5,13 +5,17 @@ float total_upgrades = 3.66;
 
 difficulty_modifier_t level_mods[MOD_DONE] = {
   {.type = MOD_NONE},
-  {.type = MOD_LEVEL_DIFF, .denom = 1,.amount = 0.33f, .modFn = ModifyLevelDifficulty},
+  {.type = MOD_LEVEL_DIFF, .denom = 1,.amount = 0.99f, .modFn = ModifyLevelDifficulty},
   {.type = MOD_LEVEL_POINTS, .denom = 250,.amount = 1, .modFn = ModifyLevelPoints},
-  {.type = MOD_MOB_UPGRADE, .denom = 180,.amount = 1, .modFn = ModifyMobUpgrade},
-  {.type = MOD_MOB_COUNT, .denom = 120,.amount = 1, .modFn = ModifyMobCount},
-  {.type = MOD_WAVE_INTERVAL, .denom = 80, .amount = -6, .modFn = ModifyWaveInterval},
+  {.type = MOD_MOB_UPGRADE, .denom = 5,.amount = 1, .modFn = ModifyMobUpgrade},
+  {.type = MOD_MOB_COUNT, .denom = 80,.amount = 1, .modFn = ModifyMobCount},
+  {.type = MOD_WAVE_INTERVAL, .denom = 50, .amount = -6, .modFn = ModifyWaveInterval},
 };
 
+level_info_t level_info[]={
+  {DEFINE_LVL_NONE,"Title"},
+  {DEFINE_LVL_TUT,"Tut"},
+};
 level_order_t levels;
 level_t level_data[4] = {
   {.luid = 0, .points = 20, .difficulty = 0.33f, .modifiers={[MOD_LEVEL_DIFF]=1,[MOD_WAVE_INTERVAL]=1,[MOD_MOB_UPGRADE]=2, [MOD_LEVEL_POINTS]=3}},
@@ -92,11 +96,14 @@ void LevelEnd(level_t *l){
 
 void InitLevelEvents(){
   levels.num_levels = ROOM_LEVEL_COUNT;
+  levels.level_info = level_info[1];
+  levels.album_id = AudioBuildMusicTracks(levels.level_info.subdir);
   for (int i = 0; i<levels.num_levels; i++){
     levels.levels[i] = &level_data[i];
     SetLevelState(levels.levels[i],LEVEL_LOADING);
   }
 
+  AudioPlayMusic(levels.album_id);
   LevelBegin(CURRENT_LEVEL);
 }
 
@@ -122,6 +129,9 @@ void LevelStep(){
 entity_pool_t* InitEntityPool(void) {
     entity_pool_t* pool = malloc(sizeof(entity_pool_t));
     pool->num_references = 0;
+    pool->current_ref = 0;
+    for(int i = 0; i < MAX_SPAWNS; i++)
+      pool->reference_ents[i] = ENT_MOB;
     return pool;
 }
 
@@ -136,9 +146,8 @@ void InitLevel(level_t *l){
   for (int i = 0; i < ROOM_LEVEL_WAVE_COUNT; i++) {
     if(room_spawners[i].level != l->luid)
       continue;
-    if(l->state != LEVEL_COMPLETE)
-      memcpy(l->event_durations, event_durations, sizeof(l->event_durations));
     
+    memcpy(l->event_durations, event_durations, sizeof(l->event_durations));
     int idx = l->num_spawners;
     l->spawns[idx] = *InitEntityPool(); // or store pointers too
     l->mob_spawners[idx] = InitObjectStatic(room_spawners[i]);
@@ -149,10 +158,19 @@ void InitLevel(level_t *l){
 
 }
 
+void ResetLevel(level_t* l){
+  l->current_spawner = 
+  l->spawner_done = 0u;
+  for (int i = 0; i < l->num_spawners; i++) {
+    l->spawns[i].current_ref = 0;
+    SetObjectState(l->mob_spawners[i],OBJECT_LOAD);
+  }
+}
+
 void GenerateLevels(int num_levels, bool inc_diff){
   int num_upgrades = (int) total_upgrades;
   for (int i = num_levels-1; i > -1; i--){
-    InitLevel(levels.levels[i]);
+    ResetLevel(levels.levels[i]);
     if(num_upgrades < 0)
       continue;
 
@@ -188,18 +206,13 @@ bool SpawnEnt(game_object_t* spawner){
   if(spawner->state != OBJECT_RUN)
     return false;
 
-  int ref_ent = ENT_MOB;
-  for (int i = ENT_MOB; i < ENT_BLANK; i++){
-    if(CURRENT_LEVEL->spawns[spawner->id].num_references == 0)
-      continue;
-    CURRENT_LEVEL->spawns[spawner->id].num_references--;
-    ref_ent = CURRENT_LEVEL->spawns[spawner->id].reference_ents[i];
-    break;
-  }
+  int cur = CURRENT_LEVEL->spawns[spawner->id].current_ref;
+  int ref_ent = CURRENT_LEVEL->spawns[spawner->id].reference_ents[cur];
 
   if (ref_ent == ENT_MOB)
     return false;
 
+  CURRENT_LEVEL->spawns[spawner->id].current_ref++;
   ent_t* spawn = InitEnt(room_instances[ref_ent]);
   spawn->body->position = spawner->pos;
   RegisterEnt(spawn);
@@ -222,7 +235,7 @@ bool ModifyMobUpgrade(difficulty_modifier_t* self){
       if(upgrade_next[p->reference_ents[j]] == ENT_BLANK)
         continue;
 
-      p->reference_ents[j] = upgrade_next[p->reference_ents[j]];
+      l->spawns[i].reference_ents[j] = upgrade_next[p->reference_ents[j]];
       TraceLog(LOG_INFO,"[MOD]====level %d mob upgraded===[MOD]",self->level_id);
       return true;
     }

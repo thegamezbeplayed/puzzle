@@ -242,7 +242,8 @@ void StepEvents(events_t* pool){
     }
 
     pool->cooldowns[i].elapsed++;
-
+    if(pool->cooldowns[i].on_step)
+      pool->cooldowns[i].on_step(pool->cooldowns[i].on_step_params);
   }
 }
 

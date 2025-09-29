@@ -6,10 +6,22 @@
 sprite_sheet_data_t spritedata;
 Texture2D sprite_sheet;
 
+texture_chain_t TexChain;
+
+void InitShaderChainCache(EntityType type,int maxWidth, int maxHeight) {
+  if(TexChain.has_chain[type])
+    return;
+
+  TexChain.has_chain[type] = true;
+  TexChain.chain1[type]= LoadRenderTexture(maxWidth, maxHeight);
+  TexChain.chain2[type]= LoadRenderTexture(maxWidth, maxHeight);
+}
+
 void InitResources(){
   LoadrtpAtlasSprite(&spritedata);
   Image spritesImg = LoadImage(TextFormat("resources/%s",ATLAS_ASSET_SPRITES_IMAGE_PATH)); 
   sprite_sheet = LoadTextureFromImage(spritesImg);
+  TexChain = (texture_chain_t){0};
 }
 
 sprite_t* InitSprite(const char* group, sprite_sheet_data_t* spritesheet){
@@ -32,10 +44,7 @@ sprite_t* InitSpriteByIndex(int index, sprite_sheet_data_t* spritesheet){
   sprite_t* spr =malloc(sizeof(sprite_t));
   memset(spr,0,sizeof(sprite_t));
 
-  spr->mirror = false;
-
   spr->sheet = &sprite_sheet;
-
   spr->slice = spritesheet->sprites[index];
   spr->color = PINK;
   
@@ -46,50 +55,54 @@ void DrawSlice(sprite_t *spr, Vector2 position,float rot){
   sprite_slice_t* slice = spr->slice; 
   Rectangle src = slice->bounds;
 
-    Rectangle dst = {
-        position.x,
-        position.y,
-        slice->bounds.width * slice->scale,
-        slice->bounds.height * slice->scale
-    };
+  EntityType t = SpriteEntType(spr);
+  RenderTexture2D *chain1 = &TexChain.chain1[t];
+  RenderTexture2D *chain2 = &TexChain.chain2[t]; 
 
-    Vector2 origin = (Vector2){
-       slice->center.x * slice->scale,//offset.x,
-       slice->center.y * slice->scale//offset.y
-    };
-    
-    Texture2D *tex = spr->sheet;
+  Rectangle dst = {
+    position.x,
+    position.y,
+    slice->bounds.width * slice->scale,
+    slice->bounds.height * slice->scale
+  };
 
-    Texture2D input = *tex;   // start with the base sprite
-    Texture2D output = *tex;
+  Vector2 origin = (Vector2){
+    slice->center.x * slice->scale,//offset.x,
+      slice->center.y * slice->scale//offset.y
+  };
 
-    for (int i = 0; i < SHADER_DONE; i++) {
-      gl_shader_t *gls = spr->gls[i];
-      if (!gls || gls->stype == SHADER_NONE) continue;
+  Texture2D *tex = spr->sheet;
 
-      // Choose which buffer to render into
-      RenderTexture2D target = (i % 2 == 0) ? spr->chain1 : spr->chain2;
+  Texture2D input = *tex;   // start with the base sprite
+  Texture2D output = *tex;
 
-      BeginTextureMode(target);
-      ClearBackground(BLANK); // clear buffer
-      BeginShaderMode(gls->shader);
+  for (int i = 0; i < SHADER_DONE; i++) {
+    gl_shader_t *gls = spr->gls[i];
+    if (!gls || gls->stype == SHADER_NONE) continue;
 
-      ShaderSetUniforms(gls, input); // set this pass's uniforms
+    // Choose which buffer to render into
+    RenderTexture2D target = (i % 2 == 0) ? *chain1 : *chain2;
 
-      // Draw input texture into shader pipeline
-      DrawTexturePro(input, src,(Rectangle){0, 0, src.width, src.height},VECTOR2_ZERO, 0, WHITE);
+    BeginTextureMode(target);
+    //ClearBackground(BLANK); // clear buffer
+    BeginShaderMode(gls->shader);
 
-      EndShaderMode();
-      EndTextureMode();
+    ShaderSetUniforms(gls, input); // set this pass's uniforms
 
-      // Result of this pass becomes input for next pass
-      output = target.texture;
-      input = output;
-    }
-    // After last pass → draw to screen
-    DrawTexturePro(output,(Rectangle){0,0,src.width,src.height},dst, origin, rot, WHITE);
-    
-    return;
+    // Draw input texture into shader pipeline
+    DrawTexturePro(input, src,(Rectangle){0, 0, src.width, src.height},VECTOR2_ZERO, 0, WHITE);
+
+    EndShaderMode();
+    EndTextureMode();
+
+    // Result of this pass becomes input for next pass
+    output = target.texture;
+    input = output;
+  }
+  // After last pass → draw to screen
+  DrawTexturePro(output,(Rectangle){0,0,src.width,src.height},dst, origin, rot, WHITE);
+
+  return;
 }
 
 bool FreeSprite(sprite_t* s){

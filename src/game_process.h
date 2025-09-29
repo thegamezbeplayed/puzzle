@@ -73,9 +73,12 @@ typedef enum{
   GAME_NONE,
   GAME_LOADING,
   GAME_READY,
+  GAME_PAUSE,
   GAME_FINISHED,
   GAME_OVER
 }GameState;
+
+void GameSetState(GameState state);
 
 typedef enum{
   LEVEL_NONE,
@@ -87,6 +90,18 @@ typedef enum{
   LEVEL_COMPLETE,
   LEVEL_DONE
 }LevelState;
+
+typedef enum{
+  DEFINE_LVL_NONE,
+  DEFINE_LVL_TUT,
+  DEFINE_LVL_DEMO,
+  DEFINE_LVL_DONE
+}LevelDefine;
+
+typedef struct{
+  LevelDefine   define;
+  const char*   subdir;
+}level_info_t;
 
 typedef struct{
   ProcessType process;
@@ -103,6 +118,7 @@ typedef struct{
   GameScreen     next[SCREEN_DONE];
   GameState      state[SCREEN_DONE];//TODO each screen needs a state
   events_t       *events;
+  int            album_id[SCREEN_DONE];
   UpdateFn       init[SCREEN_DONE];
   UpdateFn       update_steps[SCREEN_DONE][UPDATE_DONE];
   UpdateFn       finish[SCREEN_DONE];
@@ -158,11 +174,14 @@ typedef struct{
 }level_t;
 
 typedef struct{
-  unsigned int current;
-  int          num_levels;
-  int          round_num;
-  level_t      *levels[10];
+  unsigned int  current;
+  level_info_t  level_info;
+  unsigned int  album_id;
+  int           num_levels;
+  int           round_num;
+  level_t       *levels[10];
 }level_order_t;
+
 extern level_order_t levels;
 
 void InitLevel();

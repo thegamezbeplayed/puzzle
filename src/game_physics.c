@@ -35,7 +35,7 @@ rigid_body_t* InitRigidBody(ent_t* owner, Vector2 pos, float radius){
   b->counter_force[FORCE_IMPULSE] = FORCE_NONE;
   b->counter_force[FORCE_NONE] = FORCE_NONE;
 
-  b->restitution = .45;  
+  b->restitution = .05;  
   b->is_static = false;
   b->simulate = false;
   b->col_rate = 4;
@@ -313,7 +313,7 @@ force_t ForceEmpty(ForceType type){
 }
 
 void PhysicsCollision(int i, rigid_body_t* bodies[MAX_ENTS],int num_bodies, CollisionCallback callback){
-  if(!bodies[i]->simulate)
+  if(!bodies[i]->simulate || !CheckRigidBodyHasOwner(bodies[i]))
     return;
 
   if(bodies[i]->is_kinematic)
@@ -326,7 +326,7 @@ void PhysicsCollision(int i, rigid_body_t* bodies[MAX_ENTS],int num_bodies, Coll
     if(bodies[i]->owner == bodies[j]->owner)
       continue;
 
-    if(!bodies[j]->simulate)
+    if(!bodies[j]->simulate || !CheckRigidBodyHasOwner(bodies[j]))
       continue;
 
     if(bodies[j]->is_static)
@@ -382,6 +382,9 @@ bool CheckCollision(rigid_body_t *a, rigid_body_t *b, int len) {
 
   return col;
 }
+bool CheckRigidBodyHasOwner(rigid_body_t* a){
+  return a->owner!=NULL;
+}
 
 bool RigidBodyCollide(rigid_body_t* a, rigid_body_t* b, ent_t *e){
   if(b->is_static)
@@ -434,6 +437,10 @@ void CollisionMelee(rigid_body_t* a, rigid_body_t* b, ForceType t){
     return;
   if(a->owner->type >= ENT_BULLET)
     return;
+  if(b->owner->type >= ENT_BULLET)
+    return;
+  if(a->is_kinematic || b->is_kinematic)
+    return;
   if(!b->forces[t].is_active)
     return;
 
@@ -477,6 +484,8 @@ void ReactionBumpForce(rigid_body_t* a, rigid_body_t* b, ForceType t){
   float dist = Vector2Distance(b->position,a->position);
 
   float penAmount = CLAMPF((collider.width + target.width) - dist,0,collider.width);
+  float debugRad = a->owner->sprite->slice->scale * a->owner->sprite->slice->bounds.width;
+  //TraceLog(LOG_INFO,"Penatration %0.3f collider %0.3f radius %0.3f",penAmount, collider.width, debugRad);
   Vector2 penetration = Vector2Scale(angBetween,penAmount);
   
   Vector2 bump = Vector2Scale(Vector2Reflect(a->velocity,surface_normal), a->restitution);

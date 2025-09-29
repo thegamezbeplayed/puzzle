@@ -12,6 +12,7 @@
 
 #define ROOM_LEVEL_WAVE_COUNT 12
 #define ROOM_LEVEL_COUNT 3
+/*
 typedef enum {
   ENT_PLAYER,
   ENT_SHIELD,
@@ -24,7 +25,7 @@ typedef enum {
   ENT_BULLET,
   ENT_BLANK
 }EntityType;
-
+*/
 static EntityType upgrade_next[ENT_BLANK] = {
   [ENT_MOB]   = ENT_DRONE,
   [ENT_DRONE]   = ENT_SUPER_DRONE,
@@ -150,6 +151,7 @@ static const AttackData attack_data[]={
   {ATTACK_RANGED,5,RANGE_FAR,INTERVAL_FAST,INTERVAL_SLOWER,1,1,0,0,ENT_BULLET},
   {ATTACK_THORNS,1,RANGE_COL,INTERVAL_IMEDIATE,INTERVAL_NONE,1,0,0,0,ENT_BLANK},
   {ATTACK_MELEE,1,RANGE_CLOSE,INTERVAL_SLOWER,INTERVAL_SLOWER,1,1,11.4f,5.4f,ENT_BLANK},
+  {ATTACK_RANGED,6,RANGE_AVERAGE,INTERVAL_FAST,INTERVAL_SLOWEST,1,1,0,0,ENT_BULLET},
   {ATTACK_BLANK,0,0,0,0,0,0,0,0,ENT_BLANK}
 };
 
@@ -177,11 +179,11 @@ static const ObjectInstance room_instances[] = {
   {ENT_PLAYER,"ent_data", "player", 72,416, 288, 0,0, 200,15, 0, 0,450,{},WHITE,0,{[SHADER_INVERT] = true,[SHADER_OUTLINE]=true}},
   {ENT_SHIELD,"ent_data", "shield", 64,1664, 608, 43,0,1, 0, 0, 0,450,{},WHITE,0,{[SHADER_BLOOM] = true}},
   {ENT_MOB,"ent_data", "Drone", 56, -1, -1, 37,2,24, 16, 4, 3,680,{},PINK,1},
-  {ENT_SWARMER,"ent_data", "Drone", 56,-1, -1, 37,1,9, 8, 3.1f, 5,680,{[ATTACK_RANGED]=attack_data[0],[ATTACK_THORNS]=attack_data[1],[ATTACK_MELEE]=attack_data[3]},PINK,1,{[SHADER_INVERT] = true,[SHADER_OUTLINE]=true}},
-  {ENT_DRONE,"ent_data", "Drone", 54,-1, -1, 37,2,18, 8, 3.1f, 5,680,{[ATTACK_RANGED]=attack_data[0],[ATTACK_THORNS]=attack_data[1],[ATTACK_MELEE]=attack_data[3]},PINK,1,{[SHADER_INVERT] = true,[SHADER_OUTLINE]=true}},
+  {ENT_SWARMER,"ent_data", "Drone", 42,-1, -1, 37,1,9, 8, 3.1f, 5,680,{[ATTACK_RANGED]=attack_data[3],[ATTACK_THORNS]=attack_data[1],[ATTACK_MELEE]=attack_data[4]},PINK,1,{[SHADER_INVERT] = true,[SHADER_OUTLINE]=true}},
+  {ENT_DRONE,"ent_data", "Drone", 48,1, -1, 37,2,18, 8, 3.1f, 5,680,{[ATTACK_RANGED]=attack_data[3],[ATTACK_THORNS]=attack_data[1],[ATTACK_MELEE]=attack_data[4]},PINK,1,{[SHADER_INVERT] = true,[SHADER_OUTLINE]=true}},
   {ENT_SUPER_DRONE,"ent_data", "Super Drone", 60,-1, -1, 31,3,30, 8, 3.1f, 5,680,{[ATTACK_RANGED]=attack_data[0],[ATTACK_THORNS]=attack_data[1]},PINK,1,{[SHADER_INVERT] = true,[SHADER_OUTLINE]=true}},
   {ENT_BATTLE_DRONE,"ent_data", "Battle Drone", 60,-1, -1, 36, 4,36, 8, 3.1f, 5,680,{[ATTACK_RANGED]=attack_data[0],[ATTACK_THORNS]=attack_data[1]},PINK,1,{[SHADER_INVERT] = true,[SHADER_OUTLINE]=true}},
-  {ENT_HUNTER,"ent_data", "Hunter", 64,-1, -1, 7,2,36, 7.6, 2.7f, 9,620,{[ATTACK_RANGED]=attack_data[0],[ATTACK_THORNS]=attack_data[3],[ATTACK_MELEE]=attack_data[2]},RED,1,{[SHADER_INVERT] = true,[SHADER_OUTLINE]=true}},
+  {ENT_HUNTER,"ent_data", "Hunter", 64,-1, -1, 7,2,36, 7.6, 2.7f, 9,620,{[ATTACK_RANGED]=attack_data[0],[ATTACK_THORNS]=attack_data[4],[ATTACK_MELEE]=attack_data[2]},RED,1,{[SHADER_INVERT] = true,[SHADER_OUTLINE]=true}},
 };
 
 #define ROOM_INSTANCE_COUNT 3

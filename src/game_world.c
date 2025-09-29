@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include "game_process.h"
 #include "game_tools.h"
+#include "game_ui.h"
 
 game_process_t game_process;
 TreeCacheEntry tree_cache[16] = {0};
@@ -16,6 +17,17 @@ void print_mem_usage() {
         }
     }
     fclose(f);
+}
+
+bool PauseGame(ui_menu_t* m){
+  GameSetState(GAME_PAUSE);
+}
+
+void GameSetState(GameState state){
+  if(game_process.screen != SCREEN_GAMEPLAY)
+    return;
+
+  game_process.state[SCREEN_GAMEPLAY] = state;
 }
 
 void GameReady(){
@@ -327,21 +339,25 @@ void WorldRender(){
   for(int i = 0; i < world.num_spr;i++){
     if(world.sprs[i]->owner !=NULL){
       DrawSprite(world.sprs[i]);
+      if(!DEBUG)
+        continue;
+      Rectangle bounds = {
+        .x = world.cols[i]->collision_bounds.pos.x,
+        .y = world.cols[i]->collision_bounds.pos.y,
+        .width = world.cols[i]->collision_bounds.width,
+        .height = world.cols[i]->collision_bounds.height
+      };
+      DrawRectangleLinesEx(bounds,1.1f, BLUE);
+      if(!DEBUG)
+        continue;
+
+      DebugShowText(world.sprs[i]->owner->debug_info);
     }
     else
       i-=RemoveSprite(i);
-    
-    if(!DEBUG)
-      continue;
-    Rectangle bounds = {
-      .x = world.cols[i]->collision_bounds.pos.x,
-      .y = world.cols[i]->collision_bounds.pos.y,
-      .width = world.cols[i]->collision_bounds.width,
-      .height = world.cols[i]->collision_bounds.height
-    };
-    DrawRectangleRec(bounds, BLUE);
+
   }
-  
+
   ProjectilesRender();
   ParticlesRender();
   for(int i = 0; i < MAX_EVENTS; i++){
@@ -350,6 +366,7 @@ void WorldRender(){
     render_text_t rt = *world.texts[i];
     DrawText(rt.text, rt.pos.x,rt.pos.y,rt.size,rt.color);
   }
+
 }
 
 void InitGameProcess(){
@@ -359,6 +376,7 @@ void InitGameProcess(){
   }
 
   for(int s = 0; s<SCREEN_DONE; s++){
+    game_process.album_id[s] = -1;
     for(int u = 0; u<UPDATE_DONE;u++){
       game_process.update_steps[s][u] = DO_NOTHING;
     
@@ -372,11 +390,13 @@ void InitGameProcess(){
     InitParticle();
 
   game_process.next[SCREEN_TITLE] = SCREEN_GAMEPLAY;
+  game_process.album_id[SCREEN_TITLE] = AudioBuildMusicTracks("Title");
   game_process.init[SCREEN_TITLE] = InitTitleScreen;
   game_process.finish[SCREEN_TITLE] = UnloadTitleScreen;
   game_process.update_steps[SCREEN_TITLE][UPDATE_DRAW] = DrawTitleScreen;
   game_process.update_steps[SCREEN_TITLE][UPDATE_FRAME] = UpdateTitleScreen;
 
+  AudioPlayMusic(game_process.album_id[SCREEN_TITLE]);
   game_process.next[SCREEN_GAMEPLAY] = SCREEN_ENDING;
   game_process.init[SCREEN_GAMEPLAY] = InitGameplayScreen;
   game_process.finish[SCREEN_GAMEPLAY] = UnloadGameplayScreen;
@@ -392,8 +412,9 @@ void InitGameProcess(){
 
   game_process.screen = SCREEN_TITLE;
   game_process.state[SCREEN_GAMEPLAY] = GAME_LOADING;
-  game_process.events = InitEvents();
+  game_process.events = InitEvents(64);
   game_process.init[SCREEN_TITLE]();
+
 }
 
 void InitGameEvents(){
@@ -416,7 +437,8 @@ void InitGameEvents(){
   //game_process.children[SCREEN_GAMEPLAY].finish[PROCESS_LEVEL] =LevelEnd;
   game_process.children[SCREEN_GAMEPLAY].init[PROCESS_LEVEL] =InitLevelEvents;
   game_process.children[SCREEN_GAMEPLAY].update_steps[PROCESS_LEVEL][UPDATE_FIXED] = LevelStep;
-
+  
+  MenuSetState(&ui.menus[MENU_PAUSE],MENU_READY);
 }
 
 void GameTransitionScreen(){
@@ -431,6 +453,7 @@ void GameTransitionScreen(){
   game_process.finish[current]();
   game_process.screen = prepare;
   game_process.state[prepare] = GAME_LOADING;
+  AudioPlayMusic(game_process.album_id[prepare]);
 }
 
 void GameProcessStep(){
@@ -442,7 +465,7 @@ void GameProcessStep(){
 }
 
 void GameProcessSync(bool wait){
-  if(game_process.state[game_process.screen] == GAME_FINISHED)
+  if(game_process.state[game_process.screen] > GAME_READY)
     return;
 
   for(int i = 0; i <UPDATE_DONE;i++){
@@ -451,6 +474,7 @@ void GameProcessSync(bool wait){
     game_process.update_steps[game_process.screen][i]();
   }
 
+  AudioStep();
   for(int i = 0; i < PROCESS_DONE;i++){
     if(game_process.children[game_process.screen].process==PROCESS_NONE)
       continue;

@@ -13,6 +13,22 @@
 #define MAKE_ADAPTER(name, T) \
     static void name##_Adapter(void *p) { name((T)p); }
 
+typedef struct ent_s ent_t;
+
+typedef enum{
+  DEBUG_HEALTH,
+  DEBUG_DONE
+}DebugInfo;
+
+typedef struct{
+  Vector2     pos,offset;
+  bool        show[DEBUG_DONE];
+  char        debug_text[64];
+}debug_info_t;
+
+void DebugShowText(debug_info_t* d);
+void DebugSync(struct ent_s* e,debug_info_t* d);
+
 //====FILE & STRINGS====>
 char* GetFileStem(const char* filename);
 //<==========
@@ -176,4 +192,5 @@ typedef struct {
 
 void RegisterAttack(const char *name, AttackInstance *instance);
 AttackInstance* AttackGetData(const char *name);
+
 #endif

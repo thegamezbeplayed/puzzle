@@ -1,6 +1,7 @@
 #include "raylib.h"
 #include "screens.h"    // NOTE: Declares global (extern) variables and screens functions
 #include "game_assets.h"
+#include "game_ui.h"
 #include "game_process.h"
 #if defined(PLATFORM_WEB)
 #include <emscripten/emscripten.h>
@@ -37,12 +38,13 @@ int main(void)
 //  ToggleFullscreen();
   LoadShaders();
   InitGameProcess();
+  InitUI();
   //    InitGameplayScreen();
 #if defined(PLATFORM_WEB)
   emscripten_set_main_loop(UpdateDrawFrame, 60, 1);
 #else
 
-  //SetExitKey(KEY_NULL);
+  SetExitKey(KEY_NULL);
   // Main game loop
   while (!WindowShouldClose() && !wantQuit)    // Detect window close button or ESC key
   {
@@ -72,7 +74,10 @@ int main(void)
       deltaTime = (float)updateDrawTime;    // Framerate could be variable
 
     previousTime = currentTime;
+    UISync();
     GameProcessSync(wait);
+
+    UIRender();
   }
 #endif
   // Unload global data loaded
