@@ -19,8 +19,13 @@ void print_mem_usage() {
     fclose(f);
 }
 
-bool PauseGame(ui_menu_t* m){
-  GameSetState(GAME_PAUSE);
+bool TogglePause(ui_menu_t* m){
+  if(game_process.state[SCREEN_GAMEPLAY] == GAME_READY)
+    GameSetState(GAME_PAUSE);
+  else if (game_process.state[SCREEN_GAMEPLAY] == GAME_PAUSE)
+    GameSetState(GAME_READY);
+
+  return true;
 }
 
 void GameSetState(GameState state){
@@ -409,6 +414,8 @@ void InitGameProcess(){
   game_process.next[SCREEN_ENDING] = SCREEN_TITLE;
   game_process.init[SCREEN_ENDING] = InitEndScreen;
   game_process.finish[SCREEN_ENDING] = UnloadEndScreen;
+  game_process.update_steps[SCREEN_ENDING][UPDATE_DRAW] = DrawEndScreen;
+  game_process.update_steps[SCREEN_ENDING][UPDATE_FRAME] = UpdateEndScreen;
 
   game_process.screen = SCREEN_TITLE;
   game_process.state[SCREEN_GAMEPLAY] = GAME_LOADING;
@@ -441,19 +448,20 @@ void InitGameEvents(){
   MenuSetState(&ui.menus[MENU_PAUSE],MENU_READY);
 }
 
-void GameTransitionScreen(){
+bool GameTransitionScreen(){
 
   print_mem_usage();
   GameScreen current = game_process.screen;
   GameScreen prepare = game_process.next[current];
   if(game_process.state[current] >= GAME_FINISHED)
-    return;
+    return false;
   game_process.init[prepare]();
   game_process.state[current] = GAME_FINISHED;
   game_process.finish[current]();
   game_process.screen = prepare;
   game_process.state[prepare] = GAME_LOADING;
   AudioPlayMusic(game_process.album_id[prepare]);
+  return true;
 }
 
 void GameProcessStep(){
@@ -465,9 +473,16 @@ void GameProcessStep(){
 }
 
 void GameProcessSync(bool wait){
-  if(game_process.state[game_process.screen] > GAME_READY)
-    return;
+  if(game_process.state[game_process.screen] > GAME_READY){
 
+    game_process.update_steps[SCREEN_GAMEPLAY][UPDATE_DRAW]();
+  
+    if(!wait)
+      AudioStep();
+
+    return;
+  }
+  
   for(int i = 0; i <UPDATE_DONE;i++){
     if(i > UPDATE_DRAW && wait)
       return;

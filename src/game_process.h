@@ -128,7 +128,7 @@ void InitGameEvents();
 void InitGameProcess();
 void GameProcessStep();
 void GameProcessSync(bool wait);
-void GameTransitionScreen();
+bool GameTransitionScreen();
 void GameProcessEnd();
 struct difficulty_modifier_s;
 typedef struct difficulty_modifier_s difficulty_modifier_t;

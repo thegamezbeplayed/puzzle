@@ -1,6 +1,8 @@
 #include "game_ui.h"
 #include "game_utils.h"
 #include "screens.h"
+#include "game_tools.h"
+#include "game_process.h"
 
 ui_manager_t ui;
 
@@ -10,7 +12,15 @@ void InitUI(){
 
   ui.menu_key[MENU_PAUSE] = KEY_P;
   ui.menus[MENU_PAUSE] = InitMenu(MENU_PAUSE, true);
-  ui.menus[MENU_PAUSE].cb[MENU_OPENED] = PauseGame;
+  ui.menus[MENU_PAUSE].cb[MENU_OPENED] = TogglePause; 
+  ui.menus[MENU_PAUSE].cb[MENU_CLOSE] = TogglePause;
+
+  ui.menus[MENU_MAIN] = InitMenu(MENU_MAIN,false);
+  Vector2 pos = Vector2Subtract(VECTOR2_CENTER_SCREEN,Vector2Scale(DEFAULT_BUTTON_SIZE,0.5f));
+ ui_element_t *playBtn = InitElement(UI_BUTTON,pos,DEFAULT_BUTTON_SIZE); 
+
+ playBtn->cb[ELEMENT_ACTIVATED] = GameTransitionScreen;
+ MenuAddChild(&ui.menus[MENU_MAIN],playBtn);
 }
 
 ui_menu_t InitMenu(MenuId id, bool modal){
@@ -23,15 +33,16 @@ ui_menu_t InitMenu(MenuId id, bool modal){
 
   if(m.is_modal){
     m.cb[MENU_CLOSE] = UICloseMenu;
-    m.children[m.num_children++] = InitElement(UI_MASK,screenWidth,screenHeight);
+    m.children[m.num_children++] = InitElement(UI_MASK,VECTOR2_ZERO,VECTOR2_SCREEN);
   }
   return m;
 }
 
-ui_element_t InitElement(ElementType type, int wid, int hei){
-  ui_element_t u = {0};
+ui_element_t* InitElement(ElementType type, Vector2 pos, Vector2 size){
+  ui_element_t *u = malloc(sizeof(ui_element_t));
+  *u = (ui_element_t) {0};
 
-  u.type = type;
+  u->type = type;
 
   return u;
 }
@@ -40,9 +51,14 @@ void DrawElement(ui_element_t* element){
 }
 
 void DrawMenu(ui_menu_t* m){
-    DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.5f));
+  for(int i = 0; i < m->num_children;i++){
+    DrawElement(m->children[i]);
+  }
 }
 
+void MenuAddChild(ui_menu_t *m, ui_element_t* c){
+
+}
 
 void UISync(){
   for(int i = 0; i < MENU_DONE; i++){
@@ -58,9 +74,15 @@ void UISync(){
 void UISyncMenu(ui_menu_t* m){
   if(m->state < MENU_ACTIVE)
     return;
+  for(int i = 0; i < m->num_children;i++)
+    UISyncElement(m->children[i]);
 
   if(IsKeyPressed(KEY_ESCAPE))
-    if(m->cb[MENU_CLOSE](m)) return;
+    if(UICloseMenu(m)) return;
+}
+
+void UISyncElement(ui_element_t* e){
+
 }
 
 void UIRender(){
@@ -73,7 +95,19 @@ void UIRender(){
 }
 
 bool UICloseMenu(ui_menu_t* m){
-  return MenuSetState(m,MENU_CLOSED);
+  return MenuSetState(m,MENU_CLOSE);
+}
+
+void MenuOnStateChanged(ui_menu_t*m, MenuState old, MenuState s){
+  m->cb[m->state](m);
+
+  switch(s){
+    case MENU_CLOSE:
+      MenuSetState(m,MENU_CLOSED);
+      break;
+    default:
+      break;
+  }
 }
 
 bool MenuCanChangeState(MenuState old, MenuState s){
@@ -94,8 +128,10 @@ bool MenuSetState(ui_menu_t* m, MenuState s){
   if(!MenuCanChangeState(m->state, s))
     return false;
 
+  MenuState old = m->state;
   m->state = s;
 
-  m->cb[m->state](m);
+  MenuOnStateChanged(m,old,s);
+
   return true;
 }

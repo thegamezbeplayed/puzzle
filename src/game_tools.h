@@ -7,6 +7,7 @@
 #define VEC_UNSET (Vector2){FLT_MAX, FLT_MAX}
 #define EPS 1e-6f
 #define VECTOR2_CENTER_SCREEN   (Vector2){ GetScreenWidth()/2, GetScreenHeight()/2}
+#define VECTOR2_SCREEN   (Vector2){ GetScreenWidth(), GetScreenHeight()}
 #define VECTOR2_ZERO   (Vector2){ 0.0f, 0.0f}
 #define VECTOR2_ONE    (Vector2){ 1.0f, 1.0f }
 #define VECTOR2_UP     (Vector2){ 0.0f, 1.0f }

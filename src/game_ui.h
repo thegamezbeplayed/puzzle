@@ -1,5 +1,8 @@
 #include "raygui.h"
 
+#define UI_SCALE 1.0F
+#define DEFAULT_BUTTON_SIZE (Vector2){120*UI_SCALE, 32*UI_SCALE}
+
 typedef enum{
   MENU_INACTIVE,
   MENU_READY,
@@ -46,13 +49,17 @@ typedef struct ui_element_s{
   struct ui_element_s *children[4];
 }ui_element_t;
 
+ui_element_t* InitElement(ElementType type, Vector2 pos, Vector2 size);
+void DrawElement(ui_element_t* element);
+void UISyncElement(ui_element_t* e);
+
 struct ui_menu_s;
 typedef bool (*MenuCallback)(struct ui_menu_s* self);
 
 typedef struct ui_menu_s{
   int           num_children;
   MenuCallback  cb[MENU_END];
-  ui_element_t  children[8];
+  ui_element_t  *children[8];
   MenuState     state;
   bool          is_modal;
 }ui_menu_t;
@@ -63,9 +70,12 @@ bool UICloseMenu(ui_menu_t* m);
 void DrawMenu(ui_menu_t* m);
 bool MenuCanChangeState(MenuState old, MenuState s);
 bool MenuSetState(ui_menu_t* m, MenuState s);
+void MenuOnStateChanged(ui_menu_t* m, MenuState old, MenuState s);
 static bool MenuInert(ui_menu_t* self){
   return false;
 }
+void MenuAddChild(ui_menu_t *m, ui_element_t* c);
+
 typedef struct{
   //MenuId      open_menu;
   KeyboardKey menu_key[MENU_DONE];
@@ -75,9 +85,8 @@ typedef struct{
 extern ui_manager_t ui;
 
 void InitUI();
-ui_element_t InitElement(ElementType type, int wid, int hei);
-void DrawElement(ui_element_t* element);
+
 void UISync();
 void UIRender();
 
-bool PauseGame(ui_menu_t* m);
+bool TogglePause(ui_menu_t* m);
