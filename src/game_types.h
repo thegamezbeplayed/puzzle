@@ -221,6 +221,7 @@ typedef struct game_object_s{
 }game_object_t;
 bool SpawnEnt(game_object_t* spawner);
 game_object_t* InitObjectStatic(SpawnerInstance inst);
+void FreeObject(game_object_t* o);
 void SetObjectState(game_object_t *obj, ObjectState state);
 void StepObjectState(game_object_t *obj);
 void StepObject(game_object_t *obj);

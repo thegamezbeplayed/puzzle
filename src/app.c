@@ -34,11 +34,11 @@ int main(void)
 
   InitAudio();
   InitResources();
+  InitUI();
   InitShaders();
 //  ToggleFullscreen();
   LoadShaders();
   InitGameProcess();
-  InitUI();
 
 #if defined(PLATFORM_WEB)
   emscripten_set_main_loop(UpdateDrawFrame, 60, 1);

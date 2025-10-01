@@ -17,6 +17,7 @@
 #define Vector2X(x) ((Vector2){ (x), 0.0f })
 #define Vector2Y(y) ((Vector2){ 0.0f, (y) })
 #define Vector2Inc(v,xi,yi) ((Vector2){ (v.x+xi), (v.y+yi) })
+#define Rect(px,py,sx,sy) ((Rectangle){ (px),(py), (sx), (sy) })
 
 typedef struct {
   int x,y;

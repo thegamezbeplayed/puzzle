@@ -31,6 +31,10 @@ game_object_t* InitObjectStatic(SpawnerInstance inst){
 
 }
 
+void FreeObject(game_object_t* o){
+  UnloadEvents(o->events);
+}
+
 void OnObjectStateChange(game_object_t *obj, ObjectState s){
   switch(s){
     case OBJECT_START:

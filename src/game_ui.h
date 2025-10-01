@@ -2,6 +2,7 @@
 
 #define UI_SCALE 1.0F
 #define DEFAULT_BUTTON_SIZE (Vector2){120*UI_SCALE, 32*UI_SCALE}
+#define LARGE_BUTTON_SIZE (Vector2){164*UI_SCALE, 32*UI_SCALE}
 
 typedef enum{
   MENU_INACTIVE,
@@ -34,6 +35,7 @@ typedef enum{
   MENU_MAIN,
   MENU_OPTIONS,
   MENU_PAUSE,
+  MENU_RECAP,
   MENU_DEBUG,
   MENU_DONE
 }MenuId;
@@ -45,6 +47,8 @@ typedef struct ui_element_s{
   ElementType         type;
   ElementState        state;
   ElementCallback     cb[ELEMENT_DONE];
+  Rectangle           bounds;
+  char                text[65];
   int                 num_children;
   struct ui_element_s *children[4];
 }ui_element_t;

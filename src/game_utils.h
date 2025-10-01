@@ -34,6 +34,7 @@ char* GetFileStem(const char* filename);
 //<==========
 //
 static inline void DO_NOTHING(void){}
+static inline bool BOOL_DO_NOTHING(){return false;}
 //<===BEHAVIOR TREES
 
 //forward declare

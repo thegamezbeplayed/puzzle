@@ -136,6 +136,12 @@ entity_pool_t* InitEntityPool(void) {
 }
 
 void FreeLevels(){
+  for(int i = 0; i<levels.num_levels;i++){
+    level_t *l = levels.levels[i];
+    for(int j = 0; j < l->num_spawners; j++){
+      FreeObject(l->mob_spawners[j]);
+    }  
+  }
   levels = (level_order_t){0};
 }
 

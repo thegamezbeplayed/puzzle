@@ -19,8 +19,17 @@ void InitUI(){
   Vector2 pos = Vector2Subtract(VECTOR2_CENTER_SCREEN,Vector2Scale(DEFAULT_BUTTON_SIZE,0.5f));
  ui_element_t *playBtn = InitElement(UI_BUTTON,pos,DEFAULT_BUTTON_SIZE); 
 
+ strcpy(playBtn->text, "PLAY");
  playBtn->cb[ELEMENT_ACTIVATED] = GameTransitionScreen;
  MenuAddChild(&ui.menus[MENU_MAIN],playBtn);
+
+ ui.menus[MENU_RECAP] = InitMenu(MENU_RECAP,false);
+ Vector2 cPos = Vector2Subtract(VECTOR2_CENTER_SCREEN,Vector2Scale(LARGE_BUTTON_SIZE,0.5f));
+ ui_element_t *recapBtn = InitElement(UI_BUTTON,pos,LARGE_BUTTON_SIZE); 
+
+ strcpy(recapBtn->text, "CONTINUE");
+ recapBtn->cb[ELEMENT_ACTIVATED] = GameTransitionScreen;
+ MenuAddChild(&ui.menus[MENU_RECAP],recapBtn);
 }
 
 ui_menu_t InitMenu(MenuId id, bool modal){
@@ -39,25 +48,25 @@ ui_menu_t InitMenu(MenuId id, bool modal){
 }
 
 ui_element_t* InitElement(ElementType type, Vector2 pos, Vector2 size){
-  ui_element_t *u = malloc(sizeof(ui_element_t));
-  *u = (ui_element_t) {0};
+  ui_element_t* u = malloc(sizeof(ui_element_t));
+//  *u = (ui_element_t) {0};
 
+  u->num_children = 0;
   u->type = type;
-
+  u->bounds = Rect(pos.x,pos.y,size.x,size.y);
+  for(int i = 0; i < ELEMENT_DONE; i++)
+    u->cb[i] = BOOL_DO_NOTHING;
   return u;
 }
 
-void DrawElement(ui_element_t* element){
-}
-
 void DrawMenu(ui_menu_t* m){
-  for(int i = 0; i < m->num_children;i++){
+/*  for(int i = 0; i < m->num_children;i++){
     DrawElement(m->children[i]);
-  }
+  }*/
 }
 
 void MenuAddChild(ui_menu_t *m, ui_element_t* c){
-
+  m->children[m->num_children++] = c;
 }
 
 void UISync(){
@@ -82,6 +91,17 @@ void UISyncMenu(ui_menu_t* m){
 }
 
 void UISyncElement(ui_element_t* e){
+  int clicked,toggle,focused = 0;
+  switch(e->type){
+    case UI_BUTTON:
+      clicked = GuiButton(e->bounds,e->text);
+      break;
+    default:
+      break;
+  }
+
+  if(clicked>0)
+    e->cb[ELEMENT_ACTIVATED](e);
 
 }
 

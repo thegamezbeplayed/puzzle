@@ -335,7 +335,6 @@ void FreeWorld(){
     RemoveEnt(i);
   }
   world.num_ent = 0;
-
 }
 
 void WorldRender(){

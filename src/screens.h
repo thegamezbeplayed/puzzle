@@ -25,6 +25,7 @@
 
 #ifndef SCREENS_H
 #define SCREENS_H
+
 static const int screenWidth = 1920;
 static const int screenHeight = 1080;
 
