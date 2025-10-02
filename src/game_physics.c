@@ -400,6 +400,15 @@ bool RigidBodyCollide(rigid_body_t* a, rigid_body_t* b, ent_t *e){
   return true;
 }
 
+void CollisionDestroy(rigid_body_t* a, rigid_body_t* b, ForceType t){
+  if(a->owner->team == b->owner->team)
+    return;
+
+  SetState(b->owner,STATE_DIE,NULL);
+  if(b->owner->type == ENT_PLAYER)
+    TraceLog(LOG_INFO,"Destroy Ent %d",b->owner->type);
+}
+
 void CollisionReflect(rigid_body_t* a, rigid_body_t* b, ForceType t){
   /*if(a->is_static){
     //

@@ -1,6 +1,35 @@
 #include <raylib.h>
 #include "game_utils.h"
+#include <mysql/mysql.h>
 
+MYSQL *conn;
+int InitDB(){
+  conn = mysql_init(NULL);
+
+    TraceLog(LOG_INFO,("<====!MYSQL!====>"));
+  if (conn == NULL) {
+    TraceLog(LOG_WARNING,"====mysql_init() failed====");
+    return EXIT_FAILURE;
+  }
+  
+  if (mysql_real_connect(conn, "localhost", "root", "", "bulletshine", 0, NULL, 0) == NULL) {
+    TraceLog(LOG_WARNING,"====mysql_real_connect() failed===");
+    mysql_close(conn);
+    return EXIT_FAILURE;
+  }
+
+  // Insert test query
+  if (mysql_query(conn, "INSERT INTO player_scores (player, score) VALUES('bignose', 1)")) {
+    TraceLog(LOG_ERROR,"INSERT failed. Error: %s\n", mysql_error(conn));
+    mysql_close(conn);
+    return EXIT_FAILURE;
+  }
+
+  TraceLog(LOG_INFO,"Row inserted successfully!\n");
+
+  mysql_close(conn);
+  return EXIT_SUCCESS;
+}
 // Allocates a copy of the filename without extension
 char* GetFileStem(const char* filename) {
     const char* dot = strrchr(filename, '.');

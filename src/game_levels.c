@@ -74,6 +74,10 @@ bool CanChangeLevelState(LevelState old, LevelState s){
   return true;
 }
 
+const char* LevelGetCurrentWave(){
+  return TextFormat("%05i",1+LevelGetCurrentWaveNum());
+}
+
 int LevelGetCurrentWaveNum(){
   return levels.round_num * levels.num_levels + levels.current;
 }
@@ -99,7 +103,8 @@ void InitLevelEvents(){
   levels.level_info = level_info[1];
   levels.album_id = AudioBuildMusicTracks(levels.level_info.subdir);
   for (int i = 0; i<levels.num_levels; i++){
-    levels.levels[i] = &level_data[i];
+    levels.levels[i] = malloc(sizeof(level_t));
+    *levels.levels[i] = level_data[i];
     SetLevelState(levels.levels[i],LEVEL_LOADING);
   }
 
@@ -136,13 +141,23 @@ entity_pool_t* InitEntityPool(void) {
 }
 
 void FreeLevels(){
-  for(int i = 0; i<levels.num_levels;i++){
-    level_t *l = levels.levels[i];
-    for(int j = 0; j < l->num_spawners; j++){
-      FreeObject(l->mob_spawners[j]);
-    }  
-  }
+  for(int i = 0; i<levels.num_levels;i++)
+    FreeLevel(levels.levels[i]);
+
   levels = (level_order_t){0};
+
+}
+
+void FreeLevel(level_t* l){
+  if(!l)
+    return;
+
+  for(int j = 0; j < l->num_spawners; j++){
+      FreeObject(l->mob_spawners[j]);
+    l->mob_spawners[j] = NULL;  
+  }
+
+  free(l);
 }
 
 void InitLevel(level_t *l){
@@ -162,6 +177,7 @@ void InitLevel(level_t *l){
     l->num_spawners++;
   }
 
+  TraceLog(LOG_INFO,"levels initialized");
 }
 
 void ResetLevel(level_t* l){

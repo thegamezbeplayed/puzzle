@@ -5,7 +5,13 @@
 #define LARGE_BUTTON_SIZE (Vector2){164*UI_SCALE, 32*UI_SCALE}
 
 #define DEFAULT_PANEL_SIZE (Vector2){GetScreenWidth(), 64*UI_SCALE}
+#define DEFAULT_PANEL_THIN_SIZE (Vector2){GetScreenWidth(), 32*UI_SCALE}
 #define SMALL_PANEL_SIZE (Vector2){184*UI_SCALE, 64*UI_SCALE}
+#define SMALL_PANEL_THIN_SIZE (Vector2){184*UI_SCALE, 32*UI_SCALE}
+#define XS_PANEL_SIZE (Vector2){128*UI_SCALE, 64*UI_SCALE}
+#define XS_PANEL_THIN_SIZE (Vector2){128*UI_SCALE, 32*UI_SCALE}
+
+#define DEFAULT_LINE_SIZE (Vector2){2 *UI_SCALE, 64*UI_SCALE}
 typedef enum{
   MENU_INACTIVE,
   MENU_READY,
@@ -30,9 +36,26 @@ typedef enum{
   UI_MASK,
   UI_BUTTON,
   UI_LABEL,
+  UI_STATUSBAR,
+  UI_PROGRESSBAR,
   UI_PANEL,
+  UI_BOX,
+  UI_LINE,
   UI_BLANK
 }ElementType;
+
+typedef enum{
+  LAYOUT_FREE,
+  LAYOUT_VERTICAL,
+  LAYOUT_HORIZONTAL,
+}UILayout;
+
+typedef enum{
+  ALIGN_NONE,
+  ALIGN_CENTER,
+  ALIGN_LEFT,
+  ALIGN_RIGHT,
+}UIAlignment;
 
 typedef enum{
   MENU_NONE,
@@ -47,7 +70,17 @@ typedef enum{
 
 struct ui_element_s;
 typedef bool (*ElementCallback)(struct ui_element_s* self);
-typedef const char* (*ElementValueSync)(void);
+typedef enum { VAL_INT, VAL_FLOAT, VAL_CHAR } ValueType;
+typedef struct {
+    ValueType type;
+    union {
+        int   *i;
+        float *f;
+        const char*  c;
+    };
+} ElementValue;
+
+typedef ElementValue (*ElementValueSync)(void);
 
 typedef struct ui_element_s{
   struct ui_menu_s    *owner;
@@ -58,7 +91,7 @@ typedef struct ui_element_s{
   char                text[65];
   ElementValueSync    get_val;
   int                 num_children;
-  struct ui_element_s *children[4];
+  struct ui_element_s *children[8];
 }ui_element_t;
 
 ui_element_t* InitElement(ElementType type, Vector2 pos, Vector2 size);
@@ -68,7 +101,14 @@ bool UICloseOwner(ui_element_t* e);
 struct ui_menu_s;
 typedef bool (*MenuCallback)(struct ui_menu_s* self);
 
+ElementValue GetDisplayPoints(void);
+ElementValue GetDisplayTime(void);
+ElementValue GetDisplayWave(void);
+ElementValue GetDisplayHealth(void);
+
 typedef struct ui_menu_s{
+  UILayout      layout;
+  UIAlignment   align;
   int           num_children;
   MenuCallback  cb[MENU_END];
   ui_element_t  *children[8];

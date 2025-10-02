@@ -13,8 +13,6 @@ double previousTime = 0.0;    // Previous time measure
 double waitTime = 0.0;              // Wait time (if target fps required)
 float deltaTime = 0.0f;             // Frame time (Update + Draw + Wait time)
 
-int fixedFPS = 60;
-
 static void UpdateDrawFrame(void);          // Update and draw one frame
 static void ChangeToScreen(GameScreen screen);     // Change to screen, no transition effect
 
@@ -32,6 +30,7 @@ int main(void)
   InitAudioDevice();      // Initialize audio device
                           //--------------------------------------------------------------------------------------
 
+  InitDB();
   InitAudio();
   InitResources();
   InitUI();

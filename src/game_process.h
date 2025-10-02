@@ -12,6 +12,7 @@
 #define CURRENT_LEVEL levels.levels[levels.current]
 extern Font font;
 extern ent_t* player;
+static int fixedFPS = 60;
 
 typedef void (*UpdateFn)(void);
 typedef bool EntFilterFn(ent_t* e, ent_t* other); 
@@ -50,6 +51,7 @@ bool CanInteract(int source, int target);
 int GetInteractions(int source);
 void FreeInteraction(interaction_t* item);
 void FreeInteractionByIndex(int i);
+void FreeInteractions();
 void InteractionStep();
 //==INTERACTIONS_T==>
 //EVENTS==>
@@ -187,10 +189,13 @@ extern level_order_t levels;
 
 void InitLevel();
 void FreeLevels();
+void FreeLevel(level_t* l);
 void LevelAddSpawn(unsigned int index, EntityType ref, int count);
 game_object_t* LevelGetSpawner(unsigned int index);
 void AddPoints(float mul,float points,Vector2 pos);
 const char* GetPoints();
+const char* GetGameTime();
+const char* LevelGetCurrentWave();
 int LevelGetCurrentWaveNum();
 level_t* LevelCurrent();
 level_t* GetLevel(unsigned int index);

@@ -105,7 +105,7 @@ void ProjectileShoot(ent_t* owner, Vector2 pos, Vector2 dir,int damage){
 bool ProjectileCollide(rigid_body_t* a, rigid_body_t* b){
   if(b->forces[FORCE_KINEMATIC].type  == FORCE_KINEMATIC){
     b->forces[FORCE_KINEMATIC].on_react(b,a,FORCE_KINEMATIC);
-    return true;
+    //return true;
   }
   
   for (int i = 0; i < FORCE_NONE; i++){
@@ -134,8 +134,9 @@ void ProjectileCollision(rigid_body_t* a, rigid_body_t* b){
    AddInteraction(EntInteraction(a->buid,b->buid,a->col_rate));
    if(b->owner->team == TEAM_ENEMIES)
     AddPoints(GetInteractions(a->buid)-1,1,b->position);
-
-   TraceLog(LOG_INFO,"%d",a->buid);
+   else if (b->owner->type == ENT_PLAYER)
+     SetState(a->owner,STATE_DIE,NULL);
+   
    AudioPlayRandomSfx(SFX_ACTION,ACTION_SHOOT);
 
 }

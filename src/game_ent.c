@@ -285,6 +285,12 @@ bool FreeEnt(ent_t* e){
   if(!e)
     return false;
 
+
+  if(e->type == ENT_PLAYER){
+    player = malloc(sizeof(ent_t));
+    *player = *e;
+  }
+
   free(e);
   return true;
 }

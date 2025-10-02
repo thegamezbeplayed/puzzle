@@ -109,6 +109,7 @@ bool CheckCollision(rigid_body_t *a, rigid_body_t *b, int len);
 bool RigidBodyCollide(rigid_body_t* a, rigid_body_t* b, ent_t *e);
 void CollisionReflect(rigid_body_t* a, rigid_body_t* b, ForceType t);
 void CollisionDamage(rigid_body_t* a, rigid_body_t* b, ForceType t);
+void CollisionDestroy(rigid_body_t* a, rigid_body_t* b, ForceType t);
 void RecoilDamage(rigid_body_t* a, rigid_body_t* b, ForceType t);
 void CollisionMelee(rigid_body_t* a, rigid_body_t* b, ForceType t);
 void ForceDisable(rigid_body_t* a, rigid_body_t* b, ForceType t);

@@ -13,6 +13,8 @@
 #define MAKE_ADAPTER(name, T) \
     static void name##_Adapter(void *p) { name((T)p); }
 
+int InitDB();
+
 typedef struct ent_s ent_t;
 
 typedef enum{

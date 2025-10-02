@@ -33,6 +33,7 @@ void InitGameplayScreen(void){
 }
 
 void PreUpdate(void){
+  GameProcessStep();
   WorldPreUpdate();
 }
 
@@ -60,7 +61,6 @@ void UpdateGameplayScreen(void)
   if(player)
     camera.target = player->pos;
     */
-  GameProcessStep();
 }
 
 // Gameplay Screen Draw logic
@@ -84,6 +84,8 @@ void DrawGameplayScreen(void)
 // Gameplay Screen Unload logic
 void UnloadGameplayScreen(void)
 {
+  MenuSetState(&ui.menus[MENU_HUD],MENU_INACTIVE);
+
   GameProcessEnd();
   // TODO: Unload GAMEPLAY screen variables here!
 }

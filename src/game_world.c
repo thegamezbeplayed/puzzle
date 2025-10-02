@@ -139,7 +139,7 @@ int RemoveSprite(int index){
 
 int RemoveEnt(int index){
   int last_pos = world.num_ent -1;
-  
+
   if(!FreeEnt(world.ents[index]))
     return 0;
 
@@ -148,9 +148,9 @@ int RemoveEnt(int index){
     world.ents[index] = world.ents[last_pos];
     return 1;
   }
- 
+
   return 0;
-  
+
 }
 
 
@@ -503,6 +503,7 @@ void GameProcessSync(bool wait){
 void GameProcessEnd(){
   UnloadEvents(game_process.events);
   FreeWorld();
+  FreeInteractions();
   FreeLevels();
   ClearParticles();
 }
@@ -529,6 +530,9 @@ void AddPoints(float mul,float points, Vector2 pos){
   AddFloatingText(rt);
 }
 
+const char* GetGameTime(){
+  return TextFormat("%09i",(int)(game_process.game_frames/fixedFPS));
+}
 const char* GetPoints(){
   return TextFormat("%09i",(int)world.points);
 }

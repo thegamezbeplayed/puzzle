@@ -7,12 +7,17 @@
 ui_manager_t ui;
 
 void InitUI(){
-  //GuiSetStyle(DEFAULT,BASE_COLOR_NORMAL,ColorToInt(WHITE));
+  GuiSetStyle(DEFAULT,TEXT_SIZE,20);
+  GuiSetStyle(DEFAULT,TEXT_ALIGNMENT,TEXT_ALIGN_CENTER);
+  GuiSetStyle(DEFAULT,BORDER_COLOR_NORMAL,ColorToInt(WHITE));
+  //GuiSetStyle(STATUSBAR,BASE_COLOR_NORMAL,ColorToInt(Fade(WHITE,0.5f)));
+  GuiSetStyle(DEFAULT,LINE_COLOR,ColorToInt(BLACK));
   for (int i = 0; i< MENU_DONE; i++)
     ui.menu_key[i] = KEY_NULL;
 
   ui.menu_key[MENU_PAUSE] = KEY_P;
   ui.menus[MENU_PAUSE] = InitMenu(MENU_PAUSE, true);
+  ui.menus[MENU_PAUSE].layout = LAYOUT_VERTICAL;
   ui.menus[MENU_PAUSE].cb[MENU_OPENED] = TogglePause; 
   ui.menus[MENU_PAUSE].cb[MENU_CLOSE] = TogglePause;
 
@@ -23,6 +28,7 @@ void InitUI(){
   resumeBtn->cb[ELEMENT_ACTIVATED] = UICloseOwner;
   MenuAddChild(&ui.menus[MENU_PAUSE],resumeBtn);
   ui.menus[MENU_MAIN] = InitMenu(MENU_MAIN,false);
+  ui.menus[MENU_MAIN].layout = LAYOUT_VERTICAL;
   ui_element_t *playBtn = InitElement(UI_BUTTON,pos,DEFAULT_BUTTON_SIZE); 
 
   strcpy(playBtn->text, "PLAY");
@@ -30,26 +36,60 @@ void InitUI(){
   MenuAddChild(&ui.menus[MENU_MAIN],playBtn);
 
   ui.menus[MENU_RECAP] = InitMenu(MENU_RECAP,false);
+  ui.menus[MENU_RECAP].layout = LAYOUT_VERTICAL;
  Vector2 cPos = Vector2Subtract(VECTOR2_CENTER_SCREEN,Vector2Scale(LARGE_BUTTON_SIZE,0.5f));
+ ui_element_t *pointsText =InitElement(UI_STATUSBAR,pos,XS_PANEL_THIN_SIZE);
+ ui_element_t *pointsBox =InitElement(UI_STATUSBAR,pos,XS_PANEL_THIN_SIZE);
+
+ strcpy(pointsBox->text, "SCORE");
+ pointsText->get_val = GetDisplayPoints;
  ui_element_t *recapBtn = InitElement(UI_BUTTON,pos,LARGE_BUTTON_SIZE); 
 
  strcpy(recapBtn->text, "CONTINUE");
  recapBtn->cb[ELEMENT_ACTIVATED] = GameTransitionScreen;
+ MenuAddChild(&ui.menus[MENU_RECAP],pointsBox);
+ MenuAddChild(&ui.menus[MENU_RECAP],pointsText);
  MenuAddChild(&ui.menus[MENU_RECAP],recapBtn);
 
  ui.menus[MENU_HUD] = InitMenu(MENU_HUD,false);
- Vector2 pPos = VECTOR2_ZERO;
- ui_element_t *hudPane = InitElement(UI_PANEL,pPos, DEFAULT_PANEL_SIZE);
+ ui.menus[MENU_HUD].layout = LAYOUT_VERTICAL;
+ ui.menus[MENU_HUD].align = ALIGN_CENTER;
+ Vector2 pPos = Vector2X(172);
+ ui_element_t *hudPane = InitElement(UI_PANEL,pPos,XS_PANEL_THIN_SIZE);
+ ui_element_t *hudStatus = InitElement(UI_PANEL,pPos, XS_PANEL_THIN_SIZE);
 
  MenuAddChild(&ui.menus[MENU_HUD],hudPane);
+ MenuAddChild(&ui.menus[MENU_HUD],hudStatus);
 
- ui_element_t *scoreBox = InitElement(UI_PANEL,VECTOR2_ONE, SMALL_PANEL_SIZE);
+ ui_element_t *healthText = InitElement(UI_STATUSBAR,VECTOR2_ZERO, SMALL_PANEL_THIN_SIZE);
+ strcpy(healthText->text,"HEALTH");
+ ui_element_t *healthBar = InitElement(UI_PROGRESSBAR,VECTOR2_ZERO, SMALL_PANEL_THIN_SIZE);
+ healthBar->get_val = GetDisplayHealth;
+ ElementAddChild(hudStatus,healthText);
+ ElementAddChild(hudStatus,healthBar);
+ ui_element_t *scoreBox = InitElement(UI_STATUSBAR,VECTOR2_ZERO, XS_PANEL_THIN_SIZE);
  strcpy(scoreBox->text, "SCORE");
 
- ui_element_t *scoreText = InitElement(UI_LABEL,VECTOR2_ONE,SMALL_PANEL_SIZE);
- scoreText->get_val = GetPoints;
+ ui_element_t *scoreText = InitElement(UI_STATUSBAR,VECTOR2_ZERO,XS_PANEL_THIN_SIZE);
+ scoreText->get_val = GetDisplayPoints;
  ElementAddChild(hudPane,scoreBox);
  ElementAddChild(hudPane,scoreText);
+
+ ui_element_t *waveBox = InitElement(UI_STATUSBAR,VECTOR2_ZERO, XS_PANEL_THIN_SIZE);
+ strcpy(waveBox->text, "WAVE");
+
+ ui_element_t *waveText = InitElement(UI_STATUSBAR,VECTOR2_ZERO,XS_PANEL_THIN_SIZE);
+ waveText->get_val = GetDisplayWave;
+ ElementAddChild(hudPane,waveBox);
+ ElementAddChild(hudPane,waveText);
+
+ ui_element_t *timeBox = InitElement(UI_STATUSBAR,VECTOR2_ZERO, XS_PANEL_THIN_SIZE);
+ strcpy(timeBox->text, "TIME");
+
+ ui_element_t *timeText = InitElement(UI_STATUSBAR,VECTOR2_ZERO,XS_PANEL_THIN_SIZE);
+ timeText->get_val = GetDisplayTime;
+ ElementAddChild(hudPane,timeBox);
+ ElementAddChild(hudPane,timeText);
 }
 
 ui_menu_t InitMenu(MenuId id, bool modal){
@@ -82,18 +122,38 @@ ui_element_t* InitElement(ElementType type, Vector2 pos, Vector2 size){
 }
 
 void MenuAddChild(ui_menu_t *m, ui_element_t* c){
-  m->children[m->num_children++] = c;
   c->owner=m;
+  if(m->num_children > 0){
+
+    ui_element_t *prior = m->children[m->num_children-1];
+
+    switch(m->layout){
+      case LAYOUT_HORIZONTAL:
+        break;
+      case LAYOUT_VERTICAL:
+        c->bounds.y = prior->bounds.y + prior->bounds.height;
+        break;
+      default:
+        break;
+    }
+  }
+  m->children[m->num_children++] = c;
 }
 
 void ElementAddChild(ui_element_t *o, ui_element_t* c){
-  for(int i = 0; i < o->num_children; i++){
-    c->bounds.x += o->children[i]->bounds.width;
-  }
-  if(o->num_children ==0){
+  if(o->num_children == 0){
     c->bounds.x += o->bounds.x;
     c->bounds.y += o->bounds.y;
   }
+  else{
+    ui_element_t *prior = o->children[o->num_children-1];
+    c->bounds.x += prior->bounds.x + prior->bounds.width;
+    c->bounds.y += prior->bounds.y;
+  }
+  
+  if(c->bounds.x + c->bounds.width > o->bounds.width)
+    o->bounds.width+=c->bounds.width;
+
   c->owner = o->owner;
   o->children[o->num_children++] = c;
 }
@@ -121,18 +181,31 @@ void UISyncMenu(ui_menu_t* m){
 
 void UISyncElement(ui_element_t* e){
   int clicked,toggle,focused = 0;
-  if(e->get_val)
-    strcpy(e->text, e->get_val());
-
+  if(e->get_val){
+    ElementValue ev = e->get_val();
+    if(ev.type == VAL_CHAR)
+      strcpy(e->text, ev.c);
+  }
   switch(e->type){
     case UI_BUTTON:
       clicked = GuiButton(e->bounds,e->text);
       break;
     case UI_PANEL:
-      GuiPanel(e->bounds,e->text);
+      GuiPanel(e->bounds,NULL);
       break;
     case UI_LABEL:
       GuiLabel(e->bounds,e->text);
+      break;
+    case UI_BOX:
+      GuiGroupBox(e->bounds,NULL);
+    case UI_LINE:
+      GuiLine(e->bounds,NULL);
+      break;
+    case UI_PROGRESSBAR:
+      GuiProgressBar(e->bounds, NULL,NULL, e->get_val().f,0,1);
+      break;
+    case UI_STATUSBAR:
+      GuiStatusBar(e->bounds, e->text);
       break;
     default:
       break;
@@ -189,4 +262,33 @@ bool MenuSetState(ui_menu_t* m, MenuState s){
   MenuOnStateChanged(m,old,s);
 
   return true;
+}
+
+ElementValue GetDisplayPoints(void){
+  ElementValue ev = {0};
+  ev.type = VAL_CHAR;
+  ev.c = GetPoints();
+  return ev;
+}
+
+ElementValue GetDisplayTime(void){
+  ElementValue ev = {0};
+  ev.type = VAL_CHAR;
+  ev.c = GetGameTime();
+  return ev;
+}
+
+ElementValue GetDisplayWave(void){
+  ElementValue ev = {0};
+  ev.type = VAL_CHAR;
+  ev.c = LevelGetCurrentWave();
+  return ev;
+}
+
+ElementValue GetDisplayHealth(void){
+  ElementValue ev = {0};
+  ev.type = VAL_FLOAT;
+  ev.f = malloc(sizeof(float));
+  *ev.f = RATIO(player->stats[STAT_HEALTH]);
+  return ev;
 }

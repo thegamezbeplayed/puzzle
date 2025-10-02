@@ -107,6 +107,11 @@ void FreeInteraction(interaction_t* item) {
   }
 }
 
+void FreeInteractions(){
+  for (int i = 0; i < MAX_INTERACTIONS; i++)
+    FreeInteractionByIndex(i);
+}
+
 void FreeInteractionByIndex(int i) {
   if (i < 0 && i > MAX_INTERACTIONS)
     return;
