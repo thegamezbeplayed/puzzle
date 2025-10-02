@@ -105,6 +105,12 @@ void SetParticle(Vector2 pos,force_t *f, Color color, ShapeType shape, Vector2 s
   }
 }
 
+void ClearParticles(){
+  for (int  i= 0; i < MAX_PARTICLES; i++){
+    particles[i] = (particle_t) {0};
+  }
+}
+
 void StepParticles(){
   for (int i = 0; i < MAX_PARTICLES; i++){
     if (particles[i].life <= 0){

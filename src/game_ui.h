@@ -4,6 +4,8 @@
 #define DEFAULT_BUTTON_SIZE (Vector2){120*UI_SCALE, 32*UI_SCALE}
 #define LARGE_BUTTON_SIZE (Vector2){164*UI_SCALE, 32*UI_SCALE}
 
+#define DEFAULT_PANEL_SIZE (Vector2){GetScreenWidth(), 64*UI_SCALE}
+#define SMALL_PANEL_SIZE (Vector2){184*UI_SCALE, 64*UI_SCALE}
 typedef enum{
   MENU_INACTIVE,
   MENU_READY,
@@ -27,6 +29,8 @@ typedef enum{
 typedef enum{
   UI_MASK,
   UI_BUTTON,
+  UI_LABEL,
+  UI_PANEL,
   UI_BLANK
 }ElementType;
 
@@ -36,27 +40,31 @@ typedef enum{
   MENU_OPTIONS,
   MENU_PAUSE,
   MENU_RECAP,
+  MENU_HUD,
   MENU_DEBUG,
   MENU_DONE
 }MenuId;
 
 struct ui_element_s;
 typedef bool (*ElementCallback)(struct ui_element_s* self);
+typedef const char* (*ElementValueSync)(void);
 
 typedef struct ui_element_s{
+  struct ui_menu_s    *owner;
   ElementType         type;
   ElementState        state;
   ElementCallback     cb[ELEMENT_DONE];
   Rectangle           bounds;
   char                text[65];
+  ElementValueSync    get_val;
   int                 num_children;
   struct ui_element_s *children[4];
 }ui_element_t;
 
 ui_element_t* InitElement(ElementType type, Vector2 pos, Vector2 size);
-void DrawElement(ui_element_t* element);
+void ElementAddChild(ui_element_t *o, ui_element_t* c);
 void UISyncElement(ui_element_t* e);
-
+bool UICloseOwner(ui_element_t* e);
 struct ui_menu_s;
 typedef bool (*MenuCallback)(struct ui_menu_s* self);
 

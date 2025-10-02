@@ -74,10 +74,7 @@ int main(void)
       deltaTime = (float)updateDrawTime;    // Framerate could be variable
 
     previousTime = currentTime;
-    UISync();
     GameProcessSync(wait);
-
-    UIRender();
   }
 #endif
   // Unload global data loaded

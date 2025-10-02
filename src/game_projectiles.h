@@ -47,6 +47,7 @@ void AddParticle(particle_t *p);
 void SetParticle(Vector2 pos,force_t *f, Color color, ShapeType shape, Vector2 size, float duration);
 void StepParticles();
 void ParticlesRender();
+void ClearParticles();
 void ParticleExplosion(Vector2 pos, Vector2 momentum, float size, Color color);
 
 #endif

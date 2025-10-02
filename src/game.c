@@ -1,30 +1,12 @@
 #include "raylib.h"
 #include "game_process.h"
 #define RAYGUI_IMPLEMENTATION
-#include "raygui.h"
+#include "game_ui.h"
 
-#include "light.h"
-#define GUI_HUD_BAR_IMPLEMENTATION
-#include "gui_hud_bar.h"
 Camera2D camera = { 0 };
-GuiHudBarState hud_state;
 //----------------------------------------------------------------------------------
 // Gameplay Screen Functions Definition
 //----------------------------------------------------------------------------------
-void Draw2DGrid(int cellSize, int screenWidth, int screenHeight) {
-  Color gridColor = GRAY;
-
-  // Vertical lines
-  for (int x = 0; x <= screenWidth; x += cellSize) {
-    DrawLine(x, 0, x, screenHeight, gridColor);
-  }
-
-  // Horizontal lines
-  for (int y = 0; y <= screenHeight; y += cellSize) {
-    DrawLine(0, y, screenWidth, y, gridColor);
-  }
-}
-
 Vector2 CaptureInput(){
   Vector2 input = {0.0f,0.0f};
 
@@ -38,8 +20,6 @@ Vector2 CaptureInput(){
 
 // Gameplay Screen Initialization logic
 void InitGameplayScreen(void){
-  GuiLoadStyleLight();     
-  hud_state = InitGuiHudBar();
   //camera.target = player.position;
   camera.offset = (Vector2){ GetScreenWidth()/2.0f, GetScreenHeight()/2.0f };
   camera.rotation = 0.0f;
@@ -48,6 +28,8 @@ void InitGameplayScreen(void){
   camera.target = (Vector2){ROOM_WIDTH/2,ROOM_HEIGHT/2};
   InitGameEvents();
   InitLevelEvents();
+  MenuSetState(&ui.menus[MENU_HUD],MENU_ACTIVE);
+
 }
 
 void PreUpdate(void){
@@ -90,13 +72,11 @@ void DrawGameplayScreen(void)
   ClearBackground(RAYWHITE);
   BeginMode2D(camera);
 
-  Draw2DGrid(GRID_SIZE, GetScreenWidth()*4, GetScreenHeight()*4);
   WorldRender();
 
   EndMode2D();
-  GuiHudBar(&hud_state);
   DrawFPS(10, 10);
-
+  UISync();
   EndDrawing();
 
 }

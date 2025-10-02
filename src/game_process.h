@@ -114,6 +114,7 @@ typedef struct{
 
 typedef struct{
   GameScreen     screen;
+  int            game_frames;
   child_process_t children[SCREEN_DONE];
   GameScreen     next[SCREEN_DONE];
   GameState      state[SCREEN_DONE];//TODO each screen needs a state

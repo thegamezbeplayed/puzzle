@@ -443,7 +443,7 @@ void InitGameEvents(){
   //game_process.children[SCREEN_GAMEPLAY].finish[PROCESS_LEVEL] =LevelEnd;
   game_process.children[SCREEN_GAMEPLAY].init[PROCESS_LEVEL] =InitLevelEvents;
   game_process.children[SCREEN_GAMEPLAY].update_steps[PROCESS_LEVEL][UPDATE_FIXED] = LevelStep;
-  
+ game_process.game_frames = 0; 
   MenuSetState(&ui.menus[MENU_PAUSE],MENU_READY);
 }
 
@@ -467,6 +467,7 @@ void GameProcessStep(){
   if(game_process.screen != SCREEN_GAMEPLAY)
     return;
 
+  game_process.game_frames++;
   if(game_process.events)
     StepEvents(game_process.events);
 }
@@ -503,6 +504,7 @@ void GameProcessEnd(){
   UnloadEvents(game_process.events);
   FreeWorld();
   FreeLevels();
+  ClearParticles();
 }
 
 void AddPoints(float mul,float points, Vector2 pos){
@@ -510,6 +512,11 @@ void AddPoints(float mul,float points, Vector2 pos){
   world.points+=mul*points;
   if(mul < 2)
     return;
+
+  if(mul <5)
+    AudioPlaySfx(SFX_IMPORTANT,ACTION_COMBO,(int)mul-1);
+  else
+    AudioPlaySfx(SFX_IMPORTANT,ACTION_COMBO,4);
 
   render_text_t *rt = malloc(sizeof(render_text_t));
   *rt = (render_text_t){

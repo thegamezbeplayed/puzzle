@@ -137,6 +137,17 @@ void AudioMusicFade(music_track_t* t){
     AudioMan.concurrent_track = -1;
 }
 
+void AudioPlaySfx(SfxGroup group, SfxType type, int index){
+  if(CheckEvent(AudioMan.timers[group],EVENT_PLAY_SFX))
+    return;
+
+
+    PlaySound(AudioMan.sfx[group].items[type].sounds[index]);
+    SetSoundVolume(AudioMan.sfx[group].items[type].sounds[index],AudioMan.sfx[group].volume);
+    int wait  = (int)((AudioMan.sfx[group].items[type].sounds[index].frameCount*30)/44100);
+    AddEvent(AudioMan.timers[group],InitCooldown(wait,EVENT_PLAY_SFX,NULL,NULL));
+}
+
 void AudioPlayRandomSfx(SfxGroup group, SfxType type){
   if(CheckEvent(AudioMan.timers[group],EVENT_PLAY_SFX))
     return;

@@ -7,9 +7,9 @@ difficulty_modifier_t level_mods[MOD_DONE] = {
   {.type = MOD_NONE},
   {.type = MOD_LEVEL_DIFF, .denom = 1,.amount = 0.99f, .modFn = ModifyLevelDifficulty},
   {.type = MOD_LEVEL_POINTS, .denom = 250,.amount = 1, .modFn = ModifyLevelPoints},
-  {.type = MOD_MOB_UPGRADE, .denom = 5,.amount = 1, .modFn = ModifyMobUpgrade},
+  {.type = MOD_MOB_UPGRADE, .denom = 150,.amount = 1, .modFn = ModifyMobUpgrade},
   {.type = MOD_MOB_COUNT, .denom = 80,.amount = 1, .modFn = ModifyMobCount},
-  {.type = MOD_WAVE_INTERVAL, .denom = 50, .amount = -6, .modFn = ModifyWaveInterval},
+  {.type = MOD_WAVE_INTERVAL, .denom = 75, .amount = -6, .modFn = ModifyWaveInterval},
 };
 
 level_info_t level_info[]={
@@ -271,6 +271,8 @@ bool ModifyMobCount(difficulty_modifier_t* self){
       continue;
 
     p->reference_ents[p->num_references++] = p->reference_ents[0];
+    StatChangeValue(NULL,&l->event_durations[EVENT_WAVE].dur,l->event_durations[EVENT_SPAWN].dur.max);  
+
     self->denom += p->num_references;
     TraceLog(LOG_INFO,"[MOD]====level %d mob count now %d===[MOD]",self->level_id, p->num_references );
     return true;

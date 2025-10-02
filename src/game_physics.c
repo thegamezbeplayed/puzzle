@@ -35,7 +35,7 @@ rigid_body_t* InitRigidBody(ent_t* owner, Vector2 pos, float radius){
   b->counter_force[FORCE_IMPULSE] = FORCE_NONE;
   b->counter_force[FORCE_NONE] = FORCE_NONE;
 
-  b->restitution = .05;  
+  b->restitution = .035;  
   b->is_static = false;
   b->simulate = false;
   b->col_rate = 4;
@@ -45,8 +45,8 @@ rigid_body_t* InitRigidBody(ent_t* owner, Vector2 pos, float radius){
       .pos = Vector2Zero(),
       .offset = Vector2FromXY(-radius,-radius),
       .radius = radius,
-      .width = radius*2,
-      .height = radius*2
+      .width = radius*1.75,
+      .height = radius*1.75
   };
 
   return b;

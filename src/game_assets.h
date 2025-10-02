@@ -108,6 +108,7 @@ typedef enum{
   SFX_ALL,
   SFX_UI,
   SFX_ACTION,
+  SFX_IMPORTANT,
   SFX_DONE
 }SfxGroup;
 
@@ -138,7 +139,7 @@ static sfx_info_t sfx_catalog[]={
   {ACTION_SHOOT,SFX_ACTION,4,{"close_001.ogg","close_002.ogg","close_003.ogg","close_004.ogg"}},
   {ACTION_SHOT,SFX_ACTION,4,{"select_001.ogg","select_002.ogg","select_003.ogg","select_004.ogg"}},
   {ACTION_FRAG,SFX_ACTION,4,{"scratch_001.ogg","scratch_002.ogg","scratch_003.ogg","scratch_004.ogg"}},
-  {ACTION_COMBO,SFX_ACTION,5,{"combo_001.ogg","combo_002.ogg","combo_003.ogg","combo_004.ogg","combo_005.ogg"}},
+  {ACTION_COMBO,SFX_IMPORTANT,5,{"combo_001.ogg","combo_002.ogg","combo_003.ogg","combo_004.ogg","combo_005.ogg"}},
   {ACTION_REFLECT,SFX_ACTION,4,{"error_001.ogg","error_002.ogg","error_003.ogg","error_004.ogg"}},
   {ACTION_BOOM,SFX_ACTION,3,{"boom_001.ogg","boom_002.ogg","boom_003.ogg"}},
 };
@@ -162,6 +163,7 @@ typedef struct{
 void InitAudio();
 int AudioBuildMusicTracks(const char* subdir);
 void AudioStep();
+void AudioPlaySfx(SfxGroup group, SfxType type, int index);
 void AudioPlayRandomSfx(SfxGroup group, SfxType type);
 void AudioPlayMusic(int index);
 bool AudioPlayNext(music_group_t* t);

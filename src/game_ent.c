@@ -161,7 +161,7 @@ void EntAddPoints(ent_t *e,EntityState old, EntityState s){
   if(e->stats[STAT_POINTS].current <= 0)
     return;
 
-  AddPoints(GetInteractions(e->lastdamage_sourceid), e->stats[STAT_POINTS].current,e->pos);
+  AddPoints(GetInteractions(e->lastdamage_sourceid)-1, e->stats[STAT_POINTS].current,e->pos);
 }
 
 bool EntKill(ent_t* e){
@@ -362,8 +362,6 @@ void EntInitOnce(ent_t* e){
 
 void DamageEnt(ent_t *e, attack_t a){//Copy of attack cuz its subject to Updates
   //AnimPlay(e->sprite,ANIM_HURT);
-  if(e->type == ENT_PLAYER)
-    TraceLog(LOG_INFO,"Player takes %d damage",a.damage);
   StatChangeValue(e,&e->stats[STAT_HEALTH],-a.damage);
 }
 

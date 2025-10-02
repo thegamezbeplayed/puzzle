@@ -131,10 +131,11 @@ void ProjectileCollision(rigid_body_t* a, rigid_body_t* b){
    if(!ProjectileCollide(a,b))
      return;
 
-   AddInteraction(EntInteraction(a->buid,b->buid,b->col_rate));
+   AddInteraction(EntInteraction(a->buid,b->buid,a->col_rate));
    if(b->owner->team == TEAM_ENEMIES)
-    AddPoints(GetInteractions(a->buid),1,b->position);
+    AddPoints(GetInteractions(a->buid)-1,1,b->position);
 
+   TraceLog(LOG_INFO,"%d",a->buid);
    AudioPlayRandomSfx(SFX_ACTION,ACTION_SHOOT);
 
 }

@@ -114,8 +114,8 @@ typedef struct {
 static EventDefaultDuration event_durations[EVENT_NONE] = {
   {EVENT_NONE,0},
   {EVENT_NONE,0},
-  {EVENT_SPAWN, (stat_t){.attribute = STAT_DURATION, .max = 35, .current = 35, .min = 24}},
-  {EVENT_WAVE, (stat_t){.attribute = STAT_DURATION, .max = 180, .current = 196, .min = 66}},
+  {EVENT_SPAWN, (stat_t){.attribute = STAT_DURATION, .max = 35, .current = 35, .min = 27}},
+  {EVENT_WAVE, (stat_t){.attribute = STAT_DURATION, .max = 300, .current = 300, .min = 66}},
   {EVENT_NONE,0},
   {EVENT_NONE,0},
   {EVENT_NONE,0},
