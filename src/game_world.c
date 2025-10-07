@@ -9,14 +9,14 @@ TreeCacheEntry tree_cache[16] = {0};
 int tree_cache_count = 0;
 
 void print_mem_usage() {
-    FILE* f = fopen("/proc/self/status", "r");
-    char buf[256];
-    while (fgets(buf, sizeof(buf), f)) {
-        if (strncmp(buf, "VmRSS:", 6) == 0) {
-            TraceLog(LOG_WARNING,"%s", buf); // prints resident set size
-        }
+  FILE* f = fopen("/proc/self/status", "r");
+  char buf[256];
+  while (fgets(buf, sizeof(buf), f)) {
+    if (strncmp(buf, "VmRSS:", 6) == 0) {
+      TraceLog(LOG_WARNING,"%s", buf); // prints resident set size
     }
-    fclose(f);
+  }
+  fclose(f);
 }
 
 bool TogglePause(ui_menu_t* m){
@@ -276,8 +276,6 @@ void WorldFixedUpdate(){
       default:
         PhysicsStep(world.ents[i]->body);
         EntSync(world.ents[i]);
-       /* if(!CheckEntOutOfBounds(world.ents[i], WorldRoomBounds()))
-          EntKill(world.ents[i]);*/
         break;
     }
   }
@@ -313,10 +311,21 @@ void InitWorld(world_data_t data){
   world.room_bounds = RecFromCoords(0,0,ROOM_WIDTH,ROOM_HEIGHT);
   for (int i = 0; i < data.num_ents; i++)
     RegisterEnt(InitEnt(data.ents[i]));
-  
-  for (int j = 0; j < ROOM_TILE_COUNT; j++){
-    world.intgrid[data.tiles[j].map_x][data.tiles[j].map_y] = true;
-    RegisterEnt(InitEntStatic(data.tiles[j]));
+
+  for (int j = 0; j < GRID_WIDTH; j++){
+    Vector2 pos = Vector2FromXY(j*CELL_WIDTH,0);
+    RegisterEnt(InitEntStatic(data.tiles[0],pos));
+    
+    pos = Vector2FromXY(j*CELL_WIDTH,ROOM_HEIGHT);
+    RegisterEnt(InitEntStatic(data.tiles[0],pos));
+  }
+  for (int j = 1; j < GRID_HEIGHT; j++){
+    Vector2 pos = Vector2FromXY(0,j*CELL_HEIGHT);
+    RegisterEnt(InitEntStatic(data.tiles[0],pos));
+
+    pos = Vector2FromXY(ROOM_WIDTH,j*CELL_HEIGHT);
+    RegisterEnt(InitEntStatic(data.tiles[0],pos));
+
   }
 }
 
@@ -534,5 +543,9 @@ const char* GetGameTime(){
   return TextFormat("%09i",(int)(game_process.game_frames/fixedFPS));
 }
 const char* GetPoints(){
-  return TextFormat("%09i",(int)world.points);
+  return TextFormat("%09i",GetPointsInt());
+}
+
+int GetPointsInt(){
+  return (int)world.points;
 }

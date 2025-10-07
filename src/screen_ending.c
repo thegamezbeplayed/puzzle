@@ -1,13 +1,19 @@
 #include "screens.h"
 #include "game_ui.h"
+#include "game_utils.h"
+#include "game_process.h"
 
 //#define RAYGUI_IMPLEMENTATION
 
 // Title Screen Initialization logic
 void InitEndScreen(void)
 {
-  MenuSetState(&ui.menus[MENU_RECAP],MENU_ACTIVE);
 
+  if(DataUploadScore("thegamezbeplayed",GetPointsInt())){
+    //new high score
+  }
+
+  MenuSetState(&ui.menus[MENU_RECAP],MENU_ACTIVE);
 }
 
 // Title Screen Update logic

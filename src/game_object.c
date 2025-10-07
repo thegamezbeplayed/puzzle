@@ -19,14 +19,14 @@ game_object_t* InitObjectStatic(SpawnerInstance inst){
   }
 
   obj->events = InitEvents();
-
+/*
   obj->control = InitController();
   obj->control->bt[OBJECT_LOAD] = InitBehaviorTree("Load");
   obj->control->bt[OBJECT_START] = InitBehaviorTree("Prep");
   //obj->control->bt[OBJECT_RUN] = InitBehaviorTree("Check");
   obj->control->bt[OBJECT_PAUSE] =InitBehaviorTree("Prep");
   obj->control->bt[OBJECT_FINISH] =InitBehaviorTree("Finish");
-
+*/
   return obj;
 
 }
@@ -37,18 +37,32 @@ void FreeObject(game_object_t* o){
 }
 
 void OnObjectStateChange(game_object_t *obj, ObjectState s){
+  level_t* l = GetLevel(obj->level_id);
   switch(s){
     case OBJECT_START:
-      LevelLoadWave(obj->id+1);
+      EventDefaultDuration evd = l->event_durations[EVENT_SPAWN];
+      cooldown_t* cd = InitCooldown(evd.dur.current,evd.ev,StepObjectState_Adapter,obj);
+      cd->is_recycled = true;
+      int evIndex = AddEvent(obj->events,cd);
+      TraceLog(LOG_INFO,"event id:%d",evIndex);
+      LevelLoadWave(obj->id+1,obj->level_id);
       break;
     case OBJECT_END:
       LevelSyncSpawners(obj->level_id,obj->id);
+      UnloadEvents(obj->events);
       break;
     case OBJECT_RUN:
-      if(SpawnEnt(obj))
+      if(SpawnEnt(obj)){
         SetObjectState(obj,OBJECT_PAUSE);
+        ResetEvent(obj->events,EVENT_SPAWN);
+      }
       else
         SetObjectState(obj,OBJECT_END);
+      break;
+    case OBJECT_LOAD:
+      EventDefaultDuration evwd = l->event_durations[EVENT_WAVE];
+      cooldown_t* cdw = InitCooldown(evwd.dur.current,evwd.ev,StepObjectState_Adapter,obj);
+      AddEvent(obj->events,cdw);
       break;
     default:
       break;
@@ -78,6 +92,13 @@ void StepObjectState(game_object_t *obj){
   switch(obj->state){
     case OBJECT_LOAD:
       SetObjectState(obj,OBJECT_START);
+      break;
+    case OBJECT_START:
+    case OBJECT_PAUSE:
+      SetObjectState(obj,OBJECT_RUN);
+      break;
+    case OBJECT_RUN:
+      SetObjectState(obj,OBJECT_PAUSE);
       break;
     default:
       break;

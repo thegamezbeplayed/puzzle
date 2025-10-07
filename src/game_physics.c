@@ -74,7 +74,7 @@ rigid_body_t* InitRigidBodyStatic(ent_t* owner, Vector2 pos,float radius){
   b->counter_force[FORCE_IMPULSE] = FORCE_NONE;
   b->counter_force[FORCE_NONE] = FORCE_NONE;
 
-  b->restitution = 0.925;
+  b->restitution = 0.25;
   b->is_static = true;
   b->simulate = false;
   b->col_rate = 1;

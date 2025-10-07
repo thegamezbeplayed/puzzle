@@ -8,8 +8,8 @@ difficulty_modifier_t level_mods[MOD_DONE] = {
   {.type = MOD_LEVEL_DIFF, .denom = 1,.amount = 0.99f, .modFn = ModifyLevelDifficulty},
   {.type = MOD_LEVEL_POINTS, .denom = 250,.amount = 1, .modFn = ModifyLevelPoints},
   {.type = MOD_MOB_UPGRADE, .denom = 150,.amount = 1, .modFn = ModifyMobUpgrade},
-  {.type = MOD_MOB_COUNT, .denom = 80,.amount = 1, .modFn = ModifyMobCount},
-  {.type = MOD_WAVE_INTERVAL, .denom = 75, .amount = -6, .modFn = ModifyWaveInterval},
+  {.type = MOD_MOB_COUNT, .denom = 75,.amount = 1, .modFn = ModifyMobCount},
+  {.type = MOD_WAVE_INTERVAL, .denom = 50, .amount = -6, .modFn = ModifyWaveInterval},
 };
 
 level_info_t level_info[]={
@@ -57,7 +57,7 @@ void OnLevelStateChange(level_t *l, LevelState state){
       SetLevelState(CURRENT_LEVEL, LEVEL_RUNNING);
       break;
     case LEVEL_RUNNING:
-      SetObjectState(l->mob_spawners[0],OBJECT_START);
+      SetObjectState(l->mob_spawners[0],OBJECT_LOAD);
       break;
     case LEVEL_COMPLETE:
       AddPoints(1,l->points,VECTOR2_CENTER_SCREEN);
@@ -112,9 +112,10 @@ void InitLevelEvents(){
   LevelBegin(CURRENT_LEVEL);
 }
 
-void LevelLoadWave(unsigned int index){
-  if(index < CURRENT_LEVEL->num_spawners)
-    SetObjectState(CURRENT_LEVEL->mob_spawners[index],OBJECT_LOAD);
+void LevelLoadWave(unsigned int index,unsigned int level_id){
+  level_t *l = levels.levels[level_id];
+  if(index < l->num_spawners)
+    SetObjectState(l->mob_spawners[index],OBJECT_LOAD);
   else{
     //begin level end 
   }
@@ -185,7 +186,6 @@ void ResetLevel(level_t* l){
   l->spawner_done = 0u;
   for (int i = 0; i < l->num_spawners; i++) {
     l->spawns[i].current_ref = 0;
-    SetObjectState(l->mob_spawners[i],OBJECT_LOAD);
   }
 }
 
@@ -227,14 +227,15 @@ void RegisterPoolRef(unsigned int level_index,unsigned int index, EntityType ref
 bool SpawnEnt(game_object_t* spawner){
   if(spawner->state != OBJECT_RUN)
     return false;
+  level_t *l = levels.levels[spawner->level_id];
 
-  int cur = CURRENT_LEVEL->spawns[spawner->id].current_ref;
-  int ref_ent = CURRENT_LEVEL->spawns[spawner->id].reference_ents[cur];
+  int cur = l->spawns[spawner->id].current_ref;
+  int ref_ent = l->spawns[spawner->id].reference_ents[cur];
 
   if (ref_ent == ENT_MOB)
     return false;
 
-  CURRENT_LEVEL->spawns[spawner->id].current_ref++;
+  l->spawns[spawner->id].current_ref++;
   ent_t* spawn = InitEnt(room_instances[ref_ent]);
   spawn->body->position = spawner->pos;
   RegisterEnt(spawn);

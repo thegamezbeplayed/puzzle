@@ -14,7 +14,7 @@
 #define GRID_SIZE 128
 #define GRID_STEP 32
 
-#define MAX_ENTS 64  
+#define MAX_ENTS 128  
 #define MAX_SPAWNS 8  
 #define MAX_ATTACKS 8
 
@@ -182,7 +182,7 @@ typedef struct ent_s{
 } ent_t;
 
 ent_t InitEntRef(ObjectInstance ref);
-ent_t* InitEntStatic(TileInstance data);
+ent_t* InitEntStatic(TileInstance data, Vector2 pos);
 ent_t* InitEnt(ObjectInstance data);
 ent_t InitEntProjectile( ProjectileInstance data);
 
@@ -220,6 +220,7 @@ typedef struct game_object_s{
   events_t        *events;
   controller_t    *control;
 }game_object_t;
+
 bool SpawnEnt(game_object_t* spawner);
 game_object_t* InitObjectStatic(SpawnerInstance inst);
 void FreeObject(game_object_t* o);

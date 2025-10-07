@@ -253,10 +253,17 @@ BehaviorStatus BehaviorCheckEvent(behavior_params_t *params){
   if(!o || !o->control)
     return BEHAVIOR_FAILURE;
 
-  if(CheckEvent(o->events, params->event))
-    return BEHAVIOR_RUNNING;
+  //int index = GetEventIndex(o->events, params->event);
 
-  return BEHAVIOR_SUCCESS;
+  if(index < 0)
+    return BEHAVIOR_FAILURE;
+/*
+  cooldown_t ev = o->events[index];
+
+  if(ev.is_complete)
+    return BEHAVIOR_SUCCESS;
+*/
+  return BEHAVIOR_RUNNING;
 }
 
 BehaviorStatus BehaviorAddEvent(behavior_params_t *params){
@@ -309,6 +316,7 @@ BehaviorStatus BehaviorSpawnEnt(behavior_params_t *params){
   struct game_object_s* o = params->obj;
   if(!o || !o->control)
     return BEHAVIOR_FAILURE;
+  
   if(CheckEvent(o->events, params->event))
     return BEHAVIOR_RUNNING;
 

@@ -160,10 +160,8 @@ void ElementAddChild(ui_element_t *o, ui_element_t* c){
 
 void UISync(){
   for(int i = 0; i < MENU_DONE; i++){
-    if(IsKeyPressed(ui.menu_key[i])){
+    if(IsKeyPressed(ui.menu_key[i]))
       MenuSetState(&ui.menus[i],MENU_OPENED);
-      continue;
-    }
 
     UISyncMenu(&ui.menus[i]);
   }
@@ -175,8 +173,10 @@ void UISyncMenu(ui_menu_t* m){
   for(int i = 0; i < m->num_children;i++)
     UISyncElement(m->children[i]);
 
-  if(IsKeyPressed(KEY_ESCAPE))
-    m->cb[MENU_CLOSE](m);
+  if(IsKeyPressed(KEY_ESCAPE)){
+    if(m->cb[MENU_CLOSE](m))
+      MenuSetState(m,MENU_CLOSE);
+  }
 }
 
 void UISyncElement(ui_element_t* e){
@@ -289,6 +289,9 @@ ElementValue GetDisplayHealth(void){
   ElementValue ev = {0};
   ev.type = VAL_FLOAT;
   ev.f = malloc(sizeof(float));
-  *ev.f = RATIO(player->stats[STAT_HEALTH]);
+  if(player->stats[STAT_HEALTH].ratio ==NULL)
+    *ev.f = 0.0f;
+  else
+    *ev.f = RATIO(player->stats[STAT_HEALTH]);
   return ev;
 }

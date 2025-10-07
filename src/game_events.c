@@ -140,6 +140,9 @@ void InteractionStep(){
 }
 
 int AddEvent(events_t* pool, cooldown_t* cd){
+  if(CheckEvent(pool,cd->type))
+    return -1;
+  
   for (int i = 0; i < MAX_EVENTS; i++){
     if(pool->cooldown_used[i]){
       if(pool->cooldowns[i].type == EVENT_NONE){
@@ -171,6 +174,22 @@ events_t* InitEvents(){
 
   return ev;
 }
+
+int GetEventIndex(events_t* pool, EventType type){
+  for(int i = 0; i<MAX_EVENTS; i++){
+    if(!pool->cooldown_used[i])
+      continue;
+
+    if(pool->cooldowns[i].type != type)
+      continue;
+
+
+    return i;
+  }
+  
+  return -1;
+}
+
 
 bool CheckEvent(events_t* pool, EventType type){
   for(int i = 0; i<MAX_EVENTS; i++){
@@ -241,10 +260,14 @@ void StepEvents(events_t* pool){
     if(pool->cooldowns[i].elapsed >= pool->cooldowns[i].duration){
       pool->cooldowns[i].is_complete = true;
       pool->cooldowns[i].elapsed = 0;
-      if(pool->cooldowns[i].on_end)
+      if(pool->cooldowns[i].on_end){
         pool->cooldowns[i].on_end(pool->cooldowns[i].on_end_params);
+      }
       continue;
     }
+
+    if(pool->cooldowns[i].is_complete && pool->cooldowns[i].is_recycled)
+      continue;
 
     pool->cooldowns[i].elapsed++;
     if(pool->cooldowns[i].on_step)

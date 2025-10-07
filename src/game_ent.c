@@ -58,6 +58,7 @@ ent_t* InitEnt(ObjectInstance data){
       STANDARD_VEC4,
       col
   };
+
   float radius = data.size * 0.5f;
   pos = Vector2Add(pos,e->sprite->slice->center);
   e->pos = pos;
@@ -77,6 +78,10 @@ ent_t* InitEnt(ObjectInstance data){
   e->events = InitEvents();
   if(e->team == TEAM_ENEMIES){
     for(int i = 0; i < ATTACK_BLANK;i++){
+      /*
+      if(data.attacks[i].type == ATTACK_BLANK)
+        continue;
+        */
       e->attacks[i] = InitAttack(e,data.attacks[i]);
       e->num_attacks++;
     }
@@ -91,29 +96,40 @@ ent_t* InitEnt(ObjectInstance data){
     e->control->bt[STATE_ATTACK] = InitBehaviorTree("AttackOnTheMove");
   }
 
-  //SetState(e,STATE_SPAWN,OnStateChange);
   return e;
 }
 
-ent_t* InitEntStatic( TileInstance data){
+ent_t* InitEntStatic( TileInstance data, Vector2 pos){
   ent_t* e = malloc(sizeof(ent_t));
   *e = (ent_t){0};  // zero initialize if needed
-  Vector2 pos = Vector2FromXY(data.start_x,data.start_y);
 
-  e->sprite = InitSpriteByIndex(data.tile_index,&spritedata);
-  if(e->sprite!=NULL){
-    //e->sprite->slice->scale = data.size / e->sprite->slice->bounds.width;
-    e->sprite->owner = e;  
-    pos = Vector2Add(pos,e->sprite->slice->center);
-    e->sprite->layer = LAYER_BG;
-  }
+  e->type = ENT_WALL; 
   e->name = "tile";
   e->pos = pos;
+  e->sprite = InitSpriteByIndex(data.tile_index,&spritedata);
+  e->sprite->slice->scale=1;
+  InitShaderChainCache(e->type,e->sprite->slice->bounds.width,e->sprite->slice->bounds.height);
+  e->sprite->color = PINK;
+  e->sprite->owner = e;
   float radius = e->sprite->slice->bounds.height * 0.5f;
-  e->body = InitRigidBodyStatic(e, pos, radius);
+  e->body = InitRigidBodyStatic(e, e->pos, radius);
   e->events = InitEvents();
   e->team = TEAM_ENVIROMENT;
-  SetState(e, STATE_SPAWN,OnStateChange);
+  for(int i = 0; i < SHADER_DONE;i++){
+    e->sprite->gls[i] = malloc(sizeof(gl_shader_t));
+    *e->sprite->gls[i] = shaders[i];
+    if(!data.shaders[i])
+      e->sprite->gls[i]->stype = SHADER_NONE;
+  }
+  Vector4* col = malloc(sizeof(Vector4));
+  *col =  ColorNormalize(e->sprite->color);
+  e->sprite->gls[SHADER_OUTLINE]->uniforms[UNIFORM_OUTLINECOLOR] = (shader_uniform_t){
+    UNIFORM_OUTLINECOLOR,
+      STANDARD_VEC4,
+      col
+  };
+
+  SetState(e,STATE_SPAWN,OnStateChange);
   return e;
 }
 
@@ -200,12 +216,13 @@ attack_t InitAttack(ent_t* owner, AttackData data){
   attack_t a = (attack_t){0};
 
   a.owner = owner;
-  a.duid = owner->uid;
+  a.duid = 10*owner->uid+owner->num_attacks;
   a.damage = data.base_damage + data.damage_mod * owner->stats[STAT_POWER].current;
   //a.duration = data.duration;
   a.attack_type = data.type;
   a.reach = InitStatOnMax(STAT_RANGE,data.range);
-  
+
+  EventType evtype = EVENT_ATTACK_RATE; 
   switch(data.type){
     case ATTACK_RANGED:
       owner->stats[STAT_AMMO] = InitStatOnMax(STAT_AMMO,data.ammo);
@@ -217,23 +234,25 @@ attack_t InitAttack(ent_t* owner, AttackData data){
       a.attack = AttackShoot;
       break;
     case ATTACK_THORNS:
+      evtype = EVENT_THORNS_ATTACK_RATE;
       owner->body->forces[FORCE_STEERING].on_react = CollisionDamage;
       owner->body->forces[FORCE_STEERING].on_resolution = RecoilDamage;
       break;
     case ATTACK_MELEE:
       a.attack = AttackMelee;
+      evtype = EVENT_MELEE_ATTACK_RATE;
       owner->body->forces[FORCE_MELEE] = ForceBasic(FORCE_MELEE);
       owner->body->forces[FORCE_MELEE].on_react = CollisionMelee;
       owner->body->forces[FORCE_MELEE].on_resolution = ForceDisable;
       owner->body->forces[FORCE_MELEE].max_velocity = data.speed;
       owner->body->forces[FORCE_MELEE].accel = Vector2FromXY(data.accel,data.accel);
-
       break;
     default:
+      return a;
       break;
   }
   //a.attack = (AttackFunc)data.fn;
-  cooldown_t* cd =InitCooldown(data.rate,EVENT_ATTACK_RATE,NULL,NULL); 
+  cooldown_t* cd =InitCooldown(data.rate,evtype,NULL,NULL); 
   cd->is_recycled = true;
   a.params = &empty_attack_params;
   int cId = AddEvent(owner->events,cd); 
@@ -380,6 +399,8 @@ void EntSync(ent_t* e){
   if(!e->sprite)
     return;
 
+  if(e->team == TEAM_ENVIROMENT)
+    DO_NOTHING();
   e->sprite->pos = e->pos;// + abs(ent->sprite->offset.y);
 
   e->sprite->rot = 90+e->facing;
@@ -439,9 +460,9 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s){
   switch(old){
     case STATE_SPAWN:
       if(e->body)
-	e->body->simulate=true;
+        e->body->simulate=true;
       if(e->sprite)
-	e->sprite->is_visible = true;
+        e->sprite->is_visible = true;
       break;
     case STATE_WANDER:
     case STATE_ATTACK:
