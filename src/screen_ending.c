@@ -9,8 +9,8 @@
 void InitEndScreen(void)
 {
 
-  if(DataUploadScore("thegamezbeplayed",GetPointsInt())){
-
+  if(!DataUploadScore("coach1337",GetPointsInt())){
+    ElementSetState(GetElement("HIGHSCORE_LBL"),ELEMENT_HIDDEN);
   }
 
   MenuSetState(&ui.menus[MENU_RECAP],MENU_ACTIVE);

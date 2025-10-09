@@ -2,6 +2,7 @@
 #define __GAME_TOOLS__
 #include <float.h>
 #include "game_math.h"
+#include <stdint.h>
 
 #define CLAMPV2(v,a,b) ((v)<(a)?(a):((v)>(b)?(b):(v)))
 #define VEC_UNSET (Vector2){FLT_MAX, FLT_MAX}
@@ -18,6 +19,25 @@
 #define Vector2Y(y) ((Vector2){ 0.0f, (y) })
 #define Vector2Inc(v,xi,yi) ((Vector2){ (v.x+xi), (v.y+yi) })
 #define Rect(px,py,sx,sy) ((Rectangle){ (px),(py), (sx), (sy) })
+
+static void shuffle_array(void *base, size_t n, size_t size) {
+    char *arr = base;
+    for (size_t i = n - 1; i > 0; i--) {
+        size_t j = rand() % (i + 1);
+        char tmp[size];
+        memcpy(tmp, arr + i * size, size);
+        memcpy(arr + i * size, arr + j * size, size);
+        memcpy(arr + j * size, tmp, size);
+    }
+}
+
+static uint32_t hash_str(const char *str) {
+    uint32_t hash = 5381; // djb2 starting seed
+    int c;
+    while ((c = *str++))
+        hash = ((hash << 5) + hash) + (uint32_t)c; // hash * 33 + c
+    return hash;
+}
 
 typedef struct {
   int x,y;

@@ -23,13 +23,13 @@ void InitUI(){
 
   Vector2 pos = Vector2Subtract(VECTOR2_CENTER_SCREEN,Vector2Scale(DEFAULT_BUTTON_SIZE,0.5f));
 
-  ui_element_t *resumeBtn = InitElement(UI_BUTTON,pos,DEFAULT_BUTTON_SIZE); 
+  ui_element_t *resumeBtn = InitElement("RESUME_BTN",UI_BUTTON,pos,DEFAULT_BUTTON_SIZE); 
   strcpy(resumeBtn->text, "RESUME");
   resumeBtn->cb[ELEMENT_ACTIVATED] = UICloseOwner;
   MenuAddChild(&ui.menus[MENU_PAUSE],resumeBtn);
   ui.menus[MENU_MAIN] = InitMenu(MENU_MAIN,false);
   ui.menus[MENU_MAIN].layout = LAYOUT_VERTICAL;
-  ui_element_t *playBtn = InitElement(UI_BUTTON,pos,DEFAULT_BUTTON_SIZE); 
+  ui_element_t *playBtn = InitElement("PLAY_BTN",UI_BUTTON,pos,DEFAULT_BUTTON_SIZE); 
 
   strcpy(playBtn->text, "PLAY");
   playBtn->cb[ELEMENT_ACTIVATED] = GameTransitionScreen;
@@ -38,14 +38,14 @@ void InitUI(){
   ui.menus[MENU_RECAP] = InitMenu(MENU_RECAP,false);
   ui.menus[MENU_RECAP].layout = LAYOUT_VERTICAL;
  Vector2 cPos = Vector2Subtract(VECTOR2_CENTER_SCREEN,Vector2Scale(LARGE_BUTTON_SIZE,0.5f));
- ui_element_t *pointsText =InitElement(UI_STATUSBAR,pos,XS_PANEL_THIN_SIZE);
- ui_element_t *pointsBox =InitElement(UI_STATUSBAR,pos,XS_PANEL_THIN_SIZE);
- ui_element_t *newHigh =InitElement(UI_STATUSBAR,pos,DEFAULT_PANEL_THIN_SIZE);
+ ui_element_t *pointsText =InitElement("POINTS_LBL",UI_STATUSBAR,pos,XS_PANEL_THIN_SIZE);
+ ui_element_t *pointsBox =InitElement("SCORE_LBL",UI_STATUSBAR,pos,XS_PANEL_THIN_SIZE);
+ ui_element_t *newHigh =InitElement("HIGHSCORE_LBL",UI_STATUSBAR,pos,DEFAULT_PANEL_THIN_SIZE);
 
  strcpy(newHigh->text,"<<NEW HIGH SCORE>>");
  strcpy(pointsBox->text, "SCORE");
  pointsText->get_val = GetDisplayPoints;
- ui_element_t *recapBtn = InitElement(UI_BUTTON,pos,LARGE_BUTTON_SIZE); 
+ ui_element_t *recapBtn = InitElement("RECAP_BTN",UI_BUTTON,pos,LARGE_BUTTON_SIZE); 
 
 
  strcpy(recapBtn->text, "CONTINUE");
@@ -59,38 +59,38 @@ void InitUI(){
  ui.menus[MENU_HUD].layout = LAYOUT_VERTICAL;
  ui.menus[MENU_HUD].align = ALIGN_CENTER;
  Vector2 pPos = Vector2X(172);
- ui_element_t *hudPane = InitElement(UI_PANEL,pPos,XS_PANEL_THIN_SIZE);
- ui_element_t *hudStatus = InitElement(UI_PANEL,pPos, XS_PANEL_THIN_SIZE);
+ ui_element_t *hudPane = InitElement("HUD_PANE",UI_PANEL,pPos,XS_PANEL_THIN_SIZE);
+ ui_element_t *hudStatus = InitElement("STATUS_PANE",UI_PANEL,pPos, XS_PANEL_THIN_SIZE);
 
  MenuAddChild(&ui.menus[MENU_HUD],hudPane);
  MenuAddChild(&ui.menus[MENU_HUD],hudStatus);
 
- ui_element_t *healthText = InitElement(UI_STATUSBAR,VECTOR2_ZERO, SMALL_PANEL_THIN_SIZE);
+ ui_element_t *healthText = InitElement("HEALTH_STATUS",UI_STATUSBAR,VECTOR2_ZERO, SMALL_PANEL_THIN_SIZE);
  strcpy(healthText->text,"HEALTH");
- ui_element_t *healthBar = InitElement(UI_PROGRESSBAR,VECTOR2_ZERO, SMALL_PANEL_THIN_SIZE);
+ ui_element_t *healthBar = InitElement("HEALTH_BAR",UI_PROGRESSBAR,VECTOR2_ZERO, SMALL_PANEL_THIN_SIZE);
  healthBar->get_val = GetDisplayHealth;
  ElementAddChild(hudStatus,healthText);
  ElementAddChild(hudStatus,healthBar);
- ui_element_t *scoreBox = InitElement(UI_STATUSBAR,VECTOR2_ZERO, XS_PANEL_THIN_SIZE);
+ ui_element_t *scoreBox = InitElement("SCORE_BAR",UI_STATUSBAR,VECTOR2_ZERO, XS_PANEL_THIN_SIZE);
  strcpy(scoreBox->text, "SCORE");
 
- ui_element_t *scoreText = InitElement(UI_STATUSBAR,VECTOR2_ZERO,XS_PANEL_THIN_SIZE);
+ ui_element_t *scoreText = InitElement("POINT_BAR",UI_STATUSBAR,VECTOR2_ZERO,XS_PANEL_THIN_SIZE);
  scoreText->get_val = GetDisplayPoints;
  ElementAddChild(hudPane,scoreBox);
  ElementAddChild(hudPane,scoreText);
 
- ui_element_t *waveBox = InitElement(UI_STATUSBAR,VECTOR2_ZERO, XS_PANEL_THIN_SIZE);
+ ui_element_t *waveBox = InitElement("WAVE_BAR",UI_STATUSBAR,VECTOR2_ZERO, XS_PANEL_THIN_SIZE);
  strcpy(waveBox->text, "WAVE");
 
- ui_element_t *waveText = InitElement(UI_STATUSBAR,VECTOR2_ZERO,XS_PANEL_THIN_SIZE);
+ ui_element_t *waveText = InitElement("WAV_NUM_BAR",UI_STATUSBAR,VECTOR2_ZERO,XS_PANEL_THIN_SIZE);
  waveText->get_val = GetDisplayWave;
  ElementAddChild(hudPane,waveBox);
  ElementAddChild(hudPane,waveText);
 
- ui_element_t *timeBox = InitElement(UI_STATUSBAR,VECTOR2_ZERO, XS_PANEL_THIN_SIZE);
+ ui_element_t *timeBox = InitElement("TIME_BAR",UI_STATUSBAR,VECTOR2_ZERO, XS_PANEL_THIN_SIZE);
  strcpy(timeBox->text, "TIME");
 
- ui_element_t *timeText = InitElement(UI_STATUSBAR,VECTOR2_ZERO,XS_PANEL_THIN_SIZE);
+ ui_element_t *timeText = InitElement("SECONDS_BAR",UI_STATUSBAR,VECTOR2_ZERO,XS_PANEL_THIN_SIZE);
  timeText->get_val = GetDisplayTime;
  ElementAddChild(hudPane,timeBox);
  ElementAddChild(hudPane,timeText);
@@ -106,15 +106,29 @@ ui_menu_t InitMenu(MenuId id, bool modal){
 
   if(m.is_modal){
     m.cb[MENU_CLOSE] = UICloseMenu;
-    m.children[m.num_children++] = InitElement(UI_MASK,VECTOR2_ZERO,VECTOR2_SCREEN);
+    m.children[m.num_children++] = InitElement("UI_MODAL_MASK",UI_MASK,VECTOR2_ZERO,VECTOR2_SCREEN);
   }
   return m;
 }
 
-ui_element_t* InitElement(ElementType type, Vector2 pos, Vector2 size){
+ui_element_t* GetElement(const char* name){
+  uint32_t hash = hash_str(name);
+
+  for (int i = 0; i < MAX_ELEMENTS; i++){
+    if(ui.elements[i]->hash != hash)
+      continue;
+
+    return ui.elements[i];
+  }
+
+  return NULL;
+}
+
+ui_element_t* InitElement(const char* name, ElementType type, Vector2 pos, Vector2 size){
   ui_element_t* u = malloc(sizeof(ui_element_t));
 //  *u = (ui_element_t) {0};
 
+  u->hash = hash_str(name);
   u->num_children = 0;
   u->type = type;
   u->state = ELEMENT_IDLE;
@@ -122,6 +136,8 @@ ui_element_t* InitElement(ElementType type, Vector2 pos, Vector2 size){
   u->bounds = Rect(pos.x,pos.y,size.x,size.y);
   for(int i = 0; i < ELEMENT_DONE; i++)
     u->cb[i] = BOOL_DO_NOTHING;
+  
+  ui.elements[ui.num_elements++] = u;
   return u;
 }
 
@@ -184,6 +200,9 @@ void UISyncMenu(ui_menu_t* m){
 }
 
 void UISyncElement(ui_element_t* e){
+  if(e->state < ELEMENT_IDLE)
+    return;
+
   int clicked,toggle,focused = 0;
   if(e->get_val){
     ElementValue ev = e->get_val();
@@ -264,6 +283,12 @@ bool MenuSetState(ui_menu_t* m, MenuState s){
   m->state = s;
 
   MenuOnStateChanged(m,old,s);
+
+  return true;
+}
+
+bool ElementSetState(ui_element_t* e, ElementState s){
+  e->state = s;
 
   return true;
 }

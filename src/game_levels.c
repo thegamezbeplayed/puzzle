@@ -214,7 +214,7 @@ void GenerateLevels(int num_levels, bool inc_diff){
     }
 
   }
-
+  shuffle_array(levels.levels, ROOM_LEVEL_COUNT, sizeof(level_t *));
   LevelBegin(levels.levels[0]);
 }
 

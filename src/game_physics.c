@@ -35,7 +35,7 @@ rigid_body_t* InitRigidBody(ent_t* owner, Vector2 pos, float radius){
   b->counter_force[FORCE_IMPULSE] = FORCE_NONE;
   b->counter_force[FORCE_NONE] = FORCE_NONE;
 
-  b->restitution = .035;  
+  b->restitution = .0125;  
   b->is_static = false;
   b->simulate = false;
   b->col_rate = 4;
@@ -45,8 +45,8 @@ rigid_body_t* InitRigidBody(ent_t* owner, Vector2 pos, float radius){
       .pos = Vector2Zero(),
       .offset = Vector2FromXY(-radius,-radius),
       .radius = radius,
-      .width = radius*1.75,
-      .height = radius*1.75
+      .width = radius*1.5,
+      .height = radius*1.5
   };
 
   return b;
@@ -295,7 +295,7 @@ force_t ForceBasic(ForceType type){
   g.accel = Vector2Zero();
   g.max_velocity = MAX_VELOCITY;
   g.friction = (Vector2){0.9,0.9};
-  g.threshold = 0.825f;
+  g.threshold = 0.8f;
   g.is_active = false;
   return g;
 }
@@ -488,17 +488,16 @@ void ReactionBumpForce(rigid_body_t* a, rigid_body_t* b, ForceType t){
   Rectangle overlap;//TODO use this maybe instead of pen
   Vector2 surface_normal = GetNormalFromRecs(collider, target,&overlap);
 
+
   Vector2 angBetween = VectorDirectionBetween(b->position, a->position);
 
-  float dist = Vector2Distance(b->position,a->position);
-
-  float penAmount = CLAMPF((collider.width + target.width) - dist,0,collider.width);
+  float penAmount = fmaxf(overlap.width,overlap.height);
   float debugRad = a->owner->sprite->slice->scale * a->owner->sprite->slice->bounds.width;
-  //TraceLog(LOG_INFO,"Penatration %0.3f collider %0.3f radius %0.3f",penAmount, collider.width, debugRad);
+  
   Vector2 penetration = Vector2Scale(angBetween,penAmount);
   
   Vector2 bump = Vector2Scale(Vector2Reflect(a->velocity,surface_normal), a->restitution);
-  bump = Vector2Add(bump,Vector2Scale(b->velocity,b->restitution));
+  //bump = Vector2Add(bump,Vector2Scale(b->velocity,b->restitution));
 
   float speed = Vector2Length(Vector2Add(a->velocity,b->velocity));
  if(Vector2Length(bump) == 0 && Vector2Length(penetration)==0)

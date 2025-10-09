@@ -1,5 +1,7 @@
 #include "raygui.h"
+#include <stdint.h>
 
+#define MAX_ELEMENTS 64
 #define UI_SCALE 1.0F
 #define DEFAULT_BUTTON_SIZE (Vector2){120*UI_SCALE, 32*UI_SCALE}
 #define LARGE_BUTTON_SIZE (Vector2){164*UI_SCALE, 32*UI_SCALE}
@@ -26,6 +28,7 @@ typedef enum{
 
 typedef enum{
   ELEMENT_NONE,
+  ELEMENT_HIDDEN,
   ELEMENT_IDLE,
   ELEMENT_FOCUSED,
   ELEMENT_ACTIVATED,
@@ -84,6 +87,7 @@ typedef struct {
 typedef ElementValue (*ElementValueSync)(void);
 
 typedef struct ui_element_s{
+  uint32_t            hash;
   struct ui_menu_s    *owner;
   ElementType         type;
   ElementState        state;
@@ -95,7 +99,9 @@ typedef struct ui_element_s{
   struct ui_element_s *children[8];
 }ui_element_t;
 
-ui_element_t* InitElement(ElementType type, Vector2 pos, Vector2 size);
+ui_element_t* InitElement(const char* name,ElementType type, Vector2 pos, Vector2 size);
+ui_element_t* GetElement(const char* name);
+bool ElementSetState(ui_element_t* e, ElementState s);
 void ElementAddChild(ui_element_t *o, ui_element_t* c);
 void UISyncElement(ui_element_t* e);
 bool UICloseOwner(ui_element_t* e);
@@ -127,12 +133,15 @@ void MenuOnStateChanged(ui_menu_t* m, MenuState old, MenuState s);
 static bool MenuInert(ui_menu_t* self){
   return false;
 }
+
 void MenuAddChild(ui_menu_t *m, ui_element_t* c);
 
 typedef struct{
   //MenuId      open_menu;
-  KeyboardKey menu_key[MENU_DONE];
-  ui_menu_t   menus[MENU_DONE];
+  KeyboardKey  menu_key[MENU_DONE];
+  ui_menu_t    menus[MENU_DONE];
+  int          num_elements;
+  ui_element_t *elements[MAX_ELEMENTS];
 }ui_manager_t;
 
 extern ui_manager_t ui;
