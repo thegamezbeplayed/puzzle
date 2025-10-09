@@ -233,6 +233,7 @@ typedef struct world_s{
 } world_t;
 
 ent_t* WorldGetEnt(const char* name);
+ent_t* WorldGetEntById(unsigned int uid);
 int WorldGetEnts(ent_t** results,EntFilterFn fn, void* params);
 Vector2 GetWorldCoordsFromIntGrid(Vector2 pos, float len);
 bool RegisterEnt( ent_t *e);

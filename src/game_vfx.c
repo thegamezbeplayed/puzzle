@@ -44,18 +44,16 @@ void LoadShaders(){
 void ShaderSetUniforms(gl_shader_t *s, Texture2D texture){
   if(s->stype != SHADER_OUTLINE)
     return;
-  float outlineSize = 4.0f;
-    float textureSize[2] = { (float)texture.width, (float)texture.height };
+  float textureSize[2] = { (float)texture.width, (float)texture.height };
 
-    // Get shader locations
-    int outlineSizeLoc = GetShaderLocation(s->shader, "outlineSize");
-    int outlineColorLoc = GetShaderLocation(s->shader, "outlineColor");
-    int textureSizeLoc = GetShaderLocation(s->shader, "textureSize");
+  // Get shader locations
+  int outlineSizeLoc = GetShaderLocation(s->shader, "outlineSize");
+  int outlineColorLoc = GetShaderLocation(s->shader, "outlineColor");
+  int textureSizeLoc = GetShaderLocation(s->shader, "textureSize");
 
-    SetShaderValue(s->shader, outlineSizeLoc, &outlineSize, SHADER_UNIFORM_FLOAT);
-   SetShaderValue(s->shader, outlineColorLoc, s->uniforms[UNIFORM_OUTLINECOLOR].val, SHADER_UNIFORM_VEC4);
-    SetShaderValue(s->shader, textureSizeLoc, textureSize, SHADER_UNIFORM_VEC2);
-
+  SetShaderValue(s->shader, outlineSizeLoc, s->uniforms[UNIFORM_OUTLINESIZE].val, SHADER_UNIFORM_FLOAT);
+  SetShaderValue(s->shader, outlineColorLoc, s->uniforms[UNIFORM_OUTLINECOLOR].val, SHADER_UNIFORM_VEC4);
+  SetShaderValue(s->shader, textureSizeLoc, textureSize, SHADER_UNIFORM_VEC2);
 
 }
 

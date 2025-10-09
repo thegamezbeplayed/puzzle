@@ -40,13 +40,17 @@ void InitUI(){
  Vector2 cPos = Vector2Subtract(VECTOR2_CENTER_SCREEN,Vector2Scale(LARGE_BUTTON_SIZE,0.5f));
  ui_element_t *pointsText =InitElement(UI_STATUSBAR,pos,XS_PANEL_THIN_SIZE);
  ui_element_t *pointsBox =InitElement(UI_STATUSBAR,pos,XS_PANEL_THIN_SIZE);
+ ui_element_t *newHigh =InitElement(UI_STATUSBAR,pos,DEFAULT_PANEL_THIN_SIZE);
 
+ strcpy(newHigh->text,"<<NEW HIGH SCORE>>");
  strcpy(pointsBox->text, "SCORE");
  pointsText->get_val = GetDisplayPoints;
  ui_element_t *recapBtn = InitElement(UI_BUTTON,pos,LARGE_BUTTON_SIZE); 
 
+
  strcpy(recapBtn->text, "CONTINUE");
  recapBtn->cb[ELEMENT_ACTIVATED] = GameTransitionScreen;
+ MenuAddChild(&ui.menus[MENU_RECAP],newHigh);
  MenuAddChild(&ui.menus[MENU_RECAP],pointsBox);
  MenuAddChild(&ui.menus[MENU_RECAP],pointsText);
  MenuAddChild(&ui.menus[MENU_RECAP],recapBtn);

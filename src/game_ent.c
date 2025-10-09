@@ -59,6 +59,14 @@ ent_t* InitEnt(ObjectInstance data){
       col
   };
 
+  float *osize = malloc(sizeof(float));
+  *osize = 3.0f * e->sprite->slice->scale;
+  e->sprite->gls[SHADER_OUTLINE]->uniforms[UNIFORM_OUTLINESIZE] = (shader_uniform_t){
+    UNIFORM_OUTLINESIZE,
+      STANDARD_FLOAT,
+      osize
+  };
+
   float radius = data.size * 0.5f;
   pos = Vector2Add(pos,e->sprite->slice->center);
   e->pos = pos;
@@ -95,6 +103,9 @@ ent_t* InitEnt(ObjectInstance data){
     e->control->bt[STATE_AGGRO] = InitBehaviorTree("Chase");
     e->control->bt[STATE_ATTACK] = InitBehaviorTree("AttackOnTheMove");
   }
+  else{
+    e->stats[STAT_HEALTH].on_stat_change = DisplayStatChange; 
+  }
 
   return e;
 }
@@ -127,6 +138,13 @@ ent_t* InitEntStatic( TileInstance data, Vector2 pos){
     UNIFORM_OUTLINECOLOR,
       STANDARD_VEC4,
       col
+  };
+  float *osize = malloc(sizeof(float));
+  *osize = 4.0f * e->sprite->slice->scale;
+  e->sprite->gls[SHADER_OUTLINE]->uniforms[UNIFORM_OUTLINESIZE] = (shader_uniform_t){
+    UNIFORM_OUTLINESIZE,
+      STANDARD_FLOAT,
+      osize
   };
 
   SetState(e,STATE_SPAWN,OnStateChange);
@@ -348,12 +366,12 @@ bool StatChangeValue(ent_t* owner, stat_t* attr, float val){
   float old = attr->current;
   attr->current+=val;
   attr->current = CLAMPF(attr->current,attr->min, attr->max);
-
+  float cur = attr->current;
   if(attr->current == old)
     return false;
 
   if(attr->on_stat_change != NULL)
-    attr->on_stat_change(owner);
+    attr->on_stat_change(owner,old, cur);
 
   if(attr->current == attr->min && attr->on_stat_empty!=NULL)
     attr->on_stat_empty(owner);
@@ -520,3 +538,35 @@ void DebugShowText(debug_info_t* d){
 EntityType SpriteEntType(sprite_t *spr) {
     return spr->owner ? spr->owner->type : ENT_BLANK;
 }
+
+void DisplayStatChange(ent_t* owner, float old, float cur){
+  int dif = (int)floorf(cur-old);
+  if(dif == 0)
+    return;
+  
+  ent_t *other = WorldGetEntById(owner->lastdamage_sourceid);
+
+  if(other->owner)
+    other = other->owner;
+
+  Vector2 pos = Vector2Bisect(owner->pos,other->pos,3*owner->body->collision_bounds.radius);
+
+  pos = Vector2Inc(pos,GetRandomValue(-3.5f,3.5f),GetRandomValue(-3.5f,3.5f));
+
+  Color col = GREEN;
+  if (dif < 0)
+    col = RED;
+
+  int dur = 3 + abs(3*dif);
+  render_text_t *rt = malloc(sizeof(render_text_t));
+  *rt = (render_text_t){
+    .text = strdup(TextFormat("x%d",dif)),
+    .pos = pos,
+    .size = 16,
+    .color = col,
+    .duration = dur
+  };
+  AddFloatingText(rt);
+
+}
+

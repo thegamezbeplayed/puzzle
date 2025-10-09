@@ -117,6 +117,15 @@ ent_t* WorldGetEnt(const char* name){
   return NULL;
 }
 
+ent_t* WorldGetEntById(unsigned int uid){
+  for(int i = 0; i < world.num_ent; i++){
+    if(world.ents[i]->uid == uid)
+      return world.ents[i];
+  }
+
+  return NULL;
+}
+
 Rectangle WorldRoomBounds(){
   return world.room_bounds;
 }
@@ -445,7 +454,7 @@ void InitGameEvents(){
   for (int k = 0; k < ROOM_PROJECTILE_COUNT; k++)
     InitProjectilePool(room_projectiles[k]);
 
-  cooldown_t* loadEvent = InitCooldown(90,EVENT_GAME_PROCESS,GameReady,NULL);
+  cooldown_t* loadEvent = InitCooldown(20,EVENT_GAME_PROCESS,GameReady,NULL);
   AddEvent(game_process.events,loadEvent);
   InitWorld(wdata);
   game_process.children[SCREEN_GAMEPLAY].process = PROCESS_LEVEL;
@@ -538,6 +547,7 @@ void AddPoints(float mul,float points, Vector2 pos){
   };
   AddFloatingText(rt);
 }
+
 
 const char* GetGameTime(){
   return TextFormat("%09i",(int)(game_process.game_frames/fixedFPS));

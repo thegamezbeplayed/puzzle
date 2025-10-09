@@ -96,6 +96,7 @@ void ProjectileCullOffScreen(Rectangle bounds){
 void ProjectileShoot(ent_t* owner, Vector2 pos, Vector2 dir,int damage){
   ent_t* p = SpawnProjectile(&projectile_pool,pos, dir);
 
+  p->owner = owner;
   PhysicsInitOnce(p->body);
   EntInitOnce(p);
   PhysicsAccelDir(p->body,FORCE_STEERING,dir);

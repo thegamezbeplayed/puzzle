@@ -99,7 +99,7 @@ static const SpawnerInstance room_spawners[] = {
   {1, 2,"spawn_data", 1534,856,{[ENT_HUNTER]=3}},
   {2, 2,"spawn_data", 80,80,{[ENT_DRONE]=4}},
   {3, 2,"spawn_data", 1534,80,{[ENT_DRONE]=4}},
-  {4, 2,"spawn_data", 950,80, {[ENT_DRONE]=4}}
+  {4, 2,"spawn_data", 950,80, {[ENT_STRIKER]=3,[ENT_DRONE]=1}}
 };
 
 typedef struct {
@@ -165,7 +165,8 @@ static const ObjectInstance room_instances[] = {
   {ENT_DRONE,"ent_data", "Drone", 48,1, -1, 5,2,11, 8, 3.1f, 6,680,{[ATTACK_RANGED]=attack_data[3],[ATTACK_THORNS]=attack_data[1],[ATTACK_MELEE]=attack_data[4]},PINK,1,{[SHADER_INVERT] = true,[SHADER_OUTLINE]=true}},
   {ENT_SUPER_DRONE,"ent_data", "Super Drone", 60,-1, -1, 4,3,23, 8, 3.1f, 8,680,{[ATTACK_RANGED]=attack_data[0],[ATTACK_THORNS]=attack_data[1]},PINK,1,{[SHADER_INVERT] = true,[SHADER_OUTLINE]=true}},
   {ENT_BATTLE_DRONE,"ent_data", "Battle Drone", 60,-1, -1,6, 4,36, 8, 3.1f, 5,680,{[ATTACK_RANGED]=attack_data[0],[ATTACK_THORNS]=attack_data[1]},PINK,1,{[SHADER_INVERT] = true,[SHADER_OUTLINE]=true}},
-  {ENT_HUNTER,"ent_data", "Hunter", 56,-1, -1, 7,2,40, 7.1, 2.4f, 9,600,{[ATTACK_RANGED]=attack_data[0],[ATTACK_THORNS]=attack_data[4],[ATTACK_MELEE]=attack_data[2]},RED,1,{[SHADER_INVERT] = true,[SHADER_OUTLINE]=true}},
+  {ENT_HUNTER,"ent_data", "Hunter", 56,-1, -1, 39,3,40, 7.1, 2.4f, 9,600,{[ATTACK_RANGED]=attack_data[0],[ATTACK_THORNS]=attack_data[4],[ATTACK_MELEE]=attack_data[2]},RED,1,{[SHADER_INVERT] = true,[SHADER_OUTLINE]=true}},
+  {ENT_STRIKER,"ent_data", "Striker", 48,-1, -1, 42,2,20, 8.2, 2.9f, 5,600,{[ATTACK_RANGED]=attack_data[4],[ATTACK_THORNS]=attack_data[1],[ATTACK_MELEE]=attack_data[2]},YELLOW,1,{[SHADER_INVERT] = true,[SHADER_OUTLINE]=true}},
 };
 
 #define ROOM_INSTANCE_COUNT 3

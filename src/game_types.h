@@ -170,6 +170,7 @@ typedef struct ent_s{
   EntityState           state;
   controller_t          *control;
   events_t              *events;
+  struct ent_s*         owner;
   struct ent_s*         child;
   int                   lastdamage_sourceid;
   int                   num_attacks;
@@ -229,5 +230,7 @@ void StepObjectState(game_object_t *obj);
 void StepObject(game_object_t *obj);
 bool CanChangeObjectState(ObjectState old, ObjectState s);
 void RegisterPoolRef(unsigned int level_index, unsigned int index, EntityType ref);
+void DisplayStatChange(ent_t* owner, float old, float cur);
+
 //===GAME_OBJECT_T===>
 #endif

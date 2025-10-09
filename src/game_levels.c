@@ -1,15 +1,15 @@
 #include "game_process.h"
 #include "game_tools.h"
 
-float total_upgrades = 3.66;
+float total_upgrades = 4.20f;
 
 difficulty_modifier_t level_mods[MOD_DONE] = {
   {.type = MOD_NONE},
   {.type = MOD_LEVEL_DIFF, .denom = 1,.amount = 0.99f, .modFn = ModifyLevelDifficulty},
-  {.type = MOD_LEVEL_POINTS, .denom = 250,.amount = 1, .modFn = ModifyLevelPoints},
+  {.type = MOD_LEVEL_POINTS, .denom = 280,.amount = 1, .modFn = ModifyLevelPoints},
   {.type = MOD_MOB_UPGRADE, .denom = 150,.amount = 1, .modFn = ModifyMobUpgrade},
   {.type = MOD_MOB_COUNT, .denom = 75,.amount = 1, .modFn = ModifyMobCount},
-  {.type = MOD_WAVE_INTERVAL, .denom = 50, .amount = -6, .modFn = ModifyWaveInterval},
+  {.type = MOD_WAVE_INTERVAL, .denom = 40, .amount = -6, .modFn = ModifyWaveInterval},
 };
 
 level_info_t level_info[]={
@@ -18,10 +18,10 @@ level_info_t level_info[]={
 };
 level_order_t levels;
 level_t level_data[4] = {
-  {.luid = 0, .points = 20, .difficulty = 0.33f, .modifiers={[MOD_LEVEL_DIFF]=1,[MOD_WAVE_INTERVAL]=1,[MOD_MOB_UPGRADE]=2, [MOD_LEVEL_POINTS]=3}},
-  {.luid = 1, .points = 24, .difficulty = 0.66f, .modifiers={[MOD_LEVEL_DIFF]=1,[MOD_WAVE_INTERVAL]=1,[MOD_MOB_UPGRADE]=2,[MOD_LEVEL_POINTS]=3}},
-  {.luid = 2, .points = 28, .difficulty = 0.99f, .modifiers={[MOD_LEVEL_DIFF]=1,[MOD_WAVE_INTERVAL]=1,[MOD_MOB_UPGRADE]=2, [MOD_LEVEL_POINTS]=4}},
-  {.luid = 3, .points = 30, .difficulty = 1.32f, .modifiers={[MOD_LEVEL_DIFF]=1,[MOD_WAVE_INTERVAL]=1,[MOD_MOB_UPGRADE]=3, [MOD_LEVEL_POINTS]=5}},
+  {.luid = 0, .points = 20, .difficulty = 0.66f, .modifiers={[MOD_LEVEL_DIFF]=1,[MOD_WAVE_INTERVAL]=1,[MOD_MOB_UPGRADE]=2, [MOD_LEVEL_POINTS]=3}},
+  {.luid = 1, .points = 24, .difficulty = 0.99f, .modifiers={[MOD_LEVEL_DIFF]=1,[MOD_WAVE_INTERVAL]=1,[MOD_MOB_UPGRADE]=2,[MOD_LEVEL_POINTS]=3}},
+  {.luid = 2, .points = 28, .difficulty = 1.32f, .modifiers={[MOD_LEVEL_DIFF]=1,[MOD_WAVE_INTERVAL]=1,[MOD_MOB_UPGRADE]=2, [MOD_LEVEL_POINTS]=4}},
+  {.luid = 3, .points = 30, .difficulty = 1.55f, .modifiers={[MOD_LEVEL_DIFF]=1,[MOD_WAVE_INTERVAL]=1,[MOD_MOB_UPGRADE]=3, [MOD_LEVEL_POINTS]=5}},
   };
 
 level_t* LevelCurrent(){

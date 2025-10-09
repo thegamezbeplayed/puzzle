@@ -5,8 +5,9 @@
 #define LARGE_BUTTON_SIZE (Vector2){164*UI_SCALE, 32*UI_SCALE}
 
 #define DEFAULT_PANEL_SIZE (Vector2){GetScreenWidth(), 64*UI_SCALE}
-#define DEFAULT_PANEL_THIN_SIZE (Vector2){GetScreenWidth(), 32*UI_SCALE}
-#define SMALL_PANEL_SIZE (Vector2){184*UI_SCALE, 64*UI_SCALE}
+#define DEFAULT_PANEL_THIN_SIZE (Vector2){224*UI_SCALE, 32*UI_SCALE}
+#define LARGE_PANEL_THIN_SIZE (Vector2){GetScreenWidth(), 32*UI_SCALE}
+#define SMALL_PANEL_SIZE (Vector2){192*UI_SCALE, 64*UI_SCALE}
 #define SMALL_PANEL_THIN_SIZE (Vector2){184*UI_SCALE, 32*UI_SCALE}
 #define XS_PANEL_SIZE (Vector2){128*UI_SCALE, 64*UI_SCALE}
 #define XS_PANEL_THIN_SIZE (Vector2){128*UI_SCALE, 32*UI_SCALE}
@@ -140,5 +141,4 @@ void InitUI();
 
 void UISync();
 void UIRender();
-
 bool TogglePause(ui_menu_t* m);

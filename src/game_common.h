@@ -12,6 +12,7 @@ typedef enum {
   ENT_SUPER_DRONE,
   ENT_BATTLE_DRONE,
   ENT_HUNTER,
+  ENT_STRIKER,
   ENT_BULLET,
   ENT_WALL,
   ENT_BLANK
@@ -24,6 +25,7 @@ typedef struct{
   Color       color;
   int         duration;
 }render_text_t;
+void AddFloatingText(render_text_t *rt);
 
 typedef enum {
   RANGE_NONE =0,
@@ -68,7 +70,8 @@ struct ent_s;   // forward declaration
 
 struct stat_s;
 typedef struct stat_s stat_t;
-typedef bool (*StatCallback)(struct ent_s* owner);
+typedef bool (*StatOwnerCallback)(struct ent_s* owner);
+typedef void (*StatCallback)(struct ent_s* owner, float old, float cur);
 typedef float (*StatGetter)(stat_t* self);
 typedef struct stat_s{
   StatType  attribute;
@@ -78,7 +81,7 @@ typedef struct stat_s{
   float     increment;
   StatGetter ratio;
   StatCallback on_stat_change;
-  StatCallback on_stat_empty;
+  StatOwnerCallback on_stat_empty;
 } stat_t;
 
 stat_t InitStatOnMax(StatType attr, float val);
@@ -118,7 +121,7 @@ static EventDefaultDuration event_durations[EVENT_NONE] = {
   {EVENT_NONE,0},
   {EVENT_NONE,0},
   {EVENT_SPAWN, (stat_t){.attribute = STAT_DURATION, .max = 35, .current = 35, .min = 27}},
-  {EVENT_WAVE, (stat_t){.attribute = STAT_DURATION, .max = 300, .current = 300, .min = 66}},
+  {EVENT_WAVE, (stat_t){.attribute = STAT_DURATION, .max = 255, .current = 240, .min = 66}},
   {EVENT_NONE,0},
   {EVENT_NONE,0},
   {EVENT_NONE,0},

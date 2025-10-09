@@ -10,7 +10,7 @@ void InitEndScreen(void)
 {
 
   if(DataUploadScore("thegamezbeplayed",GetPointsInt())){
-    //new high score
+
   }
 
   MenuSetState(&ui.menus[MENU_RECAP],MENU_ACTIVE);
