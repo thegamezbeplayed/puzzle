@@ -41,8 +41,12 @@ void InitProjectilePool(ProjectileInstance data){
   projectile_pool.top = MAX_PROJECTILES;
 
   projectile_pool.base = InitEntProjectile(data);
+  Rectangle bounds = projectile_pool.base.sprite->slice->bounds;
+  Vector2 offset = projectile_pool.base.sprite->slice->offset;
+  Rectangle cBounds = RectangleScale(bounds, projectile_pool.base.sprite->slice->scale);
+  Vector2 cOffset = Vector2Scale(offset, projectile_pool.base.sprite->slice->scale);
 
-  projectile_pool.body = InitRigidBodyKinematic(NULL,Vector2Zero(),8);
+  projectile_pool.body = InitRigidBodyKinematic(NULL,Vector2Zero(),cBounds,cOffset);
   projectile_pool.body.forces[FORCE_STEERING].max_velocity = data.speed;
 }
 

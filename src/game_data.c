@@ -32,6 +32,101 @@ bool DataUploadScore(const char* user, int score){
 
   return true;
 }
+player_score_t* DataGetSortedRows(int *out_count){
+MYSQL_STMT *stmt;
+    MYSQL_RES *res;
+    MYSQL_BIND bind[3];
+    MYSQL_ROW row;
+
+    *out_count = 0;
+
+    const char* query = "SELECT id, player, score FROM player_scores ORDER BY score DESC";
+
+    stmt = mysql_stmt_init(conn);
+    if (!stmt) {
+        TraceLog(LOG_ERROR, "mysql_stmt_init() failed");
+        return NULL;
+    }
+
+    if (mysql_stmt_prepare(stmt, query, strlen(query))) {
+        TraceLog(LOG_ERROR, "mysql_stmt_prepare() failed: %s", mysql_stmt_error(stmt));
+        mysql_stmt_close(stmt);
+        return NULL;
+    }
+
+    if (mysql_stmt_execute(stmt)) {
+        TraceLog(LOG_ERROR, "mysql_stmt_execute() failed: %s", mysql_stmt_error(stmt));
+        mysql_stmt_close(stmt);
+        return NULL;
+    }
+
+    // Get metadata for column info
+    res = mysql_stmt_result_metadata(stmt);
+    if (!res) {
+        TraceLog(LOG_ERROR, "mysql_stmt_result_metadata() failed: %s", mysql_stmt_error(stmt));
+        mysql_stmt_close(stmt);
+        return NULL;
+    }
+
+    // Temporary variables for each column
+    int id;
+    char name[64];
+    int score;
+
+    memset(bind, 0, sizeof(bind));
+
+    // Column 1: id
+    bind[0].buffer_type = MYSQL_TYPE_LONG;
+    bind[0].buffer = (char *)&id;
+
+    // Column 2: player
+    bind[1].buffer_type = MYSQL_TYPE_STRING;
+    bind[1].buffer = (char *)name;
+    bind[1].buffer_length = sizeof(name);
+
+    // Column 3: score
+    bind[2].buffer_type = MYSQL_TYPE_LONG;
+    bind[2].buffer = (char *)&score;
+
+    if (mysql_stmt_bind_result(stmt, bind)) {
+        TraceLog(LOG_ERROR, "mysql_stmt_bind_result() failed: %s", mysql_stmt_error(stmt));
+        mysql_free_result(res);
+        mysql_stmt_close(stmt);
+        return NULL;
+    }
+
+    // Store results in client
+    if (mysql_stmt_store_result(stmt)) {
+        TraceLog(LOG_ERROR, "mysql_stmt_store_result() failed: %s", mysql_stmt_error(stmt));
+        mysql_free_result(res);
+        mysql_stmt_close(stmt);
+        return NULL;
+    }
+
+    int num_rows = mysql_stmt_num_rows(stmt);
+    *out_count = num_rows;
+
+    player_score_t *scores = malloc(sizeof(player_score_t) * num_rows);
+    if (!scores) {
+        TraceLog(LOG_ERROR, "malloc failed");
+        mysql_free_result(res);
+        mysql_stmt_close(stmt);
+        return NULL;
+    }
+
+    int i = 0;
+    while (mysql_stmt_fetch(stmt) == 0) {
+        scores[i].id = id;
+        strncpy(scores[i].name, name, sizeof(scores[i].name) - 1);
+        scores[i].name[sizeof(scores[i].name) - 1] = '\0';
+        scores[i].score = score;
+        i++;
+    }
+
+    mysql_free_result(res);
+    mysql_stmt_close(stmt);
+    return scores;
+}
 
 player_score_t DataGetUserRow(const char* user){
   MYSQL_STMT *stmt;
@@ -95,10 +190,6 @@ bool DataUpdateScore(int row_id, int score){
   const char* query = "UPDATE player_scores SET score = ? WHERE id = ?";
 
   stmt = mysql_stmt_init(conn);
-
-  if (mysql_stmt_prepare(stmt, query, strlen(query))) {
-    TraceLog(LOG_ERROR, "mysql_stmt_prepare() failed: %s\n", mysql_error(conn));
-  }
 
   if (mysql_stmt_prepare(stmt, query, strlen(query))) {
     TraceLog(LOG_ERROR, "mysql_stmt_prepare() failed: %s\n", mysql_error(conn));

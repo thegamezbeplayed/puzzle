@@ -10,7 +10,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 #define ATLAS_ASSET_SPRITES_IMAGE_PATH      "asset_sprites.png"
-#define ATLAS_ASSET_SPRITES_SPRITE_COUNT    51
+#define ATLAS_ASSET_SPRITES_SPRITE_COUNT    52
 
 // Atlas sprite properties
 typedef struct rtpAtlasSprite {
@@ -27,8 +27,8 @@ typedef struct rtpAtlasSprite {
 } rtpAtlasSprite;
 
 // Atlas sprites array
-static rtpAtlasSprite rtpDescAssetSprites[51] = {
-    { "star_large", "", 32, 32, 512, 640, 64, 64, 0, false, 8, 8, 48, 48, 0, 0, 0, 0, 0 },
+static rtpAtlasSprite rtpDescAssetSprites[52] = {
+    { "star_large", "", 32, 32, 576, 640, 64, 64, 0, false, 8, 8, 48, 48, 0, 0, 0, 0, 0 },
     { "effect_purple", "", 32, 32, 512, 0, 64, 64, 0, false, 16, 0, 32, 64, 0, 0, 0, 0, 0 },
     { "effect_yellow", "", 32, 32, 576, 0, 64, 64, 0, false, 16, 0, 32, 64, 0, 0, 0, 0, 0 },
     { "enemy_A", "", 32, 32, 640, 0, 64, 64, 0, false, 8, 8, 48, 48, 0, 0, 0, 0, 0 },
@@ -76,7 +76,8 @@ static rtpAtlasSprite rtpDescAssetSprites[51] = {
     { "station_A", "", 32, 32, 256, 640, 64, 64, 0, false, 8, 8, 48, 48, 0, 0, 0, 0, 0 },
     { "station_B", "", 32, 32, 320, 640, 64, 64, 0, false, 4, 4, 56, 56, 0, 0, 0, 0, 0 },
     { "station_C", "", 0, 0, 384, 640, 64, 64, 0, false, 2, 2, 60, 60, 0, 0, 0, 0, 0 },
-    { "Sprite-0001", "", 32, 32, 448, 640, 64, 64, 0, false, 0, 0, 64, 64, 0, 0, 0, 0, 0 },
-    { "Sprite-0002", "", 32, 32, 576, 640, 64, 64, 0, false, 1, 1, 62, 62, 0, 0, 0, 0, 0 },
+    { "Sprite-0001", "", 0, 0, 448, 640, 64, 64, 0, false, 0, 0, 64, 64, 0, 0, 0, 0, 0 },
+    { "Sprite-0002", "", 0, 0, 512, 640, 64, 64, 0, false, 1, 1, 62, 62, 0, 0, 0, 0, 0 },
     { "slash_03", "", 256, 256, 0, 0, 512, 512, 0, false, 194, 37, 125, 438, 0, 0, 0, 0, 0 },
+    { "thin_wall", "", 64, 16, 640, 640, 128, 32, 0, false, 0, 1, 128, 30, 0, 0, 0, 0, 0 },
 };

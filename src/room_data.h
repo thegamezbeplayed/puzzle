@@ -66,6 +66,7 @@ static const BehaviorData room_behaviors[] = {
   {"bisect_dest",false,BT_LEAF,LeafBisectDestination,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,0,{}},
   {"acquire_target",false,BT_LEAF,LeafAcquireTarget,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,0,{}},
   {"can_attack",false,BT_LEAF,LeafCanAttackTarget,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,0,{}},
+//  {"can_see",false,BT_LEAF,LeafCanSeeTarget,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,0,{}},
   {"attack",false,BT_LEAF,LeafAttackTarget,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,0,{}},
   {"acquire_destination",false,BT_LEAF,LeafAcquireDestination,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,0,{}},
   {"move_to_dest",false,BT_LEAF,LeafMoveToDestination,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,0,{}},
@@ -88,18 +89,18 @@ static const BehaviorData room_behaviors[] = {
 #define ROOM_BEHAVIOR_COUNT 26
 
 static const SpawnerInstance room_spawners[] = {
-  {0, 0,"spawn_data", 80,856,{[ENT_DRONE]=3,[ENT_STRIKER]=1}},
-  {1, 0,"spawn_data", 80,80, {[ENT_DRONE]=4}},
+  {0, 0,"spawn_data", 128,856,{[ENT_DRONE]=3,[ENT_STRIKER]=1}},
+  {1, 0,"spawn_data", 128,164, {[ENT_DRONE]=4}},
   {2, 0,"spawn_data", 1534,856, {[ENT_DRONE]=4}},
-  {0, 1,"spawn_data", 80,80, {[ENT_DRONE]=4}},
-  {1, 1,"spawn_data", 1534,64,{[ENT_DRONE]=4}},
-  {2, 1,"spawn_data", 950,80, {[ENT_DRONE]=4}},
-  {3, 1,"spawn_data", 80,856, {[ENT_DRONE]=4}},
-  {0, 2,"spawn_data", 80,80, {[ENT_DRONE]=5}},
+  {0, 1,"spawn_data", 128,164, {[ENT_DRONE]=4}},
+  {1, 1,"spawn_data", 1534,164,{[ENT_DRONE]=4}},
+  {2, 1,"spawn_data", 950,164, {[ENT_DRONE]=4}},
+  {3, 1,"spawn_data", 128,856, {[ENT_DRONE]=4}},
+  {0, 2,"spawn_data", 128,164, {[ENT_DRONE]=5}},
   {1, 2,"spawn_data", 1534,856,{[ENT_HUNTER]=3}},
-  {2, 2,"spawn_data", 80,80,{[ENT_DRONE]=4}},
-  {3, 2,"spawn_data", 1534,80,{[ENT_DRONE]=4}},
-  {4, 2,"spawn_data", 950,80, {[ENT_STRIKER]=3,[ENT_DRONE]=1}}
+  {2, 2,"spawn_data", 128,164,{[ENT_DRONE]=4}},
+  {3, 2,"spawn_data", 1534,164,{[ENT_DRONE]=4}},
+  {4, 2,"spawn_data", 950,164, {[ENT_STRIKER]=3,[ENT_DRONE]=1}}
 };
 
 typedef struct {
@@ -180,12 +181,17 @@ static const ProjectileInstance room_projectiles[] = {
 #endif // ROOM_DATA_H
        // Tile Data
 typedef struct {
-  int tile_index;
-  Vector2 start,map;
-  bool shaders[SHADER_DONE];
+  int     tile_index;
+  Vector2 start,map,inc;
+  bool    shaders[SHADER_DONE];
+  int     rot;
+  int     amount;
 } TileInstance;
 
 static const TileInstance room_tiles[] = {
-  {49,(Vector2){0,0},(Vector2){0,0},{[SHADER_INVERT]=true,[SHADER_OUTLINE]=true}},
+  {51,(Vector2){64,130},(Vector2){0,0},(Vector2){128,0},{[SHADER_INVERT]=true,[SHADER_OUTLINE]=true},90,15},
+  {51,(Vector2){64,1064},(Vector2){0,0},(Vector2){128,0},{[SHADER_INVERT]=true,[SHADER_OUTLINE]=true},90,15},
+  {51,(Vector2){16,214},(Vector2){0,0},(Vector2){0,128},{[SHADER_INVERT]=true,[SHADER_OUTLINE]=true},180,7},
+  {51,(Vector2){1904,214},(Vector2){0,0},(Vector2){0,128},{[SHADER_INVERT]=true,[SHADER_OUTLINE]=true},180,7},
 };
-#define ROOM_TILE_COUNT 1
+#define ROOM_TILE_COUNT 4

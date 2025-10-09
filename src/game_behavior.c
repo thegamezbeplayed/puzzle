@@ -147,10 +147,12 @@ BehaviorStatus BehaviorAcquireTarget(behavior_params_t *params){
   if(!e || !e->control)
     return BEHAVIOR_FAILURE;
 
-  if(e->control->target)
+  if(e->control->target && CheckEntAvailable(e->control->target))
     return BEHAVIOR_SUCCESS;
 
   e->control->target = NULL;
+  if(!CheckEntAvailable(player))
+    return BEHAVIOR_FAILURE;
 
   e->control->target = player;
   return BEHAVIOR_SUCCESS;
@@ -197,8 +199,6 @@ BehaviorStatus BehaviorCanAttackTarget(behavior_params_t *params){
   if(!e->control->target && !e->control->target->body)
     return BEHAVIOR_FAILURE;
 
-  if(e->stats[STAT_AMMO].current <1 || CheckEvent(e->events, EVENT_ATTACK_RATE))
-    return BEHAVIOR_FAILURE;
 
 
   for(int i = 0; i < ATTACK_THORNS; i++){
@@ -206,8 +206,11 @@ BehaviorStatus BehaviorCanAttackTarget(behavior_params_t *params){
       continue;
 
     if(e->attacks[i].cooldown->is_complete){
+      if(!e->attacks[i].cooldown->is_complete)
+        continue;
+
       if(PhysicsSimpleDistCheck(e->body,e->control->target->body)>e->attacks[i].reach.current)
-	continue;
+        continue;
 
       return BEHAVIOR_SUCCESS;
     }
@@ -233,16 +236,8 @@ BehaviorStatus BehaviorAttackTarget(behavior_params_t *params){
       continue;
 
     e->attacks[i].attack(&e->attacks[i],e);
-    //ProjectileShoot(e, e->pos, e->attacks[i].params->dir, e->attacks[i].damage); 
 
-    //e->attacks[i].cooldown->is_complete = false;
-    //StatChangeValue(e,&e->stats[STAT_AMMO],-1);    
     return BEHAVIOR_SUCCESS;
-    /*if(e->attacks[i].attack(e->attacks[i].params))
-    return BEHAVIOR_SUCCESS;
-    else
-      return BEHAVIOR_RUNNING;
-      */
   }
 
   return BEHAVIOR_FAILURE;

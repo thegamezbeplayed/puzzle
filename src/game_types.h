@@ -87,9 +87,10 @@ typedef struct rigid_body_s {
   CollisionCallback on_collision;
 } rigid_body_t;
 
-rigid_body_t* InitRigidBody(ent_t* owner,Vector2 pos, float radius);
-rigid_body_t* InitRigidBodyStatic(ent_t* owner,Vector2 pos, float radius);
-rigid_body_t InitRigidBodyKinematic(ent_t* owner, Vector2 pos,float radius);
+rigid_body_t* InitRigidBody(ent_t* owner,Vector2 pos, Rectangle bounds, Vector2 offset);
+rigid_body_t* InitRigidBodyStatic(ent_t* owner,Vector2 pos, Rectangle bounds, Vector2 offset);
+rigid_body_t InitRigidBodyKinematic(ent_t* owner, Vector2 pos,Rectangle bounds, Vector2 offset);
+
 void RigidBodySetPosition(rigid_body_t* b, Vector2 pos);
 bool FreeRigidBody(rigid_body_t* b);
 //<====RIGID_BODY
@@ -198,6 +199,7 @@ void DamageEnt(ent_t *e, attack_t a);
 void EntPrepStep(ent_t *e);
 void EntControlStep(ent_t *e);
 typedef void (*StateChangeCallback)(ent_t *e, EntityState old, EntityState s);
+bool CheckEntAvailable(ent_t* e);
 bool CheckEntOutOfBounds(ent_t* e, Rectangle bounds);
 bool SetState(ent_t *e, EntityState s,StateChangeCallback callback);
 void StepState(ent_t *e);

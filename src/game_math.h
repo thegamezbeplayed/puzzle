@@ -58,7 +58,14 @@ static inline Vector2 VectorDistanceBetween(Vector2 a, Vector2 b) {
 static inline Vector2 VectorDirectionBetween(Vector2 a, Vector2 b) {
     return Vector2Normalize((Vector2){ b.x - a.x, b.y - a.y });
 }
- 
+
+static inline Rectangle RectangleScale(Rectangle r, float scale){
+  r.width*=scale;
+  r.height*=scale;
+
+  return r;
+}
+
 static inline Vector2 GetRecCenter(Rectangle rec){
   Vector2 result = {
     rec.x+rec.width/2.0f,

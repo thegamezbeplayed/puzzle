@@ -70,7 +70,9 @@ ent_t* InitEnt(ObjectInstance data){
   float radius = data.size * 0.5f;
   pos = Vector2Add(pos,e->sprite->slice->center);
   e->pos = pos;
-  e->body = InitRigidBody(e,pos, radius);
+  Rectangle cBounds = RectangleScale(e->sprite->slice->bounds, e->sprite->slice->scale);
+  Vector2 cOffset = Vector2Scale(e->sprite->slice->offset, e->sprite->slice->scale);
+  e->body = InitRigidBody(e,pos, cBounds,cOffset);
   SetState(e,STATE_SPAWN,NULL);
   e->team = data.team_enum;
 
@@ -117,13 +119,18 @@ ent_t* InitEntStatic( TileInstance data, Vector2 pos){
   e->type = ENT_WALL; 
   e->name = "tile";
   e->pos = pos;
+  e->facing = data.rot;
   e->sprite = InitSpriteByIndex(data.tile_index,&spritedata);
   e->sprite->slice->scale=1;
   InitShaderChainCache(e->type,e->sprite->slice->bounds.width,e->sprite->slice->bounds.height);
   e->sprite->color = PINK;
   e->sprite->owner = e;
-  float radius = e->sprite->slice->bounds.height * 0.5f;
-  e->body = InitRigidBodyStatic(e, e->pos, radius);
+
+  Rectangle cBounds = RectangleScale(e->sprite->slice->bounds, e->sprite->slice->scale);
+  Vector2 cOffset = Vector2Scale(e->sprite->slice->offset, e->sprite->slice->scale);
+
+  e->body = InitRigidBodyStatic(e,pos, cBounds,cOffset);
+
   e->events = InitEvents();
   e->team = TEAM_ENVIROMENT;
   for(int i = 0; i < SHADER_DONE;i++){
@@ -417,8 +424,6 @@ void EntSync(ent_t* e){
   if(!e->sprite)
     return;
 
-  if(e->team == TEAM_ENVIROMENT)
-    DO_NOTHING();
   e->sprite->pos = e->pos;// + abs(ent->sprite->offset.y);
 
   e->sprite->rot = 90+e->facing;
@@ -508,6 +513,12 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s){
   }
 
 }
+bool CheckEntAvailable(ent_t* e){
+  if(!e)
+    return false;
+
+  return (e->state < STATE_DIE);
+}
 
 bool CheckEntOutOfBounds(ent_t* e, Rectangle bounds){
   return (CheckCollisionPointRec(e->pos, bounds));
@@ -560,7 +571,7 @@ void DisplayStatChange(ent_t* owner, float old, float cur){
   int dur = 3 + abs(3*dif);
   render_text_t *rt = malloc(sizeof(render_text_t));
   *rt = (render_text_t){
-    .text = strdup(TextFormat("x%d",dif)),
+    .text = strdup(TextFormat("%d",dif)),
     .pos = pos,
     .size = 16,
     .color = col,

@@ -15,8 +15,13 @@ void InitUI(){
   for (int i = 0; i< MENU_DONE; i++)
     ui.menu_key[i] = KEY_NULL;
 
+  Vector2 default_menu_pos = (Vector2){
+    .x = (GetScreenWidth()-DEFAULT_MENU_SIZE.x)/2,
+    .y = (GetScreenHeight()-DEFAULT_MENU_SIZE.y)/2
+  };
+
   ui.menu_key[MENU_PAUSE] = KEY_P;
-  ui.menus[MENU_PAUSE] = InitMenu(MENU_PAUSE, true);
+  ui.menus[MENU_PAUSE] = InitMenu(MENU_PAUSE,default_menu_pos,DEFAULT_MENU_SIZE, true);
   ui.menus[MENU_PAUSE].layout = LAYOUT_VERTICAL;
   ui.menus[MENU_PAUSE].cb[MENU_OPENED] = TogglePause; 
   ui.menus[MENU_PAUSE].cb[MENU_CLOSE] = TogglePause;
@@ -27,7 +32,7 @@ void InitUI(){
   strcpy(resumeBtn->text, "RESUME");
   resumeBtn->cb[ELEMENT_ACTIVATED] = UICloseOwner;
   MenuAddChild(&ui.menus[MENU_PAUSE],resumeBtn);
-  ui.menus[MENU_MAIN] = InitMenu(MENU_MAIN,false);
+  ui.menus[MENU_MAIN] = InitMenu(MENU_MAIN,default_menu_pos,DEFAULT_MENU_SIZE,false);
   ui.menus[MENU_MAIN].layout = LAYOUT_VERTICAL;
   ui_element_t *playBtn = InitElement("PLAY_BTN",UI_BUTTON,pos,DEFAULT_BUTTON_SIZE); 
 
@@ -35,35 +40,55 @@ void InitUI(){
   playBtn->cb[ELEMENT_ACTIVATED] = GameTransitionScreen;
   MenuAddChild(&ui.menus[MENU_MAIN],playBtn);
 
-  ui.menus[MENU_RECAP] = InitMenu(MENU_RECAP,false);
+  ui.menus[MENU_RECAP] = InitMenu(MENU_RECAP,default_menu_pos,DEFAULT_MENU_SIZE,false);
+
   ui.menus[MENU_RECAP].layout = LAYOUT_VERTICAL;
- Vector2 cPos = Vector2Subtract(VECTOR2_CENTER_SCREEN,Vector2Scale(LARGE_BUTTON_SIZE,0.5f));
- ui_element_t *pointsText =InitElement("POINTS_LBL",UI_STATUSBAR,pos,XS_PANEL_THIN_SIZE);
- ui_element_t *pointsBox =InitElement("SCORE_LBL",UI_STATUSBAR,pos,XS_PANEL_THIN_SIZE);
- ui_element_t *newHigh =InitElement("HIGHSCORE_LBL",UI_STATUSBAR,pos,DEFAULT_PANEL_THIN_SIZE);
+  ui.menus[MENU_RECAP].align = ALIGN_CENTER;
 
- strcpy(newHigh->text,"<<NEW HIGH SCORE>>");
- strcpy(pointsBox->text, "SCORE");
- pointsText->get_val = GetDisplayPoints;
- ui_element_t *recapBtn = InitElement("RECAP_BTN",UI_BUTTON,pos,LARGE_BUTTON_SIZE); 
+ Vector2 rPos = Vector2Y(128); 
+  ui_element_t *pointsText =InitElement("POINTS_LBL",UI_STATUSBAR,rPos,XS_PANEL_THIN_SIZE);
+  ui_element_t *pointsBox =InitElement("SCORE_LBL",UI_STATUSBAR,rPos,XS_PANEL_THIN_SIZE);
+  ui_element_t *newHigh =InitElement("HIGHSCORE_LBL",UI_STATUSBAR,rPos,DEFAULT_PANEL_THIN_SIZE);
+
+  strcpy(newHigh->text,"<<NEW HIGH SCORE>>");
+  strcpy(pointsBox->text, "SCORE");
+  pointsText->get_val = GetDisplayPoints;
+  
+  ui_element_t *scoreTable = InitElement("SCORE_TBL",UI_PANEL,rPos,DEFAULT_PANEL_THIN_SIZE);
+  scoreTable->layout = LAYOUT_HORIZONTAL;
+  
+  ui_element_t *nameCol = InitElement("NAME_COL",UI_PANEL,rPos,DEFAULT_PANEL_THIN_SIZE);
+ 
+ nameCol->layout = LAYOUT_VERTICAL; 
+  ui_element_t *tableHeader = InitElement("HEADER_PANE",UI_PANEL,rPos,DEFAULT_PANEL_THIN_SIZE);
+
+  ui_element_t *nameHeader = InitElement("NAME_HEADER",UI_LABEL,rPos,DEFAULT_BUTTON_SIZE);
+
+  strcpy(nameHeader->text,"NAME");
+  ElementAddChild(tableHeader,nameHeader);
+
+  ui_element_t *recapBtn = InitElement("RECAP_BTN",UI_BUTTON,rPos,DEFAULT_BUTTON_SIZE); 
 
 
- strcpy(recapBtn->text, "CONTINUE");
- recapBtn->cb[ELEMENT_ACTIVATED] = GameTransitionScreen;
- MenuAddChild(&ui.menus[MENU_RECAP],newHigh);
- MenuAddChild(&ui.menus[MENU_RECAP],pointsBox);
- MenuAddChild(&ui.menus[MENU_RECAP],pointsText);
- MenuAddChild(&ui.menus[MENU_RECAP],recapBtn);
+  ElementAddChild(scoreTable,tableHeader);
+  ElementAddChild(scoreTable,nameCol);
+  
+  strcpy(recapBtn->text, "CONTINUE");
+  recapBtn->cb[ELEMENT_ACTIVATED] = GameTransitionScreen;
+  MenuAddChild(&ui.menus[MENU_RECAP],newHigh);
+  MenuAddChild(&ui.menus[MENU_RECAP],pointsBox);
+  MenuAddChild(&ui.menus[MENU_RECAP],pointsText);
+  MenuAddChild(&ui.menus[MENU_RECAP],scoreTable);
+  //MenuAddChild(&ui.menus[MENU_RECAP],recapBtn);
 
- ui.menus[MENU_HUD] = InitMenu(MENU_HUD,false);
+ ui.menus[MENU_HUD] = InitMenu(MENU_HUD,default_menu_pos,DEFAULT_MENU_THIN_SIZE,false);
+
  ui.menus[MENU_HUD].layout = LAYOUT_VERTICAL;
  ui.menus[MENU_HUD].align = ALIGN_CENTER;
+
  Vector2 pPos = Vector2X(172);
  ui_element_t *hudPane = InitElement("HUD_PANE",UI_PANEL,pPos,XS_PANEL_THIN_SIZE);
  ui_element_t *hudStatus = InitElement("STATUS_PANE",UI_PANEL,pPos, XS_PANEL_THIN_SIZE);
-
- MenuAddChild(&ui.menus[MENU_HUD],hudPane);
- MenuAddChild(&ui.menus[MENU_HUD],hudStatus);
 
  ui_element_t *healthText = InitElement("HEALTH_STATUS",UI_STATUSBAR,VECTOR2_ZERO, SMALL_PANEL_THIN_SIZE);
  strcpy(healthText->text,"HEALTH");
@@ -94,12 +119,16 @@ void InitUI(){
  timeText->get_val = GetDisplayTime;
  ElementAddChild(hudPane,timeBox);
  ElementAddChild(hudPane,timeText);
+
+ MenuAddChild(&ui.menus[MENU_HUD],hudPane);
+ MenuAddChild(&ui.menus[MENU_HUD],hudStatus);
 }
 
-ui_menu_t InitMenu(MenuId id, bool modal){
+ui_menu_t InitMenu(MenuId id,Vector2 pos, Vector2 size, bool modal){
   ui_menu_t m = {0};
 
   m.is_modal = modal;
+  m.bounds = Rect(pos.x,pos.y,size.x,size.y);
 
   for(int i = 0; i < MENU_END; i++)
     m.cb[i] = MenuInert;
@@ -143,6 +172,7 @@ ui_element_t* InitElement(const char* name, ElementType type, Vector2 pos, Vecto
 
 void MenuAddChild(ui_menu_t *m, ui_element_t* c){
   c->owner=m;
+  Vector2 pos_adjustment = Vector2FromXY(c->bounds.x,c->bounds.y);
   if(m->num_children > 0){
 
     ui_element_t *prior = m->children[m->num_children-1];
@@ -151,31 +181,85 @@ void MenuAddChild(ui_menu_t *m, ui_element_t* c){
       case LAYOUT_HORIZONTAL:
         break;
       case LAYOUT_VERTICAL:
-        c->bounds.y = prior->bounds.y + prior->bounds.height;
+        pos_adjustment.y = prior->bounds.y + prior->bounds.height;
         break;
       default:
         break;
     }
   }
+
+  switch(m->align){
+    case ALIGN_CENTER:
+      float centerx = m->bounds.x + m->bounds.width/2;
+      pos_adjustment.x = centerx - c->bounds.width/2;
+      break;
+    default:
+      break;
+  }
+
+  ElementSetPosition(c,pos_adjustment);
+
+  if(c->bounds.y + c->bounds.height > m->bounds.height)
+    m->bounds.height = c->bounds.y + c->bounds.height;
+
   m->children[m->num_children++] = c;
 }
 
 void ElementAddChild(ui_element_t *o, ui_element_t* c){
-  if(o->num_children == 0){
-    c->bounds.x += o->bounds.x;
-    c->bounds.y += o->bounds.y;
+  Vector2 pos_adjustment = Vector2FromXY(c->bounds.x,c->bounds.y);
+
+  pos_adjustment.x+=o->bounds.x;
+  pos_adjustment.y+=o->bounds.y;
+  if(o->num_children > 0){
+    ui_element_t *prior = o->children[o->num_children-1];
+    switch(o->layout){
+      case LAYOUT_HORIZONTAL:
+        break;
+      case LAYOUT_VERTICAL:
+        pos_adjustment.y = prior->bounds.y + prior->bounds.height;
+        break;
+      default:
+        break;
+    }
   }
   else{
+  /*
     ui_element_t *prior = o->children[o->num_children-1];
     c->bounds.x += prior->bounds.x + prior->bounds.width;
     c->bounds.y += prior->bounds.y;
-  }
-  
+  */
+    }
+
+  ElementSetPosition(c,pos_adjustment);
+
   if(c->bounds.x + c->bounds.width > o->bounds.width)
     o->bounds.width+=c->bounds.width;
 
+  if(c->bounds.y + c->bounds.height > o->bounds.height)
+    o->bounds.height+=c->bounds.height;
+
+
   c->owner = o->owner;
   o->children[o->num_children++] = c;
+}
+
+void ElementSetPosition(ui_element_t *e, Vector2 pos){
+  Vector2 oldPos = Vector2FromXY(e->bounds.x,e->bounds.y);
+  Vector2 dif = Vector2Subtract(pos,oldPos);
+
+  e->bounds.x = pos.x;
+  e->bounds.y = pos.y;
+
+  for(int i = 0; i < e->num_children; i++)
+    ElementAdjustPosition(e->children[i],dif);
+}
+
+void ElementAdjustPosition(ui_element_t *e, Vector2 inc){
+  e->bounds.x+=inc.x;
+  e->bounds.y+=inc.y;
+
+  for(int i = 0; i < e->num_children; i++)
+    ElementAdjustPosition(e->children[i],inc);
 }
 
 void UISync(){
@@ -209,6 +293,7 @@ void UISyncElement(ui_element_t* e){
     if(ev.type == VAL_CHAR)
       strcpy(e->text, ev.c);
   }
+  
   switch(e->type){
     case UI_BUTTON:
       clicked = GuiButton(e->bounds,e->text);

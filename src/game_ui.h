@@ -3,6 +3,10 @@
 
 #define MAX_ELEMENTS 64
 #define UI_SCALE 1.0F
+
+#define DEFAULT_MENU_SIZE (Vector2){GetScreenWidth()/2, GetScreenHeight()*.75f}
+#define DEFAULT_MENU_THIN_SIZE (Vector2){GetScreenWidth()/2, 64*UI_SCALE}
+
 #define DEFAULT_BUTTON_SIZE (Vector2){120*UI_SCALE, 32*UI_SCALE}
 #define LARGE_BUTTON_SIZE (Vector2){164*UI_SCALE, 32*UI_SCALE}
 
@@ -93,6 +97,8 @@ typedef struct ui_element_s{
   ElementState        state;
   ElementCallback     cb[ELEMENT_DONE];
   Rectangle           bounds;
+  UILayout            layout;
+  UIAlignment         align;
   char                text[65];
   ElementValueSync    get_val;
   int                 num_children;
@@ -103,6 +109,8 @@ ui_element_t* InitElement(const char* name,ElementType type, Vector2 pos, Vector
 ui_element_t* GetElement(const char* name);
 bool ElementSetState(ui_element_t* e, ElementState s);
 void ElementAddChild(ui_element_t *o, ui_element_t* c);
+void ElementSetPosition(ui_element_t *e, Vector2 pos);
+void ElementAdjustPosition(ui_element_t *e, Vector2 inc); 
 void UISyncElement(ui_element_t* e);
 bool UICloseOwner(ui_element_t* e);
 struct ui_menu_s;
@@ -121,9 +129,10 @@ typedef struct ui_menu_s{
   ui_element_t  *children[8];
   MenuState     state;
   bool          is_modal;
+  Rectangle     bounds;
 }ui_menu_t;
 
-ui_menu_t InitMenu(MenuId id, bool mask);
+ui_menu_t InitMenu(MenuId id,Vector2 pos, Vector2 size, bool modal);
 void UISyncMenu(ui_menu_t* m);
 bool UICloseMenu(ui_menu_t* m);
 void DrawMenu(ui_menu_t* m);

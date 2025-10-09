@@ -317,24 +317,16 @@ void InitWorld(world_data_t data){
     for(int y = 0; y < GRID_HEIGHT; y++)
       world.intgrid[x][y] = false;
 
-  world.room_bounds = RecFromCoords(0,0,ROOM_WIDTH,ROOM_HEIGHT);
+  world.room_bounds = RecFromCoords(0,ui.menus[MENU_HUD].bounds.height,ROOM_WIDTH,ROOM_HEIGHT);
   for (int i = 0; i < data.num_ents; i++)
     RegisterEnt(InitEnt(data.ents[i]));
 
-  for (int j = 0; j < GRID_WIDTH; j++){
-    Vector2 pos = Vector2FromXY(j*CELL_WIDTH,0);
-    RegisterEnt(InitEntStatic(data.tiles[0],pos));
-    
-    pos = Vector2FromXY(j*CELL_WIDTH,ROOM_HEIGHT);
-    RegisterEnt(InitEntStatic(data.tiles[0],pos));
-  }
-  for (int j = 1; j < GRID_HEIGHT; j++){
-    Vector2 pos = Vector2FromXY(0,j*CELL_HEIGHT);
-    RegisterEnt(InitEntStatic(data.tiles[0],pos));
-
-    pos = Vector2FromXY(ROOM_WIDTH,j*CELL_HEIGHT);
-    RegisterEnt(InitEntStatic(data.tiles[0],pos));
-
+  for (int j = 0; j < ROOM_TILE_COUNT; j++){
+    Vector2 pos = data.tiles[j].start;
+    for(int k = 0; k < data.tiles[j].amount; k++){
+      RegisterEnt(InitEntStatic(data.tiles[j],pos));
+      pos = Vector2Add(pos,data.tiles[j].inc);
+    }
   }
 }
 
@@ -454,7 +446,7 @@ void InitGameEvents(){
   for (int k = 0; k < ROOM_PROJECTILE_COUNT; k++)
     InitProjectilePool(room_projectiles[k]);
 
-  cooldown_t* loadEvent = InitCooldown(20,EVENT_GAME_PROCESS,GameReady,NULL);
+  cooldown_t* loadEvent = InitCooldown(6,EVENT_GAME_PROCESS,GameReady,NULL);
   AddEvent(game_process.events,loadEvent);
   InitWorld(wdata);
   game_process.children[SCREEN_GAMEPLAY].process = PROCESS_LEVEL;

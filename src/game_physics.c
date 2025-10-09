@@ -14,7 +14,7 @@ static inline Rectangle RecFromBounds(bounds_t b){
   return result;
 }
 
-rigid_body_t* InitRigidBody(ent_t* owner, Vector2 pos, float radius){
+rigid_body_t* InitRigidBody(ent_t* owner, Vector2 pos, Rectangle bounds, Vector2 offset){
   rigid_body_t* b = malloc(sizeof(rigid_body_t));
 
   *b = (rigid_body_t){0};
@@ -43,16 +43,16 @@ rigid_body_t* InitRigidBody(ent_t* owner, Vector2 pos, float radius){
   b->collision_bounds = (bounds_t){
     .shape = SHAPE_RECTANGLE,
       .pos = Vector2Zero(),
-      .offset = Vector2FromXY(-radius,-radius),
-      .radius = radius,
-      .width = radius*1.5,
-      .height = radius*1.5
+      .offset = offset,
+      .radius = (bounds.width+bounds.height)/4,
+      .width = bounds.width,
+      .height = bounds.height
   };
 
   return b;
 }
 
-rigid_body_t* InitRigidBodyStatic(ent_t* owner, Vector2 pos,float radius){
+rigid_body_t* InitRigidBodyStatic(ent_t* owner, Vector2 pos,Rectangle bounds, Vector2 offset){
   rigid_body_t* b = malloc(sizeof(rigid_body_t));
 
   *b = (rigid_body_t){0};
@@ -74,23 +74,23 @@ rigid_body_t* InitRigidBodyStatic(ent_t* owner, Vector2 pos,float radius){
   b->counter_force[FORCE_IMPULSE] = FORCE_NONE;
   b->counter_force[FORCE_NONE] = FORCE_NONE;
 
-  b->restitution = 0.25;
+  b->restitution = 0.025;
   b->is_static = true;
   b->simulate = false;
-  b->col_rate = 1;
+  b->col_rate = 3;
   //b->on_collision = NoOpCollision;
   b->collision_bounds = (bounds_t){
     .shape = SHAPE_RECTANGLE,
       .pos = Vector2Zero(),
-      .offset = Vector2FromXY(-radius,-radius),
-      .radius = radius,
-      .width = radius*2,
-      .height = radius*2
+      .offset = offset,
+      .radius = (bounds.width+bounds.height)/4,
+      .width = bounds.width,
+      .height = bounds.height
   };
   return b;
 }
 
-rigid_body_t InitRigidBodyKinematic(ent_t* owner, Vector2 pos,float radius){
+rigid_body_t InitRigidBodyKinematic(ent_t* owner, Vector2 pos,Rectangle bounds, Vector2 offset){
   rigid_body_t b = (rigid_body_t){0};
   b.owner = owner;
   b.position = pos;
@@ -114,10 +114,10 @@ rigid_body_t InitRigidBodyKinematic(ent_t* owner, Vector2 pos,float radius){
   b.collision_bounds = (bounds_t){
     .shape = SHAPE_RECTANGLE,
       .pos = Vector2Zero(),
-      .offset = Vector2FromXY(-radius,-radius),
-      .radius = radius,
-      .width = radius*2,
-      .height = radius*2
+      .offset = offset,
+      .radius = (bounds.width+bounds.height)/4,
+      .width = bounds.width,
+      .height = bounds.height
   };
   return b;
 }
@@ -155,6 +155,8 @@ void PhysicsStep(rigid_body_t *b){
         b->forces[b->counter_force[i]].is_active)
       CancelForce(&b->forces[i]);
 
+    if(i == FORCE_MELEE && b->forces[i].is_active)
+      DO_NOTHING();
     b->forces[i].is_active = PhysicsStepForce(&b->forces[i],b->forces[i].is_active);
     if(b->forces[i].is_active){
       b->velocity = Vector2Add(b->velocity,b->forces[i].vel);
@@ -215,9 +217,7 @@ bool CheckStep(rigid_body_t* b, Vector2 vel, float dist, Vector2* out){
 
   Vector2 testStep = Vector2Add(b->position,vel);
 
-  Rectangle testRec = RecFromCoords(testStep.x+b->collision_bounds.offset.x,
-      testStep.y+b->collision_bounds.offset.y,
-      b->collision_bounds.width, b->collision_bounds.height);
+  Rectangle testRec = RecFromCoords(testStep.x+b->collision_bounds.offset.x,testStep.y+b->collision_bounds.offset.y,b->collision_bounds.width, b->collision_bounds.height);
 
   for (int i = 0; i<b->num_collisions_detected;i++){
     Vector2 distCheck = VectorDistanceBetween(testStep,b->collisions[i].pos);

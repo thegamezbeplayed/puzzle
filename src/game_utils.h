@@ -14,10 +14,21 @@
 #define MAKE_ADAPTER(name, T) \
     static void name##_Adapter(void *p) { name((T)p); }
 
+typedef enum{
+  CLAUSE_NONE,
+  CLAUSE_DESC,
+  CLAUSE_ASC
+}SqlClause;
+
+typedef enum{
+  TABLE_PLAYER_SCORES,
+}SqlTable;
+
 typedef struct {
-    int id;
-    int score;
-    bool valid;   // true if row exists, false if not
+    int   id;
+    char  name[MAX_NAME_LEN];
+    int   score;
+    bool  valid;   // true if row exists, false if not
 } player_score_t;
 
 int InitDB();
@@ -25,7 +36,7 @@ bool DataUploadScore(const char* user, int score);
 bool DataInsertScore(const char* user, int score);
 bool DataUpdateScore(int row_id, int score);
 player_score_t DataGetUserRow(const char* user);
-
+player_score_t* DataGetSortedRows(int *out_count);
 typedef struct ent_s ent_t;
 
 typedef enum{
