@@ -1,7 +1,7 @@
 #include "game_process.h"
 #include "game_tools.h"
 
-float total_upgrades = 4.20f;
+float total_upgrades = 4.33f;
 
 difficulty_modifier_t level_mods[MOD_DONE] = {
   {.type = MOD_NONE},
@@ -117,7 +117,7 @@ void LevelLoadWave(unsigned int index,unsigned int level_id){
   if(index < l->num_spawners)
     SetObjectState(l->mob_spawners[index],OBJECT_LOAD);
   else{
-    //begin level end 
+    SetLevelState(levels.levels[level_id], LEVEL_FINISH);
   }
 }
 
@@ -164,7 +164,6 @@ void FreeLevel(level_t* l){
 void InitLevel(level_t *l){
   l->current_spawner = 0;
   l->num_spawners = 0;
-  l->spawner_done = 0u;
   for (int i = 0; i < ROOM_LEVEL_WAVE_COUNT; i++) {
     if(room_spawners[i].level != l->luid)
       continue;
@@ -182,8 +181,7 @@ void InitLevel(level_t *l){
 }
 
 void ResetLevel(level_t* l){
-  l->current_spawner = 
-  l->spawner_done = 0u;
+  l->current_spawner = 0;
   for (int i = 0; i < l->num_spawners; i++) {
     l->spawns[i].current_ref = 0;
   }
@@ -227,6 +225,7 @@ void RegisterPoolRef(unsigned int level_index,unsigned int index, EntityType ref
 bool SpawnEnt(game_object_t* spawner){
   if(spawner->state != OBJECT_RUN)
     return false;
+  
   level_t *l = levels.levels[spawner->level_id];
 
   int cur = l->spawns[spawner->id].current_ref;
@@ -296,12 +295,4 @@ bool ModifyMobCount(difficulty_modifier_t* self){
   }
 
   return false;
-}
-
-void LevelSyncSpawners(unsigned int level_index, unsigned int spawner_index){
-  levels.levels[level_index]->spawner_done |= (1u << spawner_index);
-
-    if (levels.levels[level_index]->spawner_done == (1u << levels.levels[level_index]->num_spawners) - 1) {
-        SetLevelState(levels.levels[level_index], LEVEL_FINISH);
-    }
 }

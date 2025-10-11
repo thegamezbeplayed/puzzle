@@ -317,7 +317,7 @@ void InitWorld(world_data_t data){
     for(int y = 0; y < GRID_HEIGHT; y++)
       world.intgrid[x][y] = false;
 
-  world.room_bounds = RecFromCoords(0,ui.menus[MENU_HUD].bounds.height,ROOM_WIDTH,ROOM_HEIGHT);
+  world.room_bounds = RecFromCoords(0,ui.menus[MENU_HUD].element->bounds.height,ROOM_WIDTH,ROOM_HEIGHT);
   for (int i = 0; i < data.num_ents; i++)
     RegisterEnt(InitEnt(data.ents[i]));
 

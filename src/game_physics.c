@@ -312,6 +312,18 @@ force_t ForceEmpty(ForceType type){
   return g;
 }
 
+force_t ForceFrictionless(ForceType type){
+  force_t g;//= malloc(sizeof(force_t));
+  g.type = type;
+  g.vel = Vector2Zero();
+  g.accel = Vector2Zero();
+  g.max_velocity = MAX_VELOCITY;
+  g.friction = VECTOR2_ONE;
+  g.threshold = 0.01f;
+  g.is_active = false;
+  return g;
+}
+
 void PhysicsCollision(int i, rigid_body_t* bodies[MAX_ENTS],int num_bodies, CollisionCallback callback){
   if(!bodies[i]->simulate || !CheckRigidBodyHasOwner(bodies[i]))
     return;

@@ -59,11 +59,26 @@ typedef enum{
 }UILayout;
 
 typedef enum{
-  ALIGN_NONE,
-  ALIGN_CENTER,
-  ALIGN_LEFT,
-  ALIGN_RIGHT,
+  ALIGN_NONE = 0,
+  ALIGN_CENTER = 0x01,
+  ALIGN_LEFT = 0x02,
+  ALIGN_RIGHT = 0x04,
+  ALIGN_TOP = 0x10,
+  ALIGN_MID = 0x20,
+  ALIGN_BOT = 0x40,
 }UIAlignment;
+
+typedef enum{
+  UI_PADDING,
+  UI_PADDING_TOP,
+  UI_PADDING_BOT,
+  UI_PADDING_LEFT,
+  UI_PADDING_RIGHT,
+  UI_MARGIN,
+  UI_MARGIN_TOP,
+  UI_MARGIN_LEFT,
+  UI_POSITIONING
+}UIPosition;
 
 typedef enum{
   MENU_NONE,
@@ -92,25 +107,27 @@ typedef ElementValue (*ElementValueSync)(void);
 
 typedef struct ui_element_s{
   uint32_t            hash;
-  struct ui_menu_s    *owner;
+  int                 index;
+  struct ui_menu_s    *menu;
+  struct ui_element_s *owner;
   ElementType         type;
   ElementState        state;
   ElementCallback     cb[ELEMENT_DONE];
   Rectangle           bounds;
+  float               width,height;
   UILayout            layout;
   UIAlignment         align;
+  float               spacing[UI_POSITIONING];
   char                text[65];
   ElementValueSync    get_val;
   int                 num_children;
-  struct ui_element_s *children[8];
+  struct ui_element_s *children[16];
 }ui_element_t;
 
-ui_element_t* InitElement(const char* name,ElementType type, Vector2 pos, Vector2 size);
+ui_element_t* InitElement(const char* name, ElementType type, Vector2 pos, Vector2 size, UIAlignment align,UILayout layout);
 ui_element_t* GetElement(const char* name);
 bool ElementSetState(ui_element_t* e, ElementState s);
 void ElementAddChild(ui_element_t *o, ui_element_t* c);
-void ElementSetPosition(ui_element_t *e, Vector2 pos);
-void ElementAdjustPosition(ui_element_t *e, Vector2 inc); 
 void UISyncElement(ui_element_t* e);
 bool UICloseOwner(ui_element_t* e);
 struct ui_menu_s;
@@ -122,17 +139,13 @@ ElementValue GetDisplayWave(void);
 ElementValue GetDisplayHealth(void);
 
 typedef struct ui_menu_s{
-  UILayout      layout;
-  UIAlignment   align;
-  int           num_children;
+  ui_element_t  *element;
   MenuCallback  cb[MENU_END];
-  ui_element_t  *children[8];
   MenuState     state;
   bool          is_modal;
-  Rectangle     bounds;
 }ui_menu_t;
 
-ui_menu_t InitMenu(MenuId id,Vector2 pos, Vector2 size, bool modal);
+ui_menu_t InitMenu(MenuId id,Vector2 pos, Vector2 size, UIAlignment align,UILayout layout, bool modal);
 void UISyncMenu(ui_menu_t* m);
 bool UICloseMenu(ui_menu_t* m);
 void DrawMenu(ui_menu_t* m);
@@ -142,8 +155,6 @@ void MenuOnStateChanged(ui_menu_t* m, MenuState old, MenuState s);
 static bool MenuInert(ui_menu_t* self){
   return false;
 }
-
-void MenuAddChild(ui_menu_t *m, ui_element_t* c);
 
 typedef struct{
   //MenuId      open_menu;

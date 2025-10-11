@@ -118,6 +118,7 @@ void ForceDisable(rigid_body_t* a, rigid_body_t* b, ForceType t);
 force_t ForceFromVector2(ForceType type, Vector2 vec);
 force_t ForceEmpty(ForceType type);
 force_t ForceBasic(ForceType type);
+force_t ForceFrictionless(ForceType type);
 //<====PHYSICS
 typedef struct{
   Vector2 dir;
@@ -222,6 +223,8 @@ typedef struct game_object_s{
   ObjectState     state;
   events_t        *events;
   controller_t    *control;
+  float           difficulty;
+  int             modifiers[MOD_DONE];
 }game_object_t;
 
 bool SpawnEnt(game_object_t* spawner);

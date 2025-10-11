@@ -108,6 +108,42 @@ BehaviorStatus BehaviorBisectDestination(behavior_params_t *params){
   RigidBodySetPosition(e->body,newpos);
 }
 
+BehaviorStatus BehaviorAcquireTrajectory(behavior_params_t *params){
+  struct ent_s* e = params->owner;
+  if(!e || !e->control)
+    return BEHAVIOR_FAILURE;
+
+  if(!v2_compare(e->control->destination,VEC_UNSET))
+    return BEHAVIOR_SUCCESS;
+
+  e->control->destination = GetWorldCoordsFromIntGrid(e->pos, e->control->ranges[RANGE_LOITER]);
+
+  return BEHAVIOR_SUCCESS;
+}
+BehaviorStatus BehaviorMakeKinematic(behavior_params_t *params){
+  struct ent_s* e = params->owner;
+  if(!e || !e->control)
+    return BEHAVIOR_FAILURE;
+
+  if(e->body->forces[FORCE_KINEMATIC].type == FORCE_NONE)
+    e->body->forces[FORCE_KINEMATIC] = ForceFrictionless(FORCE_KINEMATIC);
+
+  return BEHAVIOR_SUCCESS;
+}
+
+BehaviorStatus BehaviorMoveAtTrajectory(behavior_params_t *params){
+  struct ent_s* e = params->owner;
+  if(!e || !e->control)
+    return BEHAVIOR_FAILURE;
+
+  if(v2_compare(e->control->destination,VEC_UNSET))
+    return BEHAVIOR_FAILURE;
+
+  PhysicsAccelDir(e->body, FORCE_KINEMATIC,Vector2Normalize(Vector2Subtract(e->control->destination,e->pos)));
+  return BEHAVIOR_SUCCESS;
+
+}
+
 BehaviorStatus BehaviorAcquireDestination(behavior_params_t *params){
   struct ent_s* e = params->owner;
   if(!e || !e->control)
@@ -200,20 +236,18 @@ BehaviorStatus BehaviorCanAttackTarget(behavior_params_t *params){
     return BEHAVIOR_FAILURE;
 
 
-
   for(int i = 0; i < ATTACK_THORNS; i++){
     if(e->attacks[i].attack_type == ATTACK_BLANK)
       continue;
 
     if(e->attacks[i].cooldown->is_complete){
-      if(!e->attacks[i].cooldown->is_complete)
-        continue;
-
       if(PhysicsSimpleDistCheck(e->body,e->control->target->body)>e->attacks[i].reach.current)
         continue;
 
       return BEHAVIOR_SUCCESS;
     }
+    else
+      continue;
   }
 
   return BEHAVIOR_FAILURE;

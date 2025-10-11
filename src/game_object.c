@@ -1,5 +1,6 @@
 #include "game_types.h"
 #include "game_process.h"
+#include "game_tools.h"
 
 MAKE_ADAPTER(SpawnEnt, game_object_t*);
 MAKE_ADAPTER(StepObjectState, game_object_t*);
@@ -17,6 +18,11 @@ game_object_t* InitObjectStatic(SpawnerInstance inst){
       RegisterPoolRef(inst.level,inst.id, i);
   
   }
+
+  if(frand()>inst.chance)
+    SetObjectState(obj,OBJECT_INACTIVE);
+  else
+    TraceLog(LOG_INFO,"loading wave %d",inst.id);
 
   obj->events = InitEvents();
 /*
@@ -48,7 +54,6 @@ void OnObjectStateChange(game_object_t *obj, ObjectState s){
       LevelLoadWave(obj->id+1,obj->level_id);
       break;
     case OBJECT_END:
-      LevelSyncSpawners(obj->level_id,obj->id);
       UnloadEvents(obj->events);
       break;
     case OBJECT_RUN:
@@ -64,6 +69,10 @@ void OnObjectStateChange(game_object_t *obj, ObjectState s){
       cooldown_t* cdw = InitCooldown(evwd.dur.current,evwd.ev,StepObjectState_Adapter,obj);
       AddEvent(obj->events,cdw);
       break;
+    case OBJECT_FINISH:
+      LevelLoadWave(obj->id+1,obj->level_id);
+      SetObjectState(obj,OBJECT_END);
+      break;
     default:
       break;
   }
@@ -74,13 +83,24 @@ bool CanChangeObjectState(ObjectState old, ObjectState s){
   if(old == s)
     return false;
 
+  switch(COMBO_KEY(old,s)){
+    case COMBO_KEY(OBJECT_INACTIVE,OBJECT_LOAD):
+    case COMBO_KEY(OBJECT_INACTIVE,OBJECT_START):
+      return false;
+      break;
+    default:
+      break;
+  }
+   
   return true;
 }
 
 void SetObjectState(game_object_t *obj, ObjectState state){
   ObjectState old = obj->state;
-  if(!CanChangeObjectState(old,state))
-      return;
+  if(!CanChangeObjectState(old,state)){
+    SetObjectState(obj,OBJECT_FINISH);  
+    return;
+  }
   
   obj->state = state;
 

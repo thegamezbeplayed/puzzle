@@ -133,39 +133,11 @@ void GameProcessStep();
 void GameProcessSync(bool wait);
 bool GameTransitionScreen();
 void GameProcessEnd();
-struct difficulty_modifier_s;
-typedef struct difficulty_modifier_s difficulty_modifier_t;
-
-typedef bool (*ModifierCallback)(difficulty_modifier_t* self);
-typedef enum{
-  MOD_NONE,
-  MOD_LEVEL_DIFF,
-  MOD_LEVEL_POINTS,
-  MOD_MOB_UPGRADE,
-  MOD_MOB_COUNT,
-  MOD_WAVE_INTERVAL,
-  MOD_DONE
-}ModifierType;
-
-bool ModifyWaveInterval(difficulty_modifier_t* self);
-bool ModifyMobUpgrade(difficulty_modifier_t* self);
-bool ModifyLevelPoints(difficulty_modifier_t* self);
-bool ModifyLevelDifficulty(difficulty_modifier_t* self);
-bool ModifyMobCount(difficulty_modifier_t* self);
-
-typedef struct difficulty_modifier_s{
-  ModifierType      type;
-  unsigned int      level_id;
-  int               denom;
-  float             amount;
-  ModifierCallback  modFn;
-}difficulty_modifier_t;
 
 //====level process==>
 typedef struct{
   unsigned int         luid;
   LevelState           state;
-  uint32_t             spawner_done;
   float                points;
   int                  current_spawner;
   int                  num_spawners;

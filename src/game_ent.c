@@ -73,7 +73,6 @@ ent_t* InitEnt(ObjectInstance data){
   Rectangle cBounds = RectangleScale(e->sprite->slice->bounds, e->sprite->slice->scale);
   Vector2 cOffset = Vector2Scale(e->sprite->slice->offset, e->sprite->slice->scale);
   e->body = InitRigidBody(e,pos, cBounds,cOffset);
-  SetState(e,STATE_SPAWN,NULL);
   e->team = data.team_enum;
 
   e->stats[STAT_HEALTH] = InitStatOnMax(STAT_HEALTH,data.health);
@@ -86,29 +85,41 @@ ent_t* InitEnt(ObjectInstance data){
   e->debug_info->show[DEBUG_HEALTH]=true;
   e->debug_info->offset = Vector2Y(data.size);
   e->events = InitEvents();
-  if(e->team == TEAM_ENEMIES){
-    for(int i = 0; i < ATTACK_BLANK;i++){
-      /*
-      if(data.attacks[i].type == ATTACK_BLANK)
-        continue;
-        */
-      e->attacks[i] = InitAttack(e,data.attacks[i]);
-      e->num_attacks++;
-    }
-    e->stats[STAT_POINTS] = InitStatOnMax(STAT_POINTS,data.points);
-    e->control = InitController(data);
-    e->control->ranges[RANGE_AGGRO] = data.aggro_range;
-    e->control->ranges[RANGE_LOITER] = radius*2 + data.aggro_range;
-    e->control->ranges[RANGE_NEAR] = radius+data.speed;
-    e->control->bt[STATE_IDLE] = InitBehaviorTree("Seek");
-    e->control->bt[STATE_WANDER] = InitBehaviorTree("Wander");
-    e->control->bt[STATE_AGGRO] = InitBehaviorTree("Chase");
-    e->control->bt[STATE_ATTACK] = InitBehaviorTree("AttackOnTheMove");
-  }
-  else{
-    e->stats[STAT_HEALTH].on_stat_change = DisplayStatChange; 
+  e->stats[STAT_POINTS] = InitStatOnMax(STAT_POINTS,data.points);
+  
+  switch (e->team){
+    case TEAM_ENEMIES:
+      for(int i = 0; i < ATTACK_BLANK;i++){
+        /*
+           if(data.attacks[i].type == ATTACK_BLANK)
+           continue;
+           */
+        e->attacks[i] = InitAttack(e,data.attacks[i]);
+        e->num_attacks++;
+      }
+      e->control = InitController(data);
+      e->control->ranges[RANGE_AGGRO] = data.aggro_range;
+      e->control->ranges[RANGE_LOITER] = radius*2 + data.aggro_range;
+      e->control->ranges[RANGE_NEAR] = radius+data.speed;
+      e->control->bt[STATE_IDLE] = InitBehaviorTree("Seek");
+      e->control->bt[STATE_WANDER] = InitBehaviorTree("Wander");
+      e->control->bt[STATE_AGGRO] = InitBehaviorTree("Chase");
+      e->control->bt[STATE_ATTACK] = InitBehaviorTree("AttackOnTheMove");
+      break;
+    case TEAM_PLAYER:
+      e->stats[STAT_HEALTH].on_stat_change = DisplayStatChange; 
+      break;
+    default:
+      e->control = InitController(data);
+      e->control->ranges[RANGE_AGGRO] = data.aggro_range;
+      e->control->ranges[RANGE_LOITER] = radius*2 + data.aggro_range;
+      e->control->ranges[RANGE_NEAR] = radius+data.speed;
+      e->control->bt[STATE_IDLE] = InitBehaviorTree("Kinematic");
+      e->control->bt[STATE_WANDER] = InitBehaviorTree("Traject");
+      break;
   }
 
+  SetState(e,STATE_SPAWN,NULL);
   return e;
 }
 

@@ -10,17 +10,29 @@
 void InitEndScreen(void)
 {
 
-  if(!DataUploadScore("mindGoblin",GetPointsInt())){
+  player_score_t pscore = {-1,"BenDover",GetPointsInt(),LevelGetCurrentWaveNum()};
+  if(!DataUploadScore(&pscore)){
     ElementSetState(GetElement("HIGHSCORE_LBL"),ELEMENT_HIDDEN);
   }
 
   int count;
   player_score_t *scores = DataGetSortedRows(&count);
-  ui_element_t* table = GetElement("NAME_COL");
+  ui_element_t* nameCol = GetElement("NAME_COL");
+  ui_element_t* scoreCol = GetElement("SCORE_COL");
+  ui_element_t* waveCol = GetElement("WAVE_COL");
   for(int i = 0; i < count; i++){
-    ui_element_t *name = InitElement("SCORE_NAME",UI_LABEL,VECTOR2_ZERO,DEFAULT_PANEL_THIN_SIZE);
+    ui_element_t *name = InitElement("PLAYER_NAME",UI_LABEL,VECTOR2_ZERO,DEFAULT_PANEL_THIN_SIZE,0,0);
+    ui_element_t *score = InitElement("PLAYER_SCORE",UI_LABEL,VECTOR2_ZERO,DEFAULT_PANEL_THIN_SIZE,0,0);
+    ui_element_t *wave = InitElement("PLAYER_WAVE",UI_LABEL,VECTOR2_ZERO,DEFAULT_PANEL_THIN_SIZE,0,0);
+    score->spacing[UI_MARGIN_LEFT]=6;
+    wave->spacing[UI_MARGIN_LEFT]=6;
+    name->spacing[UI_MARGIN_LEFT]=6;
     strcpy(name->text,scores[i].name);
-    ElementAddChild(table,name);
+    strcpy(score->text,TextFormat("%09i",scores[i].score));
+    strcpy(wave->text,TextFormat("%02i",scores[i].wave));
+    ElementAddChild(nameCol,name);
+    ElementAddChild(scoreCol,score);
+    ElementAddChild(waveCol,wave);
   }
   MenuSetState(&ui.menus[MENU_RECAP],MENU_ACTIVE);
 }

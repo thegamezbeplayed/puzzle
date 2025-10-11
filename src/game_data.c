@@ -19,16 +19,19 @@ int InitDB(){
 
   return EXIT_SUCCESS;
 }
-bool DataUploadScore(const char* user, int score){
-  player_score_t results = DataGetUserRow(user);
 
-  if(results.valid && results.score > score)
+bool DataUploadScore(player_score_t *up){
+  player_score_t results = DataGetUserRow(up->name);
+
+  if(results.valid && results.score > up->score)
     return false;
 
   if(!results.valid)
-    DataInsertScore(user,score);
-  else
-    DataUpdateScore(results.id,score);
+    DataInsertScore(up);
+  else{
+    up->id = results.id;
+    DataUpdateScore(up);
+  }
 
   return true;
 }
@@ -40,7 +43,7 @@ MYSQL_STMT *stmt;
 
     *out_count = 0;
 
-    const char* query = "SELECT id, player, score FROM player_scores ORDER BY score DESC";
+    const char* query = "SELECT player,score,wave FROM player_scores ORDER BY score DESC";
 
     stmt = mysql_stmt_init(conn);
     if (!stmt) {
@@ -69,24 +72,22 @@ MYSQL_STMT *stmt;
     }
 
     // Temporary variables for each column
-    int id;
+    int wave;
     char name[64];
     int score;
 
     memset(bind, 0, sizeof(bind));
 
-    // Column 1: id
-    bind[0].buffer_type = MYSQL_TYPE_LONG;
-    bind[0].buffer = (char *)&id;
+    bind[0].buffer_type = MYSQL_TYPE_STRING;
+    bind[0].buffer = (char *)name;
+    bind[0].buffer_length = sizeof(name);
 
-    // Column 2: player
-    bind[1].buffer_type = MYSQL_TYPE_STRING;
-    bind[1].buffer = (char *)name;
-    bind[1].buffer_length = sizeof(name);
+    bind[1].buffer_type = MYSQL_TYPE_LONG;
+    bind[1].buffer = (char *)&score;
 
-    // Column 3: score
     bind[2].buffer_type = MYSQL_TYPE_LONG;
-    bind[2].buffer = (char *)&score;
+    bind[2].buffer = (char *)&wave;
+
 
     if (mysql_stmt_bind_result(stmt, bind)) {
         TraceLog(LOG_ERROR, "mysql_stmt_bind_result() failed: %s", mysql_stmt_error(stmt));
@@ -116,7 +117,7 @@ MYSQL_STMT *stmt;
 
     int i = 0;
     while (mysql_stmt_fetch(stmt) == 0) {
-        scores[i].id = id;
+        scores[i].wave = wave;
         strncpy(scores[i].name, name, sizeof(scores[i].name) - 1);
         scores[i].name[sizeof(scores[i].name) - 1] = '\0';
         scores[i].score = score;
@@ -183,11 +184,11 @@ player_score_t DataGetUserRow(const char* user){
   return row;
 }
 
-bool DataUpdateScore(int row_id, int score){
+bool DataUpdateScore(player_score_t* up){
   MYSQL_STMT *stmt;
-  MYSQL_BIND bind[2];
+  MYSQL_BIND bind[3];
 
-  const char* query = "UPDATE player_scores SET score = ? WHERE id = ?";
+  const char* query = "UPDATE player_scores SET score = ?, wave = ? WHERE id = ?";
 
   stmt = mysql_stmt_init(conn);
 
@@ -199,15 +200,21 @@ bool DataUpdateScore(int row_id, int score){
 
   // Bind score
   bind[0].buffer_type   = MYSQL_TYPE_LONG;
-  bind[0].buffer        = (char *)&score;
+  bind[0].buffer        = (char *)&up->score;
   bind[0].is_null       = 0;
   bind[0].length        = 0;
 
-  // Bind id
   bind[1].buffer_type   = MYSQL_TYPE_LONG;
-  bind[1].buffer        = (char *)&row_id;
+  bind[1].buffer        = (char *)&up->wave;
   bind[1].is_null       = 0;
   bind[1].length        = 0;
+
+
+  // Bind id
+  bind[2].buffer_type   = MYSQL_TYPE_LONG;
+  bind[2].buffer        = (char *)&up->id;
+  bind[2].is_null       = 0;
+  bind[2].length        = 0;
   // Bind params to statement
   if (mysql_stmt_bind_param(stmt, bind)) {
     TraceLog(LOG_ERROR, "mysql_stmt_bind_param() failed: %s\n", mysql_stmt_error(stmt));
@@ -220,17 +227,17 @@ bool DataUpdateScore(int row_id, int score){
 
   int affected = mysql_stmt_affected_rows(stmt);
   TraceLog(LOG_INFO, "Updated score=%d for row id=%d (affected %d rows)",
-      score, row_id, affected);
+      up->score, up->id, affected);
 
   mysql_stmt_close(stmt);
   return affected > 0;
 }
 
-bool DataInsertScore(const char* user, int score){
+bool DataInsertScore(player_score_t* in){
 
   MYSQL_STMT *stmt;
-  MYSQL_BIND bind[2];
-  const char *query = "INSERT INTO player_scores (player, score) VALUES(?, ?)";
+  MYSQL_BIND bind[3];
+  const char *query = "INSERT INTO player_scores (player,score,wave) VALUES(?, ?, ?)";
 
   stmt = mysql_stmt_init(conn);
   if (mysql_stmt_prepare(stmt, query, strlen(query))) {
@@ -240,13 +247,18 @@ bool DataInsertScore(const char* user, int score){
   memset(bind, 0, sizeof(bind));
 
   bind[0].buffer_type = MYSQL_TYPE_STRING;
-  bind[0].buffer = strdup(user);
-  bind[0].buffer_length = strlen(user);
+  bind[0].buffer = in->name;
+  bind[0].buffer_length = strlen(in->name);
 
   bind[1].buffer_type = MYSQL_TYPE_LONG;
-  bind[1].buffer = (char *) &score;
+  bind[1].buffer = (char *) &in->score;
   bind[1].is_null = 0;
   bind[1].length = 0;
+
+  bind[2].buffer_type = MYSQL_TYPE_LONG;
+  bind[2].buffer = (char *) &in->wave;
+  bind[2].is_null = 0;
+  bind[2].length = 0;
   // Bind params to statement
   if (mysql_stmt_bind_param(stmt, bind)) {
     TraceLog(LOG_ERROR, "mysql_stmt_bind_param() failed: %s\n", mysql_stmt_error(stmt));
@@ -257,7 +269,7 @@ bool DataInsertScore(const char* user, int score){
     TraceLog(LOG_ERROR, "mysql_stmt_execute() failed: %s\n", mysql_stmt_error(stmt));
   }
 
-  TraceLog(LOG_INFO,"Inserted player %s with score %d\n", user, score);
+  TraceLog(LOG_INFO,"Inserted player %s with score %d\n",in->name, in->score);
 
   mysql_stmt_close(stmt);
 }

@@ -18,7 +18,10 @@
 #define Vector2X(x) ((Vector2){ (x), 0.0f })
 #define Vector2Y(y) ((Vector2){ 0.0f, (y) })
 #define Vector2Inc(v,xi,yi) ((Vector2){ (v.x+xi), (v.y+yi) })
+
 #define Rect(px,py,sx,sy) ((Rectangle){ (px),(py), (sx), (sy) })
+#define RECT_ZERO   (Rectangle){ 0.0f, 0.0f,0.0f,0.0f}
+#define RectInc(r,xi,yi) ((Rectangle){ (r.x+xi), (r.y+yi),(r.width),(r.height) })
 
 static void shuffle_array(void *base, size_t n, size_t size) {
     char *arr = base;

@@ -3,6 +3,35 @@
 
 #include "raylib.h"
 
+struct difficulty_modifier_s;
+typedef struct difficulty_modifier_s difficulty_modifier_t;
+
+typedef bool (*ModifierCallback)(difficulty_modifier_t* self);
+typedef enum{
+  MOD_NONE,
+  MOD_LEVEL_DIFF,
+  MOD_LEVEL_POINTS,
+  MOD_MOB_UPGRADE,
+  MOD_MOB_COUNT,
+  MOD_WAVE_INTERVAL,
+  MOD_WAVE_CHANCE,
+  MOD_DONE
+}ModifierType;
+
+bool ModifyWaveInterval(difficulty_modifier_t* self);
+bool ModifyMobUpgrade(difficulty_modifier_t* self);
+bool ModifyLevelPoints(difficulty_modifier_t* self);
+bool ModifyLevelDifficulty(difficulty_modifier_t* self);
+bool ModifyMobCount(difficulty_modifier_t* self);
+
+typedef struct difficulty_modifier_s{
+  ModifierType      type;
+  unsigned int      level_id;
+  int               denom;
+  float             amount;
+  ModifierCallback  modFn;
+}difficulty_modifier_t;
+
 typedef enum {
   ENT_PLAYER,
   ENT_SHIELD,
@@ -13,6 +42,8 @@ typedef enum {
   ENT_BATTLE_DRONE,
   ENT_HUNTER,
   ENT_STRIKER,
+  ENT_OBSTACLE,
+  ENT_ASTEROID,
   ENT_BULLET,
   ENT_WALL,
   ENT_BLANK
@@ -171,7 +202,7 @@ typedef enum {
   SHAPE_TRIANGLE,
   SHAPE_PIXEL,
   SHAPE_NONE
-} ShapeType;
+}ShapeType;
 
 typedef enum{
   STATE_NONE,//if ent_t is properly initalized to {0} this is already set
@@ -186,6 +217,7 @@ typedef enum{
 
 typedef enum{
   OBJECT_NONE,//if ent_t is properly initalized to {0} this is already set
+  OBJECT_INACTIVE,
   OBJECT_LOAD,
   OBJECT_START,//Should only be set after NONE
   OBJECT_PAUSE,

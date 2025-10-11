@@ -41,6 +41,7 @@ typedef struct {
   float x;
   float y;
   int   spawn_refs[ENT_BLANK];
+  float chance;
 } SpawnerInstance;
 
 typedef struct {
@@ -66,11 +67,13 @@ static const BehaviorData room_behaviors[] = {
   {"bisect_dest",false,BT_LEAF,LeafBisectDestination,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,0,{}},
   {"acquire_target",false,BT_LEAF,LeafAcquireTarget,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,0,{}},
   {"can_attack",false,BT_LEAF,LeafCanAttackTarget,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,0,{}},
-//  {"can_see",false,BT_LEAF,LeafCanSeeTarget,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,0,{}},
   {"attack",false,BT_LEAF,LeafAttackTarget,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,0,{}},
   {"acquire_destination",false,BT_LEAF,LeafAcquireDestination,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,0,{}},
+  {"acquire_trajectory",false,BT_LEAF,LeafAcquireTrajectory,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,0,{}},
   {"move_to_dest",false,BT_LEAF,LeafMoveToDestination,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,0,{}},
+  {"move_trajectory",false,BT_LEAF,LeafMoveAtTrajectory,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,0,{}},
   {"move_to_target",false,BT_LEAF,LeafMoveToTarget,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,0,{}},
+  {"make_kinematic",false,BT_LEAF,LeafMakeKinematic,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,0,{}},
   {"wander_state",false,BT_LEAF,LeafChangeState,EVENT_NONE,STATE_WANDER,OBJECT_NONE,0,0,{}},
   {"Orbit",true,BT_SEQUENCE, NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,2,{"acquire_mouse","bisect_dest"}},
   {"Acquire",false, BT_SEQUENCE, NULL,EVENT_NONE,STATE_NONE,OBJECT_NONE,0,2,{"acquire_target","change_state"}},
@@ -84,23 +87,25 @@ static const BehaviorData room_behaviors[] = {
   {"Wander",true,BT_SELECTOR, NULL,0,0,0,0,2,{"CheckAggro","Move"}},
   {"Chase",true,BT_SELECTOR, NULL,0,0,0,0,3,{"TryAttack","MoveTar","NoTar"}},
   {"Attack",false,BT_SEQUENCE, NULL,0,0,0,0,2,{"can_attack","attack"}},
+  {"Traject",true,BT_SEQUENCE, NULL,0,0,0,0,3,{"acquire_trajectory","move_trajectory","change_state"}},
+  {"Kinematic",true,BT_SEQUENCE, NULL,0,0,0,0,2,{"make_kinematic","change_state_wander"}},
   {"AttackOnTheMove",true,BT_CONCURRENT, NULL,0,0,0,0,2,{"Attack","MoveTar"}},
 };
-#define ROOM_BEHAVIOR_COUNT 26
+#define ROOM_BEHAVIOR_COUNT 31
 
 static const SpawnerInstance room_spawners[] = {
-  {0, 0,"spawn_data", 128,856,{[ENT_DRONE]=3,[ENT_STRIKER]=1}},
-  {1, 0,"spawn_data", 128,164, {[ENT_DRONE]=4}},
-  {2, 0,"spawn_data", 1534,856, {[ENT_DRONE]=4}},
-  {0, 1,"spawn_data", 128,164, {[ENT_DRONE]=4}},
-  {1, 1,"spawn_data", 1534,164,{[ENT_DRONE]=4}},
-  {2, 1,"spawn_data", 950,164, {[ENT_DRONE]=4}},
-  {3, 1,"spawn_data", 128,856, {[ENT_DRONE]=4}},
-  {0, 2,"spawn_data", 128,164, {[ENT_DRONE]=5}},
-  {1, 2,"spawn_data", 1534,856,{[ENT_HUNTER]=3}},
-  {2, 2,"spawn_data", 128,164,{[ENT_DRONE]=4}},
-  {3, 2,"spawn_data", 1534,164,{[ENT_DRONE]=4}},
-  {4, 2,"spawn_data", 950,164, {[ENT_STRIKER]=3,[ENT_DRONE]=1}}
+  {0, 0,"spawn_data", 164,856,{[ENT_DRONE]=3,[ENT_STRIKER]=1},1.0f},
+  {1, 0,"spawn_data", 164,164, {[ENT_DRONE]=4},1.0f},
+  {2, 0,"spawn_data", 1534,856, {[ENT_DRONE]=4},1.0f},
+  {0, 1,"spawn_data", 164,164, {[ENT_DRONE]=4},1.0f},
+  {1, 1,"spawn_data", 1534,164,{[ENT_DRONE]=4},1.0f},
+  {2, 1,"spawn_data", 950,164, {[ENT_DRONE]=4},1.0f},
+  {3, 1,"spawn_data", 164,856, {[ENT_DRONE]=4},1.0f},
+  {0, 2,"spawn_data", 164,164, {[ENT_DRONE]=5},1.0f},
+  {1, 2,"spawn_data", 1534,856,{[ENT_HUNTER]=3},1.0f},
+  {2, 2,"spawn_data", 164,164,{[ENT_DRONE]=4},1.0f},
+  {3, 2,"spawn_data", 1534,164,{[ENT_DRONE]=4},1.0f},
+  {4, 2,"spawn_data", 950,164, {[ENT_STRIKER]=3,[ENT_DRONE]=1},1.0f}
 };
 
 typedef struct {
@@ -168,6 +173,8 @@ static const ObjectInstance room_instances[] = {
   {ENT_BATTLE_DRONE,"ent_data", "Battle Drone", 60,-1, -1,6, 4,36, 8, 3.1f, 5,680,{[ATTACK_RANGED]=attack_data[0],[ATTACK_THORNS]=attack_data[1]},PINK,1,{[SHADER_INVERT] = true,[SHADER_OUTLINE]=true}},
   {ENT_HUNTER,"ent_data", "Hunter", 56,-1, -1, 39,3,40, 7.1, 2.4f, 9,600,{[ATTACK_RANGED]=attack_data[0],[ATTACK_THORNS]=attack_data[4],[ATTACK_MELEE]=attack_data[2]},RED,1,{[SHADER_INVERT] = true,[SHADER_OUTLINE]=true}},
   {ENT_STRIKER,"ent_data", "Striker", 48,-1, -1, 42,2,20, 8.2, 3.2f, 5,600,{[ATTACK_RANGED]=attack_data[4],[ATTACK_THORNS]=attack_data[1],[ATTACK_MELEE]=attack_data[2]},YELLOW,1,{[SHADER_INVERT] = true,[SHADER_OUTLINE]=true}},
+  {ENT_OBSTACLE,"ent_data", "obstacle", 56, -1, -1, 37,2,24, 16, 4, 3,680,{},PINK,1},
+  {ENT_ASTEROID,"ent_data", "Asteroid", 56, -1, -1, 19,2,24, 16, 4, 3,680,{[ATTACK_MELEE]=attack_data[4],[ATTACK_RANGED]=attack_data[4],[ATTACK_THORNS]=attack_data[1]},GREEN,2,{[SHADER_INVERT] = true,[SHADER_OUTLINE]=true}},
 };
 
 #define ROOM_INSTANCE_COUNT 3
