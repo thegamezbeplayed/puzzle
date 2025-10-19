@@ -27,7 +27,6 @@ void InitGameplayScreen(void){
  
   camera.target = (Vector2){ROOM_WIDTH/2,ROOM_HEIGHT/2};
   InitGameEvents();
-  InitLevelEvents();
   MenuSetState(&ui.menus[MENU_HUD],MENU_ACTIVE);
 
 }
@@ -38,15 +37,6 @@ void PreUpdate(void){
 }
 
 void FixedUpdate(void){
-
-  if(player && player->state < STATE_DIE){
-    Vector2 input = CaptureInput();
-
-    if(Vector2Length(input)>0){
-      input = Vector2Scale(input,8);//TODO this is placeholder for ent speed
-      PhysicsApplyForce(player->body,ForceFromVector2(FORCE_STEERING,input));
-    }
-  }
   WorldFixedUpdate();
 }
 
@@ -57,10 +47,7 @@ void PostUpdate(void){
 // Gameplay Screen Update logic
 void UpdateGameplayScreen(void)
 {
- /* 
-  if(player)
-    camera.target = player->pos;
-    */
+
 }
 
 // Gameplay Screen Draw logic
@@ -78,7 +65,6 @@ void DrawGameplayScreen(void)
   DrawFPS(10, 10);
   UISync();
   EndDrawing();
-
 }
 
 // Gameplay Screen Unload logic

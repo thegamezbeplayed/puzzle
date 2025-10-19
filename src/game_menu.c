@@ -16,19 +16,13 @@ void InitUI(){
   for (int i = 0; i< MENU_DONE; i++)
     ui.menu_key[i] = KEY_NULL;
 
-  Vector2 default_menu_pos = (Vector2){
-    .x = (GetScreenWidth()-DEFAULT_MENU_SIZE.x)/2,
-    .y = (GetScreenHeight()-DEFAULT_MENU_SIZE.y)/2
-  };
-
   ui.menu_key[MENU_PAUSE] = KEY_P;
   ui.menus[MENU_PAUSE] = InitMenu(MENU_PAUSE,VECTOR2_ZERO,VECTOR2_SCREEN,ALIGN_CENTER|ALIGN_MID,LAYOUT_VERTICAL,true);
   ui.menus[MENU_PAUSE].cb[MENU_OPENED] = TogglePause; 
   ui.menus[MENU_PAUSE].cb[MENU_CLOSE] = TogglePause;
 
-  Vector2 pos = Vector2Subtract(VECTOR2_CENTER_SCREEN,Vector2Scale(DEFAULT_BUTTON_SIZE,0.5f));
 
-  ui_element_t *resumeBtn = InitElement("RESUME_BTN",UI_BUTTON,pos,DEFAULT_BUTTON_SIZE,0,0); 
+  ui_element_t *resumeBtn = InitElement("RESUME_BTN",UI_BUTTON,VECTOR2_ZERO,DEFAULT_BUTTON_SIZE,0,0); 
   strcpy(resumeBtn->text, "RESUME");
   resumeBtn->cb[ELEMENT_ACTIVATED] = UICloseOwner;
   ElementAddChild(ui.menus[MENU_PAUSE].element,resumeBtn);
@@ -39,92 +33,6 @@ void InitUI(){
   strcpy(playBtn->text, "PLAY");
   playBtn->cb[ELEMENT_ACTIVATED] = GameTransitionScreen;
   ElementAddChild(ui.menus[MENU_MAIN].element,playBtn);
-
-  ui.menus[MENU_RECAP] = InitMenu(MENU_RECAP,VECTOR2_ZERO,VECTOR2_ZERO,ALIGN_CENTER,LAYOUT_VERTICAL,false);
-
-  ui_element_t *pointsText =InitElement("POINTS_LBL",UI_STATUSBAR,VECTOR2_ZERO,XS_PANEL_THIN_SIZE,0,0);
-  ui_element_t *pointsBox =InitElement("SCORE_LBL",UI_STATUSBAR,VECTOR2_ZERO,XS_PANEL_THIN_SIZE,0,0);
-  ui_element_t *newHigh =InitElement("HIGHSCORE_LBL",UI_STATUSBAR,VECTOR2_ZERO,DEFAULT_PANEL_THIN_SIZE,0,0);
-
-  strcpy(newHigh->text,"<<NEW HIGH SCORE>>");
-  strcpy(pointsBox->text, "SCORE");
-  pointsText->get_val = GetDisplayPoints;
-  
-  ui_element_t *scoreTable = InitElement("SCORE_TBL",UI_PANEL,VECTOR2_ZERO,DEFAULT_PANEL_THIN_SIZE,ALIGN_CENTER|ALIGN_MID,LAYOUT_VERTICAL);
-  
-  ui_element_t *nameCol = InitElement("NAME_COL",UI_PANEL,VECTOR2_ZERO,VECTOR2_ZERO, ALIGN_LEFT,LAYOUT_VERTICAL); 
-  ui_element_t *scoreCol = InitElement("SCORE_COL",UI_PANEL,VECTOR2_ZERO,VECTOR2_ZERO, ALIGN_LEFT,LAYOUT_VERTICAL); 
-  ui_element_t *waveCol = InitElement("WAVE_COL",UI_PANEL,VECTOR2_ZERO,VECTOR2_ZERO, ALIGN_LEFT,LAYOUT_VERTICAL); 
-  ui_element_t *tableHeader = InitElement("HEADER_PANE",UI_PANEL,VECTOR2_ZERO,VECTOR2_ZERO,0,LAYOUT_HORIZONTAL);
-  ui_element_t *tableData = InitElement("DATA_PANE",UI_BOX,VECTOR2_ZERO,VECTOR2_ZERO,0,LAYOUT_HORIZONTAL);
-
-  ui_element_t *nameHeader = InitElement("NAME_HEADER",UI_LABEL,VECTOR2_ZERO,DEFAULT_BUTTON_SIZE,ALIGN_LEFT,0);
-  strcpy(nameHeader->text,"NAME");
-  ElementAddChild(tableHeader,nameHeader);
-
-ui_element_t *scoreHeader = InitElement("SCORE_HEADER",UI_LABEL,VECTOR2_ZERO,DEFAULT_BUTTON_SIZE,ALIGN_LEFT,0);
-ui_element_t *waveHeader = InitElement("WAVE_HEADER",UI_LABEL,VECTOR2_ZERO,DEFAULT_BUTTON_SIZE,ALIGN_LEFT,0);
-  strcpy(scoreHeader->text,"SCORE");
-  strcpy(waveHeader->text,"WAVE");
-  scoreHeader->spacing[UI_MARGIN_LEFT]=6;
-  nameHeader->spacing[UI_MARGIN_LEFT]=6;
-
-  ElementAddChild(tableHeader,scoreHeader);
-  ElementAddChild(tableHeader,waveHeader);
-
-  ui_element_t *recapBtn = InitElement("RECAP_BTN",UI_BUTTON,VECTOR2_ZERO,DEFAULT_BUTTON_SIZE,0,0); 
-
-  ElementAddChild(scoreTable,tableHeader);
-  ElementAddChild(tableData,nameCol);
-  ElementAddChild(tableData,scoreCol);
-  ElementAddChild(tableData,waveCol);
-  ElementAddChild(scoreTable,tableData);
-  
-  strcpy(recapBtn->text, "CONTINUE");
-  recapBtn->cb[ELEMENT_ACTIVATED] = GameTransitionScreen;
-  ElementAddChild(ui.menus[MENU_RECAP].element,newHigh);
-  ElementAddChild(ui.menus[MENU_RECAP].element,pointsBox);
-  ElementAddChild(ui.menus[MENU_RECAP].element,pointsText);
-  ElementAddChild(ui.menus[MENU_RECAP].element,scoreTable);
-  ElementAddChild(ui.menus[MENU_RECAP].element,recapBtn);
-
- ui.menus[MENU_HUD] = InitMenu(MENU_HUD,VECTOR2_ZERO,VECTOR2_ZERO,ALIGN_CENTER,LAYOUT_VERTICAL,false);
-
- ui_element_t *hudPane = InitElement("HUD_PANE",UI_PANEL,VECTOR2_ZERO,VECTOR2_ZERO,ALIGN_CENTER,LAYOUT_HORIZONTAL);
- 
- ui_element_t *hudStatus = InitElement("STATUS_PANE",UI_PANEL,VECTOR2_ZERO,VECTOR2_ZERO,ALIGN_CENTER,LAYOUT_HORIZONTAL);
- ui_element_t *healthText = InitElement("HEALTH_STATUS",UI_STATUSBAR,VECTOR2_ZERO, SMALL_PANEL_THIN_SIZE,0,0);
- strcpy(healthText->text,"HEALTH");
- ui_element_t *healthBar = InitElement("HEALTH_BAR",UI_PROGRESSBAR,VECTOR2_ZERO, SMALL_PANEL_THIN_SIZE,0,0);
- healthBar->get_val = GetDisplayHealth;
- ElementAddChild(hudStatus,healthText);
- ElementAddChild(hudStatus,healthBar);
- ui_element_t *scoreBox = InitElement("SCORE_BAR",UI_STATUSBAR,VECTOR2_ZERO, XS_PANEL_THIN_SIZE,0,0);
- strcpy(scoreBox->text, "SCORE");
-
- ui_element_t *scoreText = InitElement("POINT_BAR",UI_STATUSBAR,VECTOR2_ZERO,XS_PANEL_THIN_SIZE,0,0);
- scoreText->get_val = GetDisplayPoints;
- ElementAddChild(hudPane,scoreBox);
- ElementAddChild(hudPane,scoreText);
-
- ui_element_t *waveBox = InitElement("WAVE_BAR",UI_STATUSBAR,VECTOR2_ZERO, XS_PANEL_THIN_SIZE,0,0);
- strcpy(waveBox->text, "WAVE");
-
- ui_element_t *waveText = InitElement("WAV_NUM_BAR",UI_STATUSBAR,VECTOR2_ZERO,XS_PANEL_THIN_SIZE,0,0);
- waveText->get_val = GetDisplayWave;
- ElementAddChild(hudPane,waveBox);
- ElementAddChild(hudPane,waveText);
-
- ui_element_t *timeBox = InitElement("TIME_BAR",UI_STATUSBAR,VECTOR2_ZERO, XS_PANEL_THIN_SIZE,0,0);
- strcpy(timeBox->text, "TIME");
-
- ui_element_t *timeText = InitElement("SECONDS_BAR",UI_STATUSBAR,VECTOR2_ZERO,XS_PANEL_THIN_SIZE,0,0);
- timeText->get_val = GetDisplayTime;
- ElementAddChild(hudPane,timeBox);
- ElementAddChild(hudPane,timeText);
-
- ElementAddChild(ui.menus[MENU_HUD].element,hudPane);
- ElementAddChild(ui.menus[MENU_HUD].element,hudStatus);
 }
 
 ui_menu_t InitMenu(MenuId id,Vector2 pos, Vector2 size, UIAlignment align,UILayout layout, bool modal){
@@ -394,23 +302,5 @@ ElementValue GetDisplayTime(void){
   ElementValue ev = {0};
   ev.type = VAL_CHAR;
   ev.c = GetGameTime();
-  return ev;
-}
-
-ElementValue GetDisplayWave(void){
-  ElementValue ev = {0};
-  ev.type = VAL_CHAR;
-  ev.c = LevelGetCurrentWave();
-  return ev;
-}
-
-ElementValue GetDisplayHealth(void){
-  ElementValue ev = {0};
-  ev.type = VAL_FLOAT;
-  ev.f = malloc(sizeof(float));
-  if(player->stats[STAT_HEALTH].ratio ==NULL)
-    *ev.f = 0.0f;
-  else
-    *ev.f = RATIO(player->stats[STAT_HEALTH]);
   return ev;
 }

@@ -22,7 +22,6 @@ rigid_body_t* InitRigidBody(ent_t* owner, Vector2 pos, Rectangle bounds, Vector2
   b->position = pos;
   b->velocity = Vector2Zero();
 
-  b->forces[FORCE_AVOID] = ForceBasic(FORCE_AVOID);
   b->forces[FORCE_STEERING] = ForceBasic(FORCE_STEERING);
   b->forces[FORCE_STEERING].max_velocity = GRID_SIZE/8;
 
@@ -61,13 +60,10 @@ rigid_body_t* InitRigidBodyStatic(ent_t* owner, Vector2 pos,Rectangle bounds, Ve
   b->velocity = Vector2Zero();
 
   b->forces[FORCE_IMPULSE] = ForceBasic(FORCE_IMPULSE);
-  b->forces[FORCE_IMPULSE].on_react = ReactionBumpForce;
+  b->forces[FORCE_IMPULSE].on_react = CollisionReflect;//ReactionBumpForce;
   b->forces[FORCE_IMPULSE].threshold = 0.9F;
   b->forces[FORCE_IMPULSE].friction = Vector2FromXY(0.965,0.965);
 
-  b->forces[FORCE_AVOID] = ForceBasic(FORCE_AVOID);
-  b->forces[FORCE_AVOID].on_react = CollisionBoundsAvoid;
-  
   b->forces[FORCE_STEERING] = ForceBasic(FORCE_STEERING);
   b->forces[FORCE_KINEMATIC] = ForceBasic(FORCE_KINEMATIC);
   b->counter_force[FORCE_STEERING] = FORCE_IMPULSE;
@@ -98,7 +94,6 @@ rigid_body_t InitRigidBodyKinematic(ent_t* owner, Vector2 pos,Rectangle bounds, 
 
   b.forces[FORCE_STEERING] = ForceBasic(FORCE_STEERING);
   b.forces[FORCE_STEERING].friction = Vector2One();
-  b.forces[FORCE_STEERING].on_react = CollisionDamage;
 
   b.forces[FORCE_KINEMATIC] = ForceBasic(FORCE_KINEMATIC);
   b.counter_force[FORCE_STEERING] = FORCE_IMPULSE;
@@ -155,8 +150,6 @@ void PhysicsStep(rigid_body_t *b){
         b->forces[b->counter_force[i]].is_active)
       CancelForce(&b->forces[i]);
 
-    if(i == FORCE_MELEE && b->forces[i].is_active)
-      DO_NOTHING();
     b->forces[i].is_active = PhysicsStepForce(&b->forces[i],b->forces[i].is_active);
     if(b->forces[i].is_active){
       b->velocity = Vector2Add(b->velocity,b->forces[i].vel);
@@ -432,45 +425,6 @@ void CollisionReflect(rigid_body_t* a, rigid_body_t* b, ForceType t){
   Vector2 origVel = b->forces[FORCE_STEERING].vel;
   b->forces[FORCE_STEERING].vel = Vector2Rotate(origVel,M_PI);
   AudioPlayRandomSfx(SFX_ACTION,ACTION_REFLECT);
-}
-
-void CollisionDamage(rigid_body_t* a, rigid_body_t* b, ForceType t){
-  if(b->owner->team == a->owner->team)
-    return;
-  if(b->owner->type >= ENT_BULLET)
-    return;
-
-  b->owner->lastdamage_sourceid = b->buid;
-  DamageEnt(b->owner,a->owner->attacks[ATTACK_THORNS]);
-  if(b->forces[t].on_resolution)
-    b->forces[t].on_resolution(b,a,t);
-
-  AudioPlayRandomSfx(SFX_ACTION,ACTION_SHOT);
-}
-
-void RecoilDamage(rigid_body_t* a, rigid_body_t* b, ForceType t){
-  b->owner->lastdamage_sourceid = b->buid;
-  DamageEnt(a->owner,a->owner->attacks[ATTACK_THORNS]);
-}
-
-void CollisionMelee(rigid_body_t* a, rigid_body_t* b, ForceType t){
-  if(a->owner->team == b->owner->team)
-    return;
-  if(a->owner->type >= ENT_BULLET)
-    return;
-  if(b->owner->type >= ENT_BULLET)
-    return;
-  if(a->is_kinematic || b->is_kinematic)
-    return;
-  if(!b->forces[t].is_active)
-    return;
-
-  a->owner->lastdamage_sourceid = b->buid;
-  DamageEnt(a->owner,b->owner->attacks[ATTACK_MELEE]);
-  TraceLog(LOG_INFO,"Ent %d melee hits %d",b->owner->uid,a->owner->uid);
-  if(b->forces[t].on_resolution)
-    b->forces[t].on_resolution(b,a,t);
-  //AudioPlayRandomSfx(SFX_ACTION,ACTION_SHOT);
 }
 
 void CollisionBoundsAvoid(rigid_body_t* a, rigid_body_t* b, ForceType t){

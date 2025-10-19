@@ -4,14 +4,12 @@
 #include "game_types.h"
 #include "game_common.h"
 #include "screens.h"
-#include "game_projectiles.h"
 
 #define MAX_INTERACTIONS 256
-#define MAX_SPAWNERS 16
 #define DEBUG false
 #define CURRENT_LEVEL levels.levels[levels.current]
+
 extern Font font;
-extern ent_t* player;
 static int fixedFPS = 60;
 
 typedef void (*UpdateFn)(void);
@@ -139,11 +137,6 @@ typedef struct{
   unsigned int         luid;
   LevelState           state;
   float                points;
-  int                  current_spawner;
-  int                  num_spawners;
-  game_object_t*       mob_spawners[MAX_SPAWNERS];
-  entity_pool_t        spawns[MAX_SPAWNERS];
-  float                difficulty;
   int                  modifiers[MOD_DONE];
   EventDefaultDuration event_durations[EVENT_NONE];
 }level_t;
@@ -163,25 +156,20 @@ void InitLevel();
 void FreeLevels();
 void FreeLevel(level_t* l);
 void LevelAddSpawn(unsigned int index, EntityType ref, int count);
-game_object_t* LevelGetSpawner(unsigned int index);
 void AddPoints(float mul,float points,Vector2 pos);
 int GetPointsInt();
 const char* GetPoints();
 const char* GetGameTime();
-const char* LevelGetCurrentWave();
-int LevelGetCurrentWaveNum();
 level_t* LevelCurrent();
 level_t* GetLevel(unsigned int index);
 void InitLevelEvents();
 void GenerateLevels(int num_levels, bool inc_diff);
 void LevelStep();
 void LevelBegin(level_t *l);
-void LevelLoadWave(unsigned int index,unsigned int level_id);
 void LevelEnd(level_t *l);
 void SetLevelState(level_t *l, LevelState state);
 void OnLevelStateChange(level_t *l, LevelState state);
 bool CanChangeLevelState(LevelState old, LevelState s);
-void LevelSyncSpawners(unsigned int level_index, unsigned int spawner_index);
 //===WORLD_T===>
 
 typedef struct{

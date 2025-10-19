@@ -27,12 +27,10 @@ typedef struct rigid_body_s rigid_body_t;
 
 typedef enum {
   FORCE_BLANK,
-  //FORCE_GRAVITY,
+  FORCE_GRAVITY,
   FORCE_STEERING,
-  FORCE_IMPULSE,
-  FORCE_AVOID,
   FORCE_KINEMATIC,
-  FORCE_MELEE,
+  FORCE_IMPULSE,
   FORCE_NONE
 }ForceType;
 
@@ -62,7 +60,6 @@ typedef struct {
 typedef bool (*CollisionCallback)(rigid_body_t* a, rigid_body_t* b, ent_t *e);
 void ReactionBumpForce(rigid_body_t* a, rigid_body_t* b, ForceType t);
 void ReactionAvoidForce(rigid_body_t* a, rigid_body_t* b, ForceType t);
-void CollisionBoundsAvoid(rigid_body_t* a, rigid_body_t* b, ForceType t);
 bool CheckStep(rigid_body_t* b, Vector2 vel, float dist, Vector2* out);
 bool CheckCanSeeTarget(rigid_body_t* a, rigid_body_t *b, float range);
 bool CheckRigidBodyHasOwner(rigid_body_t* a);
@@ -109,10 +106,7 @@ void PhysicsCollision(int i,rigid_body_t* bodies[MAX_ENTS],int num_bodies, Colli
 bool CheckCollision(rigid_body_t *a, rigid_body_t *b, int len);
 bool RigidBodyCollide(rigid_body_t* a, rigid_body_t* b, ent_t *e);
 void CollisionReflect(rigid_body_t* a, rigid_body_t* b, ForceType t);
-void CollisionDamage(rigid_body_t* a, rigid_body_t* b, ForceType t);
 void CollisionDestroy(rigid_body_t* a, rigid_body_t* b, ForceType t);
-void RecoilDamage(rigid_body_t* a, rigid_body_t* b, ForceType t);
-void CollisionMelee(rigid_body_t* a, rigid_body_t* b, ForceType t);
 void ForceDisable(rigid_body_t* a, rigid_body_t* b, ForceType t);
 
 force_t ForceFromVector2(ForceType type, Vector2 vec);
@@ -120,31 +114,6 @@ force_t ForceEmpty(ForceType type);
 force_t ForceBasic(ForceType type);
 force_t ForceFrictionless(ForceType type);
 //<====PHYSICS
-typedef struct{
-  Vector2 dir;
-}attack_params_t;
-typedef struct attack_s attack_t;
-typedef bool (*AttackFunc)(struct attack_s* a, struct ent_s* e);
-
-typedef struct attack_s{
-  int               duid;
-  int               duration;
-  stat_t            reach;
-  int               damage;
-  cooldown_t*       cooldown;
-  AttackType        attack_type;
-  attack_params_t*  params;
-  AttackFunc        attack;
-  rigid_body_t	  *hurtbox;
-  struct ent_s* owner;
-}attack_t;
-
-attack_t InitAttack(ent_t* owner,AttackData data);
-bool AttackPrepare(attack_t* a);
-bool AttackShoot(attack_t *a, ent_t* e);
-bool AttackMelee(attack_t *a, ent_t* e);
-bool AttackDefault(attack_t *a, ent_t* e);
-
 typedef enum{
   RANGE_AGGRO,
   RANGE_LOITER,
@@ -174,20 +143,14 @@ typedef struct ent_s{
   events_t              *events;
   struct ent_s*         owner;
   struct ent_s*         child;
-  int                   lastdamage_sourceid;
-  int                   num_attacks;
-  int                   active_attack_id;
-  attack_t              attacks[ATTACK_BLANK];
   stat_t                stats[STAT_BLANK];
   float                 facing;
   sprite_t              *sprite;
   debug_info_t          *debug_info;
 } ent_t;
 
-ent_t InitEntRef(ObjectInstance ref);
 ent_t* InitEntStatic(TileInstance data, Vector2 pos);
 ent_t* InitEnt(ObjectInstance data);
-ent_t InitEntProjectile( ProjectileInstance data);
 
 void EntInitOnce(ent_t* e);
 void EntSync(ent_t* e);
@@ -196,7 +159,6 @@ void EntDestroy(ent_t* e);
 bool FreeEnt(ent_t* e);
 bool EntReload(ent_t* e);
 void EntAddPoints(ent_t* e,EntityState old, EntityState s);
-void DamageEnt(ent_t *e, attack_t a);
 void EntPrepStep(ent_t *e);
 void EntControlStep(ent_t *e);
 typedef void (*StateChangeCallback)(ent_t *e, EntityState old, EntityState s);
@@ -215,27 +177,7 @@ typedef struct {
 
 entity_pool_t* InitEntityPool();
 //===ENT_T==>
-//====GAME_OBJECT_T===>
-typedef struct game_object_s{
-  unsigned int   id;
-  unsigned int   level_id;
-  Vector2         pos;
-  ObjectState     state;
-  events_t        *events;
-  controller_t    *control;
-  float           difficulty;
-  int             modifiers[MOD_DONE];
-}game_object_t;
-
-bool SpawnEnt(game_object_t* spawner);
-game_object_t* InitObjectStatic(SpawnerInstance inst);
-void FreeObject(game_object_t* o);
-void SetObjectState(game_object_t *obj, ObjectState state);
-void StepObjectState(game_object_t *obj);
-void StepObject(game_object_t *obj);
-bool CanChangeObjectState(ObjectState old, ObjectState s);
 void RegisterPoolRef(unsigned int level_index, unsigned int index, EntityType ref);
 void DisplayStatChange(ent_t* owner, float old, float cur);
 
-//===GAME_OBJECT_T===>
 #endif

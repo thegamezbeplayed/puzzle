@@ -7,8 +7,6 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(MARIADB REQUIRED libmariadb)
-
 set(CMAKE_C_STANDARD 99)
 
 add_compile_definitions(RAYLIB_CUSTOM_CONFIG)
@@ -19,8 +17,6 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/raysan5/raylib.git
   GIT_TAG 5.5
 )
-include_directories(${MARIADB_INCLUDE_DIRS})
-link_directories(${MARIADB_LIBRARY_DIRS})
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(raylib)
 #add_subdirectory(vendor/raylib)
@@ -32,7 +28,6 @@ add_executable(${PROJECT_NAME})
 add_subdirectory(src)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/resources)
 add_subdirectory(resources)
-target_link_libraries(${PROJECT_NAME} PRIVATE raylib ${MARIADB_LIBRARIES})
 
 # Let CMake inherit the include dirs from raylib
 target_include_directories(${PROJECT_NAME}
@@ -40,7 +35,7 @@ target_include_directories(${PROJECT_NAME}
     includes
 )
 # Libraries & link dirs
-
+target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
 target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address -g -O0)
 target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
 

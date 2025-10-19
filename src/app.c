@@ -3,10 +3,15 @@
 #include "game_assets.h"
 #include "game_ui.h"
 #include "game_process.h"
+#include "rlgl.h"
 #if defined(PLATFORM_WEB)
 #include <emscripten/emscripten.h>
 #endif
-
+#if defined(PLATFORM_DESKTOP)
+    #include <GL/gl.h>  // for GL_VERSION, GL_VENDOR, etc.
+#elif defined(PLATFORM_WEB)
+    #include <GLES2/gl2.h>
+#endif
 double currentTime = 0.0;           // Current time measure
 double updateDrawTime = 0.0;        // Update + Draw time
 double previousTime = 0.0;    // Previous time measure
@@ -27,10 +32,12 @@ int main(void)
   //---------------------------------------------------------
   InitWindow(screenWidth, screenHeight, "raylib game template");
 
+  TraceLog(LOG_INFO, "OpenGL version string: %s", glGetString(GL_VERSION));
+  TraceLog(LOG_INFO, "GLSL version string: %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
+
   InitAudioDevice();      // Initialize audio device
                           //--------------------------------------------------------------------------------------
 
-  InitDB();
   InitAudio();
   InitResources();
   InitUI();

@@ -19,7 +19,7 @@ void InitShaderChainCache(EntityType type,int maxWidth, int maxHeight) {
 
 void InitResources(){
   LoadrtpAtlasSprite(&spritedata);
-  Image spritesImg = LoadImage(TextFormat("resources/%s",ATLAS_ASSET_SPRITES_IMAGE_PATH)); 
+  Image spritesImg = LoadImage(TextFormat("resources/%s",ATLAS_IMAGE_PATH)); 
   sprite_sheet = LoadTextureFromImage(spritesImg);
   TexChain = (texture_chain_t){0};
 }
@@ -129,10 +129,10 @@ void DrawSprite(sprite_t* s){
 
 void LoadrtpAtlasSprite(sprite_sheet_data_t *out){
 
-  for (int i = 0; i < ATLAS_ASSET_SPRITES_SPRITE_COUNT; i++){
-    rtpAtlasSprite sprData = rtpDescAssetSprites[i];
+  for (int i = 0; i < ATLAS_SPRITE_COUNT; i++){
+    SubTexture sprData = BACK_TILES[i];
  
-    TraceLog(LOG_INFO,"Load index %d - %s into sprite sheet data",i,sprData.nameId);
+    TraceLog(LOG_INFO,"Load index %d - %s into sprite sheet data",i,sprData.file);
 
    Vector2 center = Vector2FromXY(sprData.originX,sprData.originY);
     Vector2 offset = Vector2FromXY(sprData.trimRecX,sprData.trimRecY);
@@ -144,8 +144,6 @@ void LoadrtpAtlasSprite(sprite_sheet_data_t *out){
     spr->name = (char*)malloc(MAX_NAME_LEN*sizeof(char));
     spr->group = (char*)malloc(MAX_NAME_LEN*sizeof(char));
 
-    strcpy(spr->name,sprData.nameId);
-    strcpy(spr->group,sprData.tag);
     spr->center = center;
     spr->offset = offset;
     spr->bounds = bounds;
@@ -153,7 +151,7 @@ void LoadrtpAtlasSprite(sprite_sheet_data_t *out){
 
   }
 
-  TraceLog(LOG_INFO,"Done with %s",ATLAS_ASSET_SPRITES_IMAGE_PATH);
+  TraceLog(LOG_INFO,"Done with %s",ATLAS_IMAGE_PATH);
 
 }
 

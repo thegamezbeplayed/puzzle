@@ -41,7 +41,6 @@ void GameReady(){
 }
 
 static world_t world;
-ent_t* player;
 
 void AddFloatingText(render_text_t *rt){
   for (int i = 0; i < MAX_EVENTS; i++){
@@ -214,8 +213,6 @@ int AddSprite(sprite_t *s){
 
 bool RegisterEnt( ent_t *e){
   e->uid = AddEnt(e);
-  if(e->type == ENT_PLAYER)
-    player = e;
 
   if(e->body)
     RegisterRigidBody(e->body);
@@ -250,18 +247,12 @@ void WorldInitOnce(){
     if(world.cols[i])
       PhysicsInitOnce(world.cols[i]);
  
-    if(world.ents[i]->type == ENT_PLAYER)
-      world.ents[i]->child =  WorldGetEnt("shield");
-  
     EntInitOnce(world.ents[i]);
   }
 
 }
 
 void WorldPreUpdate(){
-  if(!player || player->state == STATE_DIE)
-   GameTransitionScreen();
-
   InteractionStep();
   for(int i = 0; i < world.num_col; i++){
     if(world.cols[i]->owner!=NULL){
@@ -288,14 +279,9 @@ void WorldFixedUpdate(){
         break;
     }
   }
- 
- ProjectilesStep(); 
 }
 
 void WorldPostUpdate(){
-
-  ProjectileCullOffScreen(WorldRoomBounds());
-
   for(int i = 0; i < MAX_EVENTS; i++){
     if(!world.floatytext_used[i])
       continue;
@@ -307,8 +293,6 @@ void WorldPostUpdate(){
 
     world.texts[i]->duration--;
   }
-
-  StepParticles();
 }
 
 void InitWorld(world_data_t data){
@@ -372,8 +356,6 @@ void WorldRender(){
 
   }
 
-  ProjectilesRender();
-  ParticlesRender();
   for(int i = 0; i < MAX_EVENTS; i++){
     if(!world.floatytext_used[i])
       continue;
@@ -399,9 +381,6 @@ void InitGameProcess(){
     for(int p = 0; p < PROCESS_DONE; p++)
       game_process.children[s].state[p]=GAME_NONE;
   }
-
-  for (int i = 0; i < MAX_PARTICLES; i++)
-    InitParticle();
 
   game_process.next[SCREEN_TITLE] = SCREEN_GAMEPLAY;
   game_process.album_id[SCREEN_TITLE] = AudioBuildMusicTracks("Title");
@@ -443,15 +422,12 @@ void InitGameEvents(){
     wdata.tiles[j] = room_tiles[j];
   }
 
-  for (int k = 0; k < ROOM_PROJECTILE_COUNT; k++)
-    InitProjectilePool(room_projectiles[k]);
-
   cooldown_t* loadEvent = InitCooldown(6,EVENT_GAME_PROCESS,GameReady,NULL);
   AddEvent(game_process.events,loadEvent);
   InitWorld(wdata);
   game_process.children[SCREEN_GAMEPLAY].process = PROCESS_LEVEL;
   //game_process.children[SCREEN_GAMEPLAY].finish[PROCESS_LEVEL] =LevelEnd;
-  game_process.children[SCREEN_GAMEPLAY].init[PROCESS_LEVEL] =InitLevelEvents;
+  //game_process.children[SCREEN_GAMEPLAY].init[PROCESS_LEVEL] =InitLevelEvents;
   game_process.children[SCREEN_GAMEPLAY].update_steps[PROCESS_LEVEL][UPDATE_FIXED] = LevelStep;
  game_process.game_frames = 0; 
   MenuSetState(&ui.menus[MENU_PAUSE],MENU_READY);
@@ -515,7 +491,6 @@ void GameProcessEnd(){
   FreeWorld();
   FreeInteractions();
   FreeLevels();
-  ClearParticles();
 }
 
 void AddPoints(float mul,float points, Vector2 pos){

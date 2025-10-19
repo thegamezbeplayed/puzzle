@@ -3,6 +3,8 @@
 #include <float.h>
 #include "game_math.h"
 #include <stdint.h>
+#include <stddef.h>
+#include <stdlib.h>
 
 #define CLAMPV2(v,a,b) ((v)<(a)?(a):((v)>(b)?(b):(v)))
 #define VEC_UNSET (Vector2){FLT_MAX, FLT_MAX}
