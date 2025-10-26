@@ -6,28 +6,15 @@
 #include "game_common.h"
 
 #define MAX_BEHAVIOR_TREE 8
-#define MAX_ATTACKS 8
 #define MAX_NAME_LEN 64
 #define COMBO_KEY(a, b) ((a << 8) | b)
 #define CALL_FUNC(type, ptr, ...) ((type)(ptr))(__VA_ARGS__)
 #define MAKE_ADAPTER(name, T) \
     static void name##_Adapter(void *p) { name((T)p); }
 
+ShapeID SelectRandomShape(ShapeFlags color, ShapeFlags shape);
+
 typedef struct ent_s ent_t;
-
-typedef enum{
-  DEBUG_HEALTH,
-  DEBUG_DONE
-}DebugInfo;
-
-typedef struct{
-  Vector2     pos,offset;
-  bool        show[DEBUG_DONE];
-  char        debug_text[64];
-}debug_info_t;
-
-void DebugShowText(debug_info_t* d);
-void DebugSync(struct ent_s* e,debug_info_t* d);
 
 //====FILE & STRINGS====>
 char* GetFileStem(const char* filename);
@@ -46,7 +33,7 @@ typedef struct {
     behavior_tree_node_t *tree;
 } bt_register_entry_t;
 
-behavior_tree_node_t *BehaviorGetTree(const char *name);
+behavior_tree_node_t *BehaviorGetTree( BehaviorID id);
 
 typedef enum{
   BEHAVIOR_SUCCESS,
@@ -62,27 +49,27 @@ typedef enum{
 }BehaviorTreeType;
 
 typedef struct {
-    char name[32];
-    behavior_tree_node_t *root;
+  BehaviorID           id;
+  behavior_tree_node_t *root;
 } TreeCacheEntry;
 
 extern TreeCacheEntry tree_cache[16];
 extern int tree_cache_count;
 
-behavior_tree_node_t *BuildTreeNode(const char *name);
 static behavior_tree_node_t* BehaviorFindLeafFactory(const char *name);
 
 typedef BehaviorStatus (*BehaviorTreeTickFunc)(behavior_tree_node_t* self, void* context);
 
 typedef struct behavior_params_s{
   struct ent_s*         owner;
-  struct game_object_s* obj;
   EntityState           state;
   ObjectState           obj_state;
   EventType             event;
   CooldownCallback      eventFn;
   int                   duration;
 }behavior_params_t;
+
+behavior_tree_node_t *BuildTreeNode(BehaviorID id, behavior_params_t* parent_params);
 
 typedef struct behavior_tree_node_s{
   BehaviorTreeType      bt_type;
@@ -114,7 +101,7 @@ typedef struct {
     behavior_tree_node_t* (*factory)(behavior_params_t *params); // params is leaf-specific (can be NULL)
 } BTLeafRegistryEntry;
 
-behavior_tree_node_t* InitBehaviorTree( const char* name);
+behavior_tree_node_t* InitBehaviorTree( BehaviorID id);
 void FreeBehaviorTree(behavior_tree_node_t* node);
 BehaviorStatus BehaviorTickSequence(behavior_tree_node_t *self, void *context);
 BehaviorStatus BehaviorTickSelector(behavior_tree_node_t *self, void *context);
@@ -125,58 +112,14 @@ behavior_tree_node_t* BehaviorCreateSelector(behavior_tree_node_t **children, in
 behavior_tree_node_t* BehaviorCreateConcurrent(behavior_tree_node_t **children, int count);
 
 BehaviorStatus BehaviorChangeState(behavior_params_t *params);
-BehaviorStatus BehaviorAcquireMousePosition(behavior_params_t *params);
-BehaviorStatus BehaviorBisectDestination(behavior_params_t *params);
-BehaviorStatus BehaviorAcquireDestination(behavior_params_t *params);
-BehaviorStatus BehaviorAcquireTrajectory(behavior_params_t *params);
-BehaviorStatus BehaviorMoveAtTrajectory(behavior_params_t *params);
-BehaviorStatus BehaviorAcquireTarget(behavior_params_t *params);
-BehaviorStatus BehaviorCanSeeTarget(behavior_params_t *params);
+BehaviorStatus BehaviorInitChild(behavior_params_t *params);
 BehaviorStatus BehaviorMoveToTarget(behavior_params_t *params);
 BehaviorStatus BehaviorMoveToDestination(behavior_params_t *params);
-BehaviorStatus BehaviorCanAttackTarget(behavior_params_t *params);
-BehaviorStatus BehaviorAttackTarget(behavior_params_t *params);
-BehaviorStatus BehaviorStartEvent(behavior_params_t *params);
-BehaviorStatus BehaviorAddEvent(behavior_params_t *params);
-BehaviorStatus BehaviorCheckEvent(behavior_params_t *params);
-BehaviorStatus BehaviorStartState(behavior_params_t *params);
-BehaviorStatus BehaviorSpawnEnt(behavior_params_t *params);
-BehaviorStatus BehaviorMakeKinematic(behavior_params_t *params);
+BehaviorStatus BehaviorSelectShape(behavior_params_t *params);
 
-static inline behavior_tree_node_t* LeafAcquireMousePosition(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorAcquireMousePosition,params); }
-static inline behavior_tree_node_t* LeafBisectDestination(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorBisectDestination,params); }
+static inline behavior_tree_node_t* LeafInitChild(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorInitChild,params); }
 static inline behavior_tree_node_t* LeafChangeState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorChangeState,params); }
-static inline behavior_tree_node_t* LeafAcquireTarget(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorAcquireTarget,params); }
-static inline behavior_tree_node_t* LeafAcquireDestination(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorAcquireDestination,params); }
-static inline behavior_tree_node_t* LeafAcquireTrajectory(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorAcquireTrajectory,params); }
-static inline behavior_tree_node_t* LeafMoveAtTrajectory(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorMoveAtTrajectory,params); }
-static inline behavior_tree_node_t* LeafCanSeeTarget(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCanSeeTarget,params); }
+static inline behavior_tree_node_t* LeafSelectShape(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorSelectShape,params); }
 static inline behavior_tree_node_t* LeafMoveToTarget(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorMoveToTarget,params); }
 static inline behavior_tree_node_t* LeafMoveToDestination(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorMoveToDestination,params); }
-static inline behavior_tree_node_t* LeafCanAttackTarget(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCanAttackTarget,params); }
-static inline behavior_tree_node_t* LeafAttackTarget(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorAttackTarget,params); }
-static inline behavior_tree_node_t* LeafStartEvent(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorStartEvent,params); }
-static inline behavior_tree_node_t* LeafAddEvent(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorAddEvent,params); }
-static inline behavior_tree_node_t* LeafCheckEvent(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCheckEvent,params); }
-static inline behavior_tree_node_t* LeafStartState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorStartState,params); }
-static inline behavior_tree_node_t* LeafSpawnEnt(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorSpawnEnt,params); }
-static inline behavior_tree_node_t* LeafMakeKinematic(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorMakeKinematic,params); }
-
-typedef struct{
-  bool  is_projectile;
-  int   range;
-  int   rate;
-  int   speed;
-  int   duration;
-  int   damage;
-}AttackInstance;
-
-typedef struct {
-    const char           *name;
-    AttackInstance       *data;
-} attack_register_entry_t;
-
-void RegisterAttack(const char *name, AttackInstance *instance);
-AttackInstance* AttackGetData(const char *name);
-
 #endif

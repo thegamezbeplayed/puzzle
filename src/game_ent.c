@@ -4,88 +4,42 @@
 #include "game_process.h"
 
 MAKE_ADAPTER(StepState, ent_t*);
-MAKE_ADAPTER(StatMaxOut, stat_t*);
 
 ent_t* InitEnt(ObjectInstance data){
   ent_t* e = malloc(sizeof(ent_t));
   *e = (ent_t){0};  // zero initialize if needed
-  Vector2 pos = Vector2FromXY(data.x,data.y);
-  e->name = (char*)malloc(100*sizeof(char));
-  e->type = data.ent_ref;
-  strcpy(e->name,data.name);
-  e->sprite = InitSpriteByIndex(data.sprite_sheet_index,&spritedata);
-  e->sprite->owner = e;  
-  e->sprite->color = data.color;
-  e->sprite->slice->scale = data.size / e->sprite->slice->bounds.width;
+  e->type = ENT_SHAPE;
 
- float radius = data.size * 0.5f;
-  pos = Vector2Add(pos,e->sprite->slice->center);
-  e->pos = pos;
-  Rectangle cBounds = RectangleScale(e->sprite->slice->bounds, e->sprite->slice->scale);
-  Vector2 cOffset = Vector2Scale(e->sprite->slice->offset, e->sprite->slice->scale);
-  e->body = InitRigidBody(e,pos, cBounds,cOffset);
-  e->team = data.team_enum;
-
-  e->debug_info = malloc(sizeof(debug_info_t));
-  e->debug_info->offset = Vector2Y(data.size);
-  e->events = InitEvents();
-  e->stats[STAT_POINTS] = InitStatOnMax(STAT_POINTS,data.points);
-  
+  e->sprite = InitSpriteByID(data.id,&shapedata);
+  e->sprite->owner = e;
+ 
   SetState(e,STATE_SPAWN,NULL);
   return e;
 }
 
-ent_t* InitEntStatic( TileInstance data, Vector2 pos){
+ent_t* InitEntStatic(TileInstance data,Vector2 pos){
   ent_t* e = malloc(sizeof(ent_t));
   *e = (ent_t){0};  // zero initialize if needed
+  e->type = ENT_TILE;
 
-  e->type = ENT_WALL; 
-  e->name = "tile";
   e->pos = pos;
-  e->facing = data.rot;
-  e->sprite = InitSpriteByIndex(data.tile_index,&spritedata);
-  e->sprite->slice->scale=1;
-  InitShaderChainCache(e->type,e->sprite->slice->bounds.width,e->sprite->slice->bounds.height);
-  e->sprite->color = PINK;
+  e->sprite = InitSpriteByIndex(data.id,&tiledata);
   e->sprite->owner = e;
 
-  Rectangle cBounds = RectangleScale(e->sprite->slice->bounds, e->sprite->slice->scale);
-  Vector2 cOffset = Vector2Scale(e->sprite->slice->offset, e->sprite->slice->scale);
-
-  e->body = InitRigidBodyStatic(e,pos, cBounds,cOffset);
-
-  e->events = InitEvents();
-  e->team = TEAM_ENVIROMENT;
-  for(int i = 0; i < SHADER_DONE;i++){
-    e->sprite->gls[i] = malloc(sizeof(gl_shader_t));
-    *e->sprite->gls[i] = shaders[i];
-    if(!data.shaders[i])
-      e->sprite->gls[i]->stype = SHADER_NONE;
+  e->control = InitController();
+  for (int i = STATE_SPAWN; i < STATE_END; i++){
+    if(data.behaviors[i] == BEHAVIOR_NONE)
+      continue;
+    e->control->bt[i] = InitBehaviorTree(data.behaviors[i]);
   }
-  Vector4* col = malloc(sizeof(Vector4));
-  *col =  ColorNormalize(e->sprite->color);
-  e->sprite->gls[SHADER_OUTLINE]->uniforms[UNIFORM_OUTLINECOLOR] = (shader_uniform_t){
-    UNIFORM_OUTLINECOLOR,
-      STANDARD_VEC4,
-      col
-  };
-  float *osize = malloc(sizeof(float));
-  *osize = 4.0f * e->sprite->slice->scale;
-  e->sprite->gls[SHADER_OUTLINE]->uniforms[UNIFORM_OUTLINESIZE] = (shader_uniform_t){
-    UNIFORM_OUTLINESIZE,
-      STANDARD_FLOAT,
-      osize
-  };
 
-  SetState(e,STATE_SPAWN,OnStateChange);
+  SetState(e,STATE_SPAWN,NULL);
   return e;
 }
 
 void EntAddPoints(ent_t *e,EntityState old, EntityState s){
-  if(e->team == TEAM_PLAYER)
-    return;
-  if(e->stats[STAT_POINTS].current <= 0)
-    return;
+  //if(e->stats[STAT_POINTS].current <= 0)
+   // return;
 
   //AddPoints(GetInteractions(e->lastdamage_sourceid)-1, e->stats[STAT_POINTS].current,e->pos);
 }
@@ -94,29 +48,18 @@ bool EntKill(ent_t* e){
   return SetState(e, STATE_DIE,NULL);
 }
 
-bool EntReload(ent_t* e){
-  ResetEvent(e->events, EVENT_ATTACK_PREPARE);
-}
-
 void EntDestroy(ent_t* e){
   if(!e || !SetState(e, STATE_END,EntAddPoints))
     return;
  
-  if(e->sprite!=NULL){
+  /*if(e->sprite!=NULL){
     e->sprite->owner = NULL;
     e->sprite->is_visible = false;
-    e->sprite = NULL;
-  }
-
-  if(e->body!=NULL){
-    e->body->owner = NULL;
-    e->body = NULL;
-  }
+  }*/
 
   e->control = NULL;
 }
 void EntPrepStep(ent_t* e){
-  e->body->forces[FORCE_STEERING].max_velocity = e->stats[STAT_SPEED].current;
 }
 
 bool FreeEnt(ent_t* e){
@@ -124,53 +67,6 @@ bool FreeEnt(ent_t* e){
     return false;
 
   free(e);
-  return true;
-}
-
-stat_t InitStatEmpty(){
-  return (stat_t){
-    .attribute = STAT_BLANK,
-      .min = 0,
-      .max = 0,
-      .current = 0,
-      .increment = 0//TODO idk yet
-  };
-}
-
-stat_t InitStatOnMax(StatType attr, float val){
-  return (stat_t){
-    .attribute = attr,
-      .min = 0.0f,
-      .max = val,
-      .current = val,
-      .ratio = StatGetRatio
-  };
-}
-float StatGetRatio(stat_t *self) {
-    return (float)self->current / (float)self->max;
-}
-void StatMaxOut(stat_t* s){
-  s->current = s->max;
-}
-
-void InitStats(stat_t stats[STAT_BLANK]){
-
-}
-
-bool StatChangeValue(ent_t* owner, stat_t* attr, float val){
-  float old = attr->current;
-  attr->current+=val;
-  attr->current = CLAMPF(attr->current,attr->min, attr->max);
-  float cur = attr->current;
-  if(attr->current == old)
-    return false;
-
-  if(attr->on_stat_change != NULL)
-    attr->on_stat_change(owner,old, cur);
-
-  if(attr->current == attr->min && attr->on_stat_empty!=NULL)
-    attr->on_stat_empty(owner);
-
   return true;
 }
 
@@ -182,27 +78,17 @@ controller_t* InitController(){
   return ctrl;
 }
 
-void EntInitOnce(ent_t* e){
-  EntSync(e);
-  
-  cooldown_t* spawner = InitCooldown(3,EVENT_SPAWN,StepState_Adapter,e);
-  AddEvent(e->events, spawner);
-}
-
 void EntSync(ent_t* e){
   if(e->control)  
     EntControlStep(e);
 
-  StepEvents(e->events);
+  if(e->events)
+    StepEvents(e->events);
 
   if(!e->sprite)
     return;
 
   e->sprite->pos = e->pos;// + abs(ent->sprite->offset.y);
-
-  e->sprite->rot = 90+e->facing;
-  if(DEBUG && e->debug_info)
-    DebugSync(e,e->debug_info);
 }
 
 void EntControlStep(ent_t *e){
@@ -243,9 +129,6 @@ bool CanChangeState(EntityState old, EntityState s){
     case COMBO_KEY(!STATE_DIE,STATE_END):
       return false;
       break;
-    case COMBO_KEY(STATE_SPAWN,STATE_ATTACK):
-      return false;
-      break;
     default:
       return true;
       break;
@@ -253,31 +136,18 @@ bool CanChangeState(EntityState old, EntityState s){
 } 
 
 void OnStateChange(ent_t *e, EntityState old, EntityState s){
-  //TraceLog(LOG_INFO,"Entity %s state change from %s to %s",e->name,EntityStateName(old),EntityStateName(s));
   switch(old){
     case STATE_SPAWN:
-      if(e->body)
-        e->body->simulate=true;
+      if(e->owner)
+        e->pos = e->owner->pos;
       if(e->sprite)
         e->sprite->is_visible = true;
       break;
-    case STATE_WANDER:
-    case STATE_ATTACK:
-      StatMaxOut(&e->stats[STAT_ACCEL]);
-      StatMaxOut(&e->stats[STAT_SPEED]);
     default:
       break;
   }
 
   switch(s){
-    case STATE_WANDER:
-    case STATE_AGGRO:
-      StatMaxOut(&e->stats[STAT_SPEED]);
-      break;
-    case STATE_ATTACK:
-      e->stats[STAT_ACCEL].current = e->stats[STAT_ACCEL].max*0.925f;
-      e->stats[STAT_SPEED].current = e->stats[STAT_SPEED].max*.85f;
-      break;
     case STATE_DIE:
       AudioPlayRandomSfx(SFX_ACTION,ACTION_BOOM);
       break;
@@ -291,65 +161,4 @@ bool CheckEntAvailable(ent_t* e){
     return false;
 
   return (e->state < STATE_DIE);
-}
-
-bool CheckEntOutOfBounds(ent_t* e, Rectangle bounds){
-  return (CheckCollisionPointRec(e->pos, bounds));
-}
-
-void DebugSync(struct ent_s* e,debug_info_t* d){
-  d->pos = e->pos;
-  for(int i = 0; i < DEBUG_DONE; i++){
-    if(!d->show[i])
-      continue;
-
-    switch(i){
-      case DEBUG_HEALTH:
-        strcpy(d->debug_text,TextFormat("%0.1f", e->stats[STAT_HEALTH].ratio(&e->stats[STAT_HEALTH])));
-        break;
-      default:
-        break;
-    }
-
-  }  
-}
-
-void DebugShowText(debug_info_t* d){
-  Vector2 pos = Vector2Add(d->pos,d->offset);
-  DrawText(d->debug_text, pos.x,pos.y, 16, RED);
-}
-
-EntityType SpriteEntType(sprite_t *spr) {
-    return spr->owner ? spr->owner->type : ENT_BLANK;
-}
-
-void DisplayStatChange(ent_t* owner, float old, float cur){
-  int dif = (int)floorf(cur-old);
-  if(dif == 0)
-    return;
-  /*
-  ent_t *other = WorldGetEntById(owner);//->lastdamage_sourceid);
-
-  if(other->owner)
-    other = other->owner;
-
-  Vector2 pos = Vector2Bisect(owner->pos,other->pos,3*owner->body->collision_bounds.radius);
-
-  pos = Vector2Inc(pos,GetRandomValue(-3.5f,3.5f),GetRandomValue(-3.5f,3.5f));
-
-  Color col = GREEN;
-  if (dif < 0)
-    col = RED;
-
-  int dur = 3 + abs(3*dif);
-  render_text_t *rt = malloc(sizeof(render_text_t));
-  *rt = (render_text_t){
-    .text = strdup(TextFormat("%d",dif)),
-    .pos = pos,
-    .size = 16,
-    .color = col,
-    .duration = dur
-  };
-  AddFloatingText(rt);
-*/
 }

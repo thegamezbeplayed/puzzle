@@ -26,8 +26,13 @@
 #ifndef SCREENS_H
 #define SCREENS_H
 
+#if defined(PLATFORM_WEB)
+static const int screenWidth = 1538;
+static const int screenHeight = 866;
+#else
 static const int screenWidth = 1920;
 static const int screenHeight = 1080;
+#endif
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition

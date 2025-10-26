@@ -100,41 +100,4 @@ static inline Vector2 rand_unit(){
   float a = ((float)rand() / (float)RAND_MAX) * 6.28318530718f;
   return (Vector2){cosf(a), sinf(a)};
 }
-
-// Distance you can move along dir before leaving rect (start assumed INSIDE).
-// Returns a "t_max" so p + dir * t_max is the last point still inside (minus epsilon).
-static float max_step_inside_rect(Vector2 p, Vector2 dir, Rectangle r){
-  const float eps = 1e-4f;
-  float tmax = FLT_MAX;
-
-  if (fabsf(dir.x) > 1e-8f) {
-    float tx = (dir.x > 0.0f)
-      ? ((r.x + r.width) - p.x) / dir.x
-      : ( (r.x) - p.x ) / dir.x;
-    if (tx >= 0.0f) tmax = fminf(tmax, tx);
-  }
-  if (fabsf(dir.y) > 1e-8f) {
-    float ty = (dir.y > 0.0f)
-      ? ((r.y + r.height) - p.y) / dir.y
-      : ( (r.y) - p.y ) / dir.y;
-    if (ty >= 0.0f) tmax = fminf(tmax, ty);
-  }
-  if (tmax == FLT_MAX) tmax = 0.0f; // dir == (0,0)
-  tmax = fmaxf(0.0f, tmax - eps);
-  return tmax;
-}
-
-//TODO this doesnt do what i think..
-static inline Vector2 GetNearbyDestination(Vector2 curr, float len, Rectangle area, float bias,float padding){
-  // Clamp start to inside
-  curr = clamp_point_to_rect(curr, area);
-
-  
-  float angle = frand() * 6.28318530718f;
-
-  Vector2 result = v2_add(curr,Vector2FromAngle(angle,len));
-
-  return clamp_point_to_rect(result,RectangleCrop(area,padding,padding));
-}
-
 #endif

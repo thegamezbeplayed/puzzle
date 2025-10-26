@@ -14,26 +14,6 @@ static int fixedFPS = 60;
 
 typedef void (*UpdateFn)(void);
 typedef bool EntFilterFn(ent_t* e, ent_t* other); 
-static bool FilterEntNotOnTeam(ent_t* e,ent_t* other){
-  if(e->team == other->team || e->team == TEAM_ENVIROMENT)
-    return false;
-  else
-    return true;
-}
-
-static bool FilterEntTargetable(ent_t* e, ent_t* other){
-    if(e->team == other->team || e->team == TEAM_ENVIROMENT || e->state >= STATE_DIE || !e->sprite->is_visible || e->body->is_kinematic)
-    return false;
-  else
-    return true;
-}
-
-static bool FilterEntNotOnTeamAlive(ent_t* e,ent_t* other){
-  if(e->team == other->team || e->team == TEAM_ENVIROMENT || e->state >= STATE_DIE)
-    return false;
-  else
-    return true;
-}
 
 //INTERACTIONS_T===>
 typedef struct {
@@ -137,8 +117,6 @@ typedef struct{
   unsigned int         luid;
   LevelState           state;
   float                points;
-  int                  modifiers[MOD_DONE];
-  EventDefaultDuration event_durations[EVENT_NONE];
 }level_t;
 
 typedef struct{
@@ -155,7 +133,6 @@ extern level_order_t levels;
 void InitLevel();
 void FreeLevels();
 void FreeLevel(level_t* l);
-void LevelAddSpawn(unsigned int index, EntityType ref, int count);
 void AddPoints(float mul,float points,Vector2 pos);
 int GetPointsInt();
 const char* GetPoints();
@@ -173,8 +150,7 @@ bool CanChangeLevelState(LevelState old, LevelState s);
 //===WORLD_T===>
 
 typedef struct{
-  ObjectInstance  ents[ROOM_INSTANCE_COUNT];
-  TileInstance    tiles[ROOM_TILE_COUNT];
+  ObjectInstance  ents[SHAPE_DONE];
   unsigned int    num_ents;
 }world_data_t;
 
@@ -183,8 +159,6 @@ typedef struct world_s{
   bool          intgrid[GRID_WIDTH][GRID_HEIGHT];
   ent_t*        ents[MAX_ENTS];
   unsigned int  num_ent;
-  rigid_body_t* cols[MAX_ENTS];
-  unsigned int  num_col;
   sprite_t*     sprs[MAX_ENTS];
   unsigned int  num_spr;
   render_text_t *texts[MAX_EVENTS];
@@ -197,7 +171,6 @@ ent_t* WorldGetEntById(unsigned int uid);
 int WorldGetEnts(ent_t** results,EntFilterFn fn, void* params);
 Vector2 GetWorldCoordsFromIntGrid(Vector2 pos, float len);
 bool RegisterEnt( ent_t *e);
-bool RegisterRigidBody(rigid_body_t *b);
 bool RegisterSprite(sprite_t *s);
 void WorldInitOnce();
 void WorldPreUpdate();
@@ -207,5 +180,6 @@ void InitWorld(world_data_t data);
 void WorldRender();
 Rectangle WorldRoomBounds();
 
+ObjectInstance GetObjectInstanceByShapeID(ShapeID id);
 #endif
 

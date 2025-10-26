@@ -4,18 +4,31 @@
 //#include "raylib.h"
 #include <stdlib.h>
 #include <string.h>
-#include "asset_sprites.h"
 #include "game_common.h"
+#include "asset_sprites.h"
+#include "asset_shapes.h"
 
 #define MAX_SONGS 4
+#define MAX_SPRITES 64
+
+#if defined(PLATFORM_WEB)
+#define SPRITE_SCALE .8
+#else
+#define SPRITE_SCALE 1.0
+#endif
+
 struct ent_s;
 void InitResources();
 
+typedef enum{
+  TILES,
+  SHAPES,
+}SheetID;
 //====SHADERS===>
 typedef struct{
-  bool              has_chain[ENT_BLANK];
-  RenderTexture2D   chain1[ENT_BLANK];
-  RenderTexture2D   chain2[ENT_BLANK];
+  bool              has_chain[SHAPE_NONE];
+  RenderTexture2D   chain1[SHAPE_NONE];
+  RenderTexture2D   chain2[SHAPE_NONE];
 }texture_chain_t;
 
 typedef enum{
@@ -77,7 +90,7 @@ typedef struct{
 }gl_shader_t;
 extern gl_shader_t shaders[SHADER_DONE];
 
-void InitShaderChainCache(EntityType,int maxWidth, int maxHeight);
+void InitShaderChainCache(ShapeID,int maxWidth, int maxHeight);
 void InitShaders();
 void LoadShaders();
 void ShaderSetUniforms(gl_shader_t *s, Texture2D texture);
@@ -170,17 +183,15 @@ bool AudioPlayNext(music_group_t* t);
 void AudioMusicFade(music_track_t* t);
 
 typedef enum{
-  LAYER_ROOT,
+  LAYER_ROOT = -1,
   LAYER_BG,
   LAYER_MAIN,
-  LAYER_FLOOR,
-  LAYER_FX_MAIN,
-  LAYER_TOP
+  LAYER_TOP,
+  LAYER_DONE
 }RenderLayer;
 
 typedef struct {
-  char      *name;
-  char      *group;
+  int       id;
   int       sequence_index;
   Vector2   center;
   Rectangle bounds;
@@ -190,16 +201,17 @@ typedef struct {
 
 typedef struct{
   int             num_sprites;
-  sprite_slice_t  *sprites[1024];
+  sprite_slice_t  *sprites[128];
+  Texture2D       *sprite_sheet;
 }sprite_sheet_data_t;
-extern sprite_sheet_data_t spritedata;
-void LoadrtpAtlasSprite(sprite_sheet_data_t *out);
+extern sprite_sheet_data_t shapedata;
+extern sprite_sheet_data_t tiledata;
+void SpriteLoadSubTextures(sprite_sheet_data_t *out, int sheet_id);
 //SPRITE_T===>
 typedef struct {
   int             suid;
   Texture2D       *sheet;
   sprite_slice_t* slice;
-  Color           color;
   gl_shader_t*    gls[SHADER_DONE];
   bool            is_visible;
   float           rot;
@@ -210,11 +222,10 @@ typedef struct {
 } sprite_t;
 
 void DrawSlice(sprite_t *spr, Vector2 position,float rot);
-sprite_t* InitSprite(const char* tag, sprite_sheet_data_t* spritesheet);
+sprite_t* InitSpriteByID(int id, sprite_sheet_data_t* data);
 sprite_t* InitSpriteByIndex(int index, sprite_sheet_data_t* spritesheet);
 bool FreeSprite(sprite_t* s);
 void DrawSprite(sprite_t* s);
 void DrawSpriteAtPos(sprite_t*s , Vector2 pos);
-EntityType SpriteEntType(sprite_t *spr);
 //====SPRITE_T>>
 #endif

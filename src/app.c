@@ -1,3 +1,4 @@
+#include <time.h>
 #include "raylib.h"
 #include "screens.h"    // NOTE: Declares global (extern) variables and screens functions
 #include "game_assets.h"
@@ -28,6 +29,7 @@ bool wantQuit = false;
 
 int main(void)
 {
+    srand((unsigned int)time(NULL));  // seed once using current time
   // Initialization
   //---------------------------------------------------------
   InitWindow(screenWidth, screenHeight, "raylib game template");
@@ -38,7 +40,7 @@ int main(void)
   InitAudioDevice();      // Initialize audio device
                           //--------------------------------------------------------------------------------------
 
-  InitAudio();
+  //InitAudio();
   InitResources();
   InitUI();
   InitShaders();

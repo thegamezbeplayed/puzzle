@@ -8,17 +8,6 @@ game_process_t game_process;
 TreeCacheEntry tree_cache[16] = {0};
 int tree_cache_count = 0;
 
-void print_mem_usage() {
-  FILE* f = fopen("/proc/self/status", "r");
-  char buf[256];
-  while (fgets(buf, sizeof(buf), f)) {
-    if (strncmp(buf, "VmRSS:", 6) == 0) {
-      TraceLog(LOG_WARNING,"%s", buf); // prints resident set size
-    }
-  }
-  fclose(f);
-}
-
 bool TogglePause(ui_menu_t* m){
   if(game_process.state[SCREEN_GAMEPLAY] == GAME_READY)
     GameSetState(GAME_PAUSE);
@@ -101,18 +90,14 @@ Vector2 GetWorldCoordsFromIntGrid(Vector2 pos, float len){
 
 bool RegisterBehaviorTree(BehaviorData data){
   TreeCacheEntry entry = {0};
-  strcpy(entry.name,data.name);
-  entry.root = BuildTreeNode(data.name);
+  entry.id = data.id;
+  entry.root = BuildTreeNode(data.id,NULL);
   tree_cache[tree_cache_count++] = entry;
+
   return entry.root!=NULL;
 }
 
 ent_t* WorldGetEnt(const char* name){
-  for(int i = 0; i < world.num_ent; i++){
-    if(strcmp(world.ents[i]->name, name) == 0)
-      return world.ents[i];
-  }
-
   return NULL;
 }
 
@@ -161,23 +146,6 @@ int RemoveEnt(int index){
 
 }
 
-
-int RemoveBody(int index){
-  int last_pos = world.num_col -1;
-  
-  if(!FreeRigidBody(world.cols[index]))
-    return 0;
-
-  world.num_col--;
-  if(index!=last_pos){
-    world.cols[index] = world.cols[last_pos];
-    return 1;
-  }
- 
-  return 0;
-  
-}
-
 int AddEnt(ent_t *e) {
   if (world.num_ent < MAX_ENTS) {
     int index = world.num_ent;
@@ -188,17 +156,6 @@ int AddEnt(ent_t *e) {
   }
   return -1;
 } 
-
-int AddRigidBody(rigid_body_t *b){
-  if(world.num_col < MAX_ENTS){
-    int index = world.num_col;
-    world.cols[world.num_col++] = b;
-
-    return index;
-  }
-
-  return -1;
-}
 
 int AddSprite(sprite_t *s){
   if(world.num_spr < MAX_ENTS){
@@ -211,26 +168,24 @@ int AddSprite(sprite_t *s){
   return -1;
 }
 
+ObjectInstance GetObjectInstanceByShapeID(ShapeID id){
+  for (int i = SHAPE_NONE; i<SHAPE_COUNT;i++){
+    if(room_instances[i].id != id)
+      continue;
+
+    return room_instances[i];
+  }
+  
+  return room_instances[0];
+}
+
 bool RegisterEnt( ent_t *e){
   e->uid = AddEnt(e);
 
-  if(e->body)
-    RegisterRigidBody(e->body);
   if(e->sprite)
     RegisterSprite(e->sprite);
 
-  if(game_process.state[SCREEN_GAMEPLAY] == GAME_READY){
-    PhysicsInitOnce(e->body);
-    EntInitOnce(e);
-  }
-
   return e->uid > -1;
-}
-
-bool RegisterRigidBody(rigid_body_t *b){
-  b->buid = AddRigidBody(b);
-
-  return b->buid > -1;
 }
 
 bool RegisterSprite(sprite_t *s){
@@ -243,25 +198,11 @@ void WorldInitOnce(){
   
   InteractionStep();
 
-  for(int i = 0; i < world.num_ent; i++){
-    if(world.cols[i])
-      PhysicsInitOnce(world.cols[i]);
- 
-    EntInitOnce(world.ents[i]);
-  }
 
 }
 
 void WorldPreUpdate(){
   InteractionStep();
-  for(int i = 0; i < world.num_col; i++){
-    if(world.cols[i]->owner!=NULL){
-      EntPrepStep(world.cols[i]->owner);
-      PhysicsCollision(i,world.cols,world.num_col,RigidBodyCollide);
-    }
-    else
-      i-=RemoveBody(i);
-  }
 }
 
 void WorldFixedUpdate(){
@@ -274,7 +215,6 @@ void WorldFixedUpdate(){
         EntDestroy(world.ents[i]);
         break;
       default:
-        PhysicsStep(world.ents[i]->body);
         EntSync(world.ents[i]);
         break;
     }
@@ -298,20 +238,13 @@ void WorldPostUpdate(){
 void InitWorld(world_data_t data){
   world = (world_t){0};
   for(int x = 0; x < GRID_WIDTH; x++)
-    for(int y = 0; y < GRID_HEIGHT; y++)
-      world.intgrid[x][y] = false;
+    for(int y = 0; y < GRID_HEIGHT; y++){
+      Vector2 pos = {CELL_WIDTH+x*CELL_WIDTH,CELL_HEIGHT+y*CELL_HEIGHT};
+      RegisterEnt(InitEntStatic(BASE_TILE,pos));
+    }
 
-  world.room_bounds = RecFromCoords(0,ui.menus[MENU_HUD].element->bounds.height,ROOM_WIDTH,ROOM_HEIGHT);
   for (int i = 0; i < data.num_ents; i++)
     RegisterEnt(InitEnt(data.ents[i]));
-
-  for (int j = 0; j < ROOM_TILE_COUNT; j++){
-    Vector2 pos = data.tiles[j].start;
-    for(int k = 0; k < data.tiles[j].amount; k++){
-      RegisterEnt(InitEntStatic(data.tiles[j],pos));
-      pos = Vector2Add(pos,data.tiles[j].inc);
-    }
-  }
 }
 
 void FreeWorld(){
@@ -319,11 +252,6 @@ void FreeWorld(){
     RemoveSprite(i);
   }
   world.num_spr = 0;
-
-  for (int i = 0; i < world.num_col; i++){
-    RemoveBody(i);
-  }
-  world.num_col = 0;
 
   for (int i = 0; i < world.num_ent; i++){
     RemoveEnt(i);
@@ -334,27 +262,11 @@ void FreeWorld(){
 void WorldRender(){
   DrawRectangleRec(world.room_bounds, BLACK);
   
-  for(int i = 0; i < world.num_spr;i++){
-    if(world.sprs[i]->owner !=NULL){
+  for(int i = 0; i < world.num_spr;i++)
+    if(world.sprs[i]->owner !=NULL)
       DrawSprite(world.sprs[i]);
-      if(!DEBUG)
-        continue;
-      Rectangle bounds = {
-        .x = world.cols[i]->collision_bounds.pos.x,
-        .y = world.cols[i]->collision_bounds.pos.y,
-        .width = world.cols[i]->collision_bounds.width,
-        .height = world.cols[i]->collision_bounds.height
-      };
-      DrawRectangleLinesEx(bounds,1.1f, BLUE);
-      if(!DEBUG)
-        continue;
-
-      DebugShowText(world.sprs[i]->owner->debug_info);
-    }
     else
       i-=RemoveSprite(i);
-
-  }
 
   for(int i = 0; i < MAX_EVENTS; i++){
     if(!world.floatytext_used[i])
@@ -366,7 +278,7 @@ void WorldRender(){
 }
 
 void InitGameProcess(){
-  for(int i = 0; i < ROOM_BEHAVIOR_COUNT; i++){
+  for(int i = 0; i < BEHAVIOR_COUNT; i++){
     if(room_behaviors[i].is_root)
       RegisterBehaviorTree(room_behaviors[i]);
   }
@@ -383,13 +295,11 @@ void InitGameProcess(){
   }
 
   game_process.next[SCREEN_TITLE] = SCREEN_GAMEPLAY;
-  game_process.album_id[SCREEN_TITLE] = AudioBuildMusicTracks("Title");
   game_process.init[SCREEN_TITLE] = InitTitleScreen;
   game_process.finish[SCREEN_TITLE] = UnloadTitleScreen;
   game_process.update_steps[SCREEN_TITLE][UPDATE_DRAW] = DrawTitleScreen;
   game_process.update_steps[SCREEN_TITLE][UPDATE_FRAME] = UpdateTitleScreen;
 
-  AudioPlayMusic(game_process.album_id[SCREEN_TITLE]);
   game_process.next[SCREEN_GAMEPLAY] = SCREEN_ENDING;
   game_process.init[SCREEN_GAMEPLAY] = InitGameplayScreen;
   game_process.finish[SCREEN_GAMEPLAY] = UnloadGameplayScreen;
@@ -414,28 +324,16 @@ void InitGameProcess(){
 
 void InitGameEvents(){
   world_data_t wdata = {0};
-  for (int i = 0; i < ENT_MOB; i++){
-    wdata.ents[wdata.num_ents++] = room_instances[i];
-  }
-
-  for (int j = 0; j < ROOM_TILE_COUNT; j++){
-    wdata.tiles[j] = room_tiles[j];
-  }
 
   cooldown_t* loadEvent = InitCooldown(6,EVENT_GAME_PROCESS,GameReady,NULL);
   AddEvent(game_process.events,loadEvent);
   InitWorld(wdata);
   game_process.children[SCREEN_GAMEPLAY].process = PROCESS_LEVEL;
-  //game_process.children[SCREEN_GAMEPLAY].finish[PROCESS_LEVEL] =LevelEnd;
-  //game_process.children[SCREEN_GAMEPLAY].init[PROCESS_LEVEL] =InitLevelEvents;
-  game_process.children[SCREEN_GAMEPLAY].update_steps[PROCESS_LEVEL][UPDATE_FIXED] = LevelStep;
- game_process.game_frames = 0; 
+  game_process.game_frames = 0; 
   MenuSetState(&ui.menus[MENU_PAUSE],MENU_READY);
 }
 
 bool GameTransitionScreen(){
-
-  print_mem_usage();
   GameScreen current = game_process.screen;
   GameScreen prepare = game_process.next[current];
   if(game_process.state[current] >= GAME_FINISHED)
@@ -445,7 +343,6 @@ bool GameTransitionScreen(){
   game_process.finish[current]();
   game_process.screen = prepare;
   game_process.state[prepare] = GAME_LOADING;
-  AudioPlayMusic(game_process.album_id[prepare]);
   return true;
 }
 
@@ -463,9 +360,6 @@ void GameProcessSync(bool wait){
 
     game_process.update_steps[SCREEN_GAMEPLAY][UPDATE_DRAW]();
   
-    if(!wait)
-      AudioStep();
-
     return;
   }
   
@@ -475,7 +369,7 @@ void GameProcessSync(bool wait){
     game_process.update_steps[game_process.screen][i]();
   }
 
-  AudioStep();
+  //AudioStep();
   for(int i = 0; i < PROCESS_DONE;i++){
     if(game_process.children[game_process.screen].process==PROCESS_NONE)
       continue;
@@ -490,19 +384,11 @@ void GameProcessEnd(){
   UnloadEvents(game_process.events);
   FreeWorld();
   FreeInteractions();
-  FreeLevels();
 }
 
 void AddPoints(float mul,float points, Vector2 pos){
   //TraceLog(LOG_INFO,"===Add %0.2f Points===",points*mul);
   world.points+=mul*points;
-  if(mul < 2)
-    return;
-
-  if(mul <5)
-    AudioPlaySfx(SFX_IMPORTANT,ACTION_COMBO,(int)mul-1);
-  else
-    AudioPlaySfx(SFX_IMPORTANT,ACTION_COMBO,4);
 
   render_text_t *rt = malloc(sizeof(render_text_t));
   *rt = (render_text_t){

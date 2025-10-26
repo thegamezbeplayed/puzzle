@@ -65,12 +65,6 @@ void LevelStep(){
 }
 
 entity_pool_t* InitEntityPool(void) {
-    entity_pool_t* pool = malloc(sizeof(entity_pool_t));
-    pool->num_references = 0;
-    pool->current_ref = 0;
-    for(int i = 0; i < MAX_SPAWNS; i++)
-      pool->reference_ents[i] = ENT_MOB;
-    return pool;
 }
 
 void FreeLevels(){
@@ -99,5 +93,5 @@ void GenerateLevels(int num_levels, bool inc_diff){
   LevelBegin(levels.levels[0]);
 }
 
-void RegisterPoolRef(unsigned int level_index,unsigned int index, EntityType ref){
+void RegisterPoolRef(unsigned int level_index,unsigned int index, ShapeID ref){
 }
