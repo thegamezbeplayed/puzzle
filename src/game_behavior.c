@@ -2,6 +2,7 @@
 #include "game_utils.h"
 #include "game_process.h"
 #include "game_tools.h"
+#include "game_helpers.h"
 
 static bt_register_entry_t BT_Registry[MAX_BEHAVIOR_TREE];
 static int registry_count = 0;
@@ -106,9 +107,8 @@ BehaviorStatus BehaviorSelectShape(behavior_params_t *params){
 
   ShapeID shape = SelectRandomShape(SHAPE_COLOR_NONE, SHAPE_TYPE_NONE);
 
-  e->child = InitEnt(GetObjectInstanceByShapeID(shape));
+  EntSetOwner(InitEnt(GetObjectInstanceByShapeID(shape)),e,false,NULL);
 
-  e->child->owner = e;
   return BEHAVIOR_SUCCESS;
 
 }

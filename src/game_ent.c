@@ -3,13 +3,12 @@
 #include "game_math.h"
 #include "game_process.h"
 
-MAKE_ADAPTER(StepState, ent_t*);
-
 ent_t* InitEnt(ObjectInstance data){
   ent_t* e = malloc(sizeof(ent_t));
   *e = (ent_t){0};  // zero initialize if needed
   e->type = ENT_SHAPE;
 
+  e->shape = data.id;
   e->sprite = InitSpriteByID(data.id,&shapedata);
   e->sprite->owner = e;
  
@@ -91,6 +90,10 @@ void EntSync(ent_t* e){
   e->sprite->pos = e->pos;// + abs(ent->sprite->offset.y);
 }
 
+void EntSetPos(ent_t *e, Vector2 pos){
+  e->sprite->pos = e->pos = pos;
+}
+
 void EntControlStep(ent_t *e){
   if(!e->control || !e->control->bt || !e->control->bt[e->state])
     return;
@@ -98,6 +101,20 @@ void EntControlStep(ent_t *e){
   behavior_tree_node_t* current = e->control->bt[e->state];
 
   current->tick(current, e);
+}
+
+void SetViableTile(ent_t* e, EntityState old, EntityState s){
+  ent_t* neighbors[4];
+  
+  int num_neighbors = WorldGetEnts(neighbors, FilterEntNeighbor, e->owner);
+
+  for (int i = 0; i < num_neighbors; i++){
+    if(!CheckEntPosition(neighbors[i],e->pos))
+      continue;
+
+    EntChangeOccupant(e, neighbors[i]);
+
+  }
 }
 
 bool SetState(ent_t *e, EntityState s,StateChangeCallback callback){
@@ -138,8 +155,6 @@ bool CanChangeState(EntityState old, EntityState s){
 void OnStateChange(ent_t *e, EntityState old, EntityState s){
   switch(old){
     case STATE_SPAWN:
-      if(e->owner)
-        e->pos = e->owner->pos;
       if(e->sprite)
         e->sprite->is_visible = true;
       break;
@@ -151,11 +166,70 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s){
     case STATE_DIE:
       AudioPlayRandomSfx(SFX_ACTION,ACTION_BOOM);
       break;
+    case STATE_SCORE:
+      TraceLog(LOG_INFO,"Scored at [%i,%i]",e->intgrid_pos.x,e->intgrid_pos.y);
     default:
       break;
   }
-
 }
+
+void EntChangeOccupant(ent_t* e, ent_t* owner){
+  ent_t* tenant = owner->child;
+  ent_t* old = e->owner;
+
+  if(!EntSetOwner(e,owner,true,NULL))
+    return;
+  
+  if(!tenant)
+    return;
+
+  if(!EntSetOwner(tenant,old,false,NULL)){
+    EntSetOwner(e,old,true,NULL);
+    return;
+  }
+
+  WorldCheckGrid(e,owner);
+  WorldCheckGrid(tenant,old);
+}
+
+void EntOnOwnerChange(ent_t *e, ent_t* old, ent_t* owner){
+  if(e->uid <= 0){
+    RegisterEnt(e);
+    SetState(e,STATE_IDLE,NULL);
+  }
+
+  e->pos = owner->pos;
+  e->intgrid_pos = owner->intgrid_pos;
+  owner->shape = e->shape;
+}
+
+bool EntSetOwner(ent_t* e, ent_t* owner, bool evict, OwnerChangeCallback cb){
+  if (e->owner == owner)
+    return false;
+
+  if(!evict && owner->child)
+    return false;
+
+  ent_t* old = e->owner;
+  e->owner = owner;
+  owner->child = e;
+  if(old && old->child && old->child == e)
+    old->child = NULL;
+  
+  EntOnOwnerChange(e,old, e->owner);
+  if(cb)
+    cb(e,old,e->owner);
+
+  return true;
+}
+
+bool CheckEntPosition(ent_t* e, Vector2 pos){
+  Vector2 topCorner = Vector2Subtract(e->sprite->pos,e->sprite->slice->center);
+
+  Rectangle bounds = RectPos(topCorner, e->sprite->slice->bounds);
+  return point_in_rect(pos, bounds);
+}
+
 bool CheckEntAvailable(ent_t* e){
   if(!e)
     return false;

@@ -1,5 +1,5 @@
-#include "screens.h"
 #include "game_ui.h"
+#include "screens.h"
 #define RAYGUI_IMPLEMENTATION
 
 // Title Screen Initialization logic
@@ -21,8 +21,8 @@ void DrawTitleScreen(void)
   ClearBackground(RAYWHITE);
 
   DrawFPS(10, 10);
-
-  UISync();
+  DrawNineSlice(NULL,VECTOR2_ZERO);
+  //UISync();
   EndDrawing();
 }
 

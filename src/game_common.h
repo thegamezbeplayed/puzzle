@@ -20,7 +20,6 @@ typedef enum{
   BEHAVIOR_COUNT
 }BehaviorID;
 
-
 typedef struct sub_texture_s {
     int tag;
     int originX, originY;
@@ -145,6 +144,8 @@ typedef enum{
   STATE_EMPTY,
   STATE_IDLE, //should be able to move freely between these ==>
   STATE_SELECTED,
+  STATE_PLACED,
+  STATE_SCORE,
   STATE_DIE,//<===== In MOST cases. Should not be able to go down from DIE
   STATE_END//sentinel entity state should never be this or greater
 }EntityState;

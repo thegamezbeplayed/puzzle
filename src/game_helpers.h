@@ -1,4 +1,6 @@
-#include "game_utils.h"
+#ifndef __GAME_HELPERS__
+#define __GAME_HELPERS__
+
 #include <assert.h>
 
 #define SHAPE_COLOR(shape) ((shape) & SHAPE_COLOR_MASK)
@@ -9,7 +11,7 @@
 #define IS_ANY_COLOR(shape)    ((shape) & SHAPE_COLOR_MASK)
 #define IS_ANY_TYPE(shape)     ((shape) & SHAPE_TYPE_MASK)
 
-ShapeID SelectRandomShape(ShapeFlags color, ShapeFlags shape){
+static ShapeID SelectRandomShape(ShapeFlags color, ShapeFlags shape){
   assert((color & ~SHAPE_COLOR_MASK) == 0 && "Invalid color bits set");
   assert((shape & ~SHAPE_TYPE_MASK) == 0 && "Invalid shape bits set");
 
@@ -21,3 +23,5 @@ ShapeID SelectRandomShape(ShapeFlags color, ShapeFlags shape){
 
   return (ShapeID)(color | shape);
 }
+
+#endif

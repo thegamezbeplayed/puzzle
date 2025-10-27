@@ -12,8 +12,6 @@
 #define MAKE_ADAPTER(name, T) \
     static void name##_Adapter(void *p) { name((T)p); }
 
-ShapeID SelectRandomShape(ShapeFlags color, ShapeFlags shape);
-
 typedef struct ent_s ent_t;
 
 //====FILE & STRINGS====>

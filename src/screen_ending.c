@@ -1,15 +1,13 @@
-#include "screens.h"
 #include "game_ui.h"
 #include "game_utils.h"
 #include "game_tools.h"
 #include "game_process.h"
-
-//#define RAYGUI_IMPLEMENTATION
+#include "screens.h"
 
 // Title Screen Initialization logic
 void InitEndScreen(void)
 {
-  MenuSetState(&ui.menus[MENU_RECAP],MENU_ACTIVE);
+  //MenuSetState(&ui.menus[MENU_RECAP],MENU_ACTIVE);
 }
 
 // Title Screen Update logic
@@ -25,7 +23,7 @@ void DrawEndScreen(void)
   ClearBackground(RAYWHITE);
 
   DrawFPS(10, 10);
-  UISync();
+  //UISync();
   EndDrawing();
 }
 
@@ -33,5 +31,5 @@ void DrawEndScreen(void)
 void UnloadEndScreen(void)
 {
     // TODO: Unload TITLE screen variables here!
-  MenuSetState(&ui.menus[MENU_RECAP],MENU_INACTIVE);
+  //MenuSetState(&ui.menus[MENU_RECAP],MENU_INACTIVE);
 }

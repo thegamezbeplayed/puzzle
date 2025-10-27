@@ -5,8 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "game_common.h"
+#include "game_ui.h"
 #include "asset_sprites.h"
 #include "asset_shapes.h"
+#include "asset_ui.h"
 
 #define MAX_SONGS 4
 #define MAX_SPRITES 64
@@ -199,14 +201,65 @@ typedef struct {
   float     scale;
 } sprite_slice_t;
 
+typedef enum {
+  SLICE_NONE =-1,
+  SLICE_TOP_LEFT,
+  SLICE_TOP_MID,
+  SLICE_TOP_RIGHT,
+  SLICE_EDGE_LEFT,
+  SLICE_CENTER,
+  SLICE_EDGE_RIGHT,
+  SLICE_BOT_LEFT,
+  SLICE_BOT_MID,
+  SLICE_BOT_RIGHT,
+  SLICE_ALL
+}SliceParts;
+
+typedef enum{
+  SCALE_NONE,
+  SCALE_STRETCH_W,
+  SCALE_STRETCH_H,
+  SCALE_NORMAL
+}ScalingType;
+
+typedef struct {
+  ScalingType      scaling[SLICE_ALL];
+  sprite_slice_t   *slices[SLICE_ALL];
+  float             scale;
+} scaling_slice_t;
+
+typedef struct{
+  scaling_slice_t *sprites[ELEMENT_COUNT];
+  Texture2D       *sprite_sheet;
+}scaling_sprite_data_t;
+
 typedef struct{
   int             num_sprites;
   sprite_slice_t  *sprites[128];
   Texture2D       *sprite_sheet;
 }sprite_sheet_data_t;
+
+typedef struct{
+  SliceParts  type;
+  ScalingType rules;
+}scaling_rules_t;
+
+static scaling_rules_t scaling_rules[SLICE_ALL] = {
+  {SLICE_TOP_LEFT, SCALE_NONE},
+  {SLICE_TOP_MID, SCALE_STRETCH_W},
+  {SLICE_TOP_RIGHT, SCALE_NONE},
+  {SLICE_EDGE_LEFT, SCALE_STRETCH_H},
+  {SLICE_CENTER, SCALE_NORMAL},
+  {SLICE_EDGE_RIGHT,SCALE_STRETCH_H},
+  {SLICE_BOT_LEFT, SCALE_NONE},
+  {SLICE_BOT_MID,  SCALE_STRETCH_W},
+  {SLICE_BOT_RIGHT, SCALE_NONE}
+};
+
 extern sprite_sheet_data_t shapedata;
 extern sprite_sheet_data_t tiledata;
 void SpriteLoadSubTextures(sprite_sheet_data_t *out, int sheet_id);
+void SpriteLoadSlicedTextures();
 //SPRITE_T===>
 typedef struct {
   int             suid;
@@ -222,6 +275,7 @@ typedef struct {
 } sprite_t;
 
 void DrawSlice(sprite_t *spr, Vector2 position,float rot);
+void DrawNineSlice(scaling_slice_t *spr, Vector2 position);
 sprite_t* InitSpriteByID(int id, sprite_sheet_data_t* data);
 sprite_t* InitSpriteByIndex(int index, sprite_sheet_data_t* spritesheet);
 bool FreeSprite(sprite_t* s);

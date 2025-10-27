@@ -9,7 +9,7 @@
 #define CLAMPV2(v,a,b) ((v)<(a)?(a):((v)>(b)?(b):(v)))
 #define VEC_UNSET (Vector2){FLT_MAX, FLT_MAX}
 #define EPS 1e-6f
-#define VECTOR2_CENTER_SCREEN   (Vector2){ GetScreenWidth()/2, GetScreenHeight()/2}
+#define VECTOR2_CENTER_SCREEN   (Vector2){ screenWidth/2, screenHeight/2}
 #define VECTOR2_SCREEN   (Vector2){ GetScreenWidth(), GetScreenHeight()}
 #define VECTOR2_ZERO   (Vector2){ 0.0f, 0.0f}
 #define VECTOR2_ONE    (Vector2){ 1.0f, 1.0f }
@@ -21,9 +21,11 @@
 #define Vector2Y(y) ((Vector2){ 0.0f, (y) })
 #define Vector2Inc(v,xi,yi) ((Vector2){ (v.x+xi), (v.y+yi) })
 
+#define RectPos(v,r) ((Rectangle){(v.x),(v.y),(r.width),(r.height)})
 #define Rect(px,py,sx,sy) ((Rectangle){ (px),(py), (sx), (sy) })
 #define RECT_ZERO   (Rectangle){ 0.0f, 0.0f,0.0f,0.0f}
 #define RectInc(r,xi,yi) ((Rectangle){ (r.x+xi), (r.y+yi),(r.width),(r.height) })
+
 
 static void shuffle_array(void *base, size_t n, size_t size) {
     char *arr = base;
@@ -47,6 +49,19 @@ static uint32_t hash_str(const char *str) {
 typedef struct {
   int x,y;
 } Cell;
+
+static bool is_adjacent(Cell c1, Cell c2)
+{
+  int x1 = c1.x;
+  int x2 = c2.x;
+  int y1 = c1.y;
+  int y2 = c2.y;
+  int dx = abs(x1 - x2);
+  int dy = abs(y1 - y2);
+
+  // Adjacent if exactly 1 step away horizontally or vertically
+  return (dx + dy == 1);
+}
 
 static inline float distance(int x1, int y1, int x2, int y2) {
     int dx = x2 - x1;
@@ -83,7 +98,7 @@ static inline Vector2 v2_norm_safe(Vector2 v){
 }
 
 
-static inline int point_in_rect(Vector2 p, Rectangle r){
+static inline bool point_in_rect(Vector2 p, Rectangle r){
   return (p.x >= r.x && p.x <= r.x + r.width &&
       p.y >= r.y && p.y <= r.y + r.height);
 }

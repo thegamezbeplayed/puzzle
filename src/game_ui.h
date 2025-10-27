@@ -1,5 +1,8 @@
-#include "raygui.h"
+#ifndef __GAME_UI__
+#define __GAME_UI__
 #include <stdint.h>
+#include <stdbool.h>
+#include "raylib.h"
 
 #define MAX_ELEMENTS 64
 #define UI_SCALE 1.0F
@@ -19,6 +22,13 @@
 #define XS_PANEL_THIN_SIZE (Vector2){128*UI_SCALE, 32*UI_SCALE}
 
 #define DEFAULT_LINE_SIZE (Vector2){2 *UI_SCALE, 64*UI_SCALE}
+
+typedef enum{
+  ELEMENT_EMPTY,
+  ELEMENT_PANEL_GRAY,
+  ELEMENT_COUNT
+}ElementID;
+
 typedef enum{
   MENU_INACTIVE,
   MENU_READY,
@@ -171,3 +181,4 @@ void InitUI();
 void UISync();
 void UIRender();
 bool TogglePause(ui_menu_t* m);
+#endif

@@ -14,6 +14,24 @@ static int fixedFPS = 60;
 
 typedef void (*UpdateFn)(void);
 typedef bool EntFilterFn(ent_t* e, ent_t* other); 
+bool CheckWorldGridAdjacent(ent_t* e, ent_t* other);
+
+static bool FilterEntShape(ent_t* e,ent_t* other){
+  if(e->type == ENT_SHAPE)
+    return true;
+  else
+    return false;
+}
+
+static bool FilterEntNeighbor(ent_t* e,ent_t* other){
+  if(e->type!= other->type)
+    return false;
+
+  if(CheckWorldGridAdjacent(e, other))
+    return true;
+
+  return false;
+}
 
 //INTERACTIONS_T===>
 typedef struct {
@@ -112,41 +130,10 @@ void GameProcessSync(bool wait);
 bool GameTransitionScreen();
 void GameProcessEnd();
 
-//====level process==>
-typedef struct{
-  unsigned int         luid;
-  LevelState           state;
-  float                points;
-}level_t;
-
-typedef struct{
-  unsigned int  current;
-  level_info_t  level_info;
-  unsigned int  album_id;
-  int           num_levels;
-  int           round_num;
-  level_t       *levels[10];
-}level_order_t;
-
-extern level_order_t levels;
-
-void InitLevel();
-void FreeLevels();
-void FreeLevel(level_t* l);
 void AddPoints(float mul,float points,Vector2 pos);
 int GetPointsInt();
 const char* GetPoints();
 const char* GetGameTime();
-level_t* LevelCurrent();
-level_t* GetLevel(unsigned int index);
-void InitLevelEvents();
-void GenerateLevels(int num_levels, bool inc_diff);
-void LevelStep();
-void LevelBegin(level_t *l);
-void LevelEnd(level_t *l);
-void SetLevelState(level_t *l, LevelState state);
-void OnLevelStateChange(level_t *l, LevelState state);
-bool CanChangeLevelState(LevelState old, LevelState s);
 //===WORLD_T===>
 
 typedef struct{
@@ -154,9 +141,23 @@ typedef struct{
   unsigned int    num_ents;
 }world_data_t;
 
+typedef struct{
+  ent_t*      tile;
+  ShapeFlags  bonus_color,bonus_type;
+  float       color_mul,type_mul;
+}grid_combo_t;
+
+typedef struct{
+  grid_combo_t* combos[GRID_WIDTH][GRID_HEIGHT];
+}grid_manager_t;
+
+int GridCompare(ent_t* start, int num_others,ent_t** others, ent_t** results);
+int GridGetRow(int row, ent_t** out);
+int GridGetCol(int col, ent_t** out);
+
 typedef struct world_s{
-  Rectangle     room_bounds;
-  bool          intgrid[GRID_WIDTH][GRID_HEIGHT];
+  grid_manager_t grid;
+  Rectangle     play_area;
   ent_t*        ents[MAX_ENTS];
   unsigned int  num_ent;
   sprite_t*     sprs[MAX_ENTS];
@@ -169,7 +170,7 @@ typedef struct world_s{
 ent_t* WorldGetEnt(const char* name);
 ent_t* WorldGetEntById(unsigned int uid);
 int WorldGetEnts(ent_t** results,EntFilterFn fn, void* params);
-Vector2 GetWorldCoordsFromIntGrid(Vector2 pos, float len);
+void WorldCheckGrid(ent_t *e, ent_t* owner);
 bool RegisterEnt( ent_t *e);
 bool RegisterSprite(sprite_t *s);
 void WorldInitOnce();

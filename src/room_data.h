@@ -17,7 +17,6 @@ typedef struct {
   int         points;
 } ObjectInstance;
 
-
 typedef struct {
   BackTileID  id;
   BehaviorID  behaviors[STATE_END];
@@ -65,6 +64,6 @@ static const BehaviorData room_behaviors[BEHAVIOR_COUNT] = {
   {BEHAVIOR_CHANGE_STATE,false,BT_LEAF,LeafChangeState,false, STATE_IDLE,0,{}},
   {BEHAVIOR_SELECT_SHAPE,false,BT_LEAF,LeafSelectShape,false, STATE_NONE,0,{}},
   {BEHAVIOR_INIT_CHILD,false,BT_LEAF,LeafInitChild,false, STATE_NONE,0,{}},
-  {BEHAVIOR_ACQUIRE_CHILD,true,BT_SEQUENCE,NULL,true,STATE_IDLE,3, {BEHAVIOR_SELECT_SHAPE, BEHAVIOR_INIT_CHILD,BEHAVIOR_CHANGE_STATE}},
+  {BEHAVIOR_ACQUIRE_CHILD,true,BT_SEQUENCE,NULL,true,STATE_IDLE,2, {BEHAVIOR_SELECT_SHAPE,BEHAVIOR_CHANGE_STATE}},
 };
 #endif

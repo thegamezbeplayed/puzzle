@@ -1,9 +1,10 @@
-#include "game_ui.h"
+//#include "game_ui.h"
 #include "game_utils.h"
 #include "screens.h"
 #include "game_tools.h"
 #include "game_process.h"
-
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
 ui_manager_t ui;
 
 void InitUI(){

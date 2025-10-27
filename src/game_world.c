@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include "game_process.h"
 #include "game_tools.h"
+#include "game_helpers.h"
 #include "game_ui.h"
 
 game_process_t game_process;
@@ -42,6 +43,76 @@ void AddFloatingText(render_text_t *rt){
   }
 }
 
+int GridGetRow(int row, ent_t** out){
+  int count = 0;
+  for (int x = 0; x < GRID_WIDTH; x++) {
+    ent_t *e = world.grid.combos[x][row]->tile;
+    if (e)
+      out[count++] = e;
+  }
+
+  return count;
+}
+
+int GridGetCol(int col,ent_t** out){
+  int count = 0;
+  for (int y = 0; y < GRID_HEIGHT; y++) {
+    ent_t *e = world.grid.combos[col][y]->tile;
+    if (e)
+      out[count++] = e;
+  }
+
+  return count;
+}
+
+int GridCompare(ent_t* start, int num_others, ent_t** others, ent_t** results){
+  int matches = 0;
+  ShapeFlags og_type = SHAPE_TYPE(start->child->shape);
+  ShapeFlags og_col = SHAPE_COLOR(start->child->shape);
+  ShapeFlags bonus_type = SHAPE_TYPE_NONE;
+  ShapeFlags bonus_col = SHAPE_COLOR_NONE;
+  
+  if(start->shape){
+    bonus_type = SHAPE_TYPE(start->shape);
+    bonus_col = SHAPE_COLOR(start->shape);
+  }
+  
+  for(int i = 0; i<num_others;i++){
+    if(!IS_TYPE(others[i]->child->shape,og_type))
+      continue;
+
+    results[matches++] = others[i];
+  }
+
+  return matches;
+}
+
+void WorldCheckGrid(ent_t *e,ent_t* owner){
+  ent_t* row_comp[GRID_WIDTH];
+  ent_t* row_results[GRID_WIDTH];
+  ent_t* col_comp[GRID_HEIGHT];
+  ent_t* col_results[GRID_HEIGHT];
+
+  int row_start = GridGetRow(owner->intgrid_pos.y,row_comp);
+  int col_start = GridGetCol(owner->intgrid_pos.x,col_comp);
+  int rowComb = GridCompare(owner,row_start,row_comp,row_results);
+  int colComb = GridCompare(owner,col_start,col_comp, col_results);
+
+  if(rowComb == GRID_WIDTH){
+    for(int i = 0; i < rowComb; i++)
+      SetState(row_results[i]->child,STATE_SCORE,NULL);
+  }
+  if(colComb == GRID_HEIGHT){
+    for(int i = 0; i < colComb; i++)
+      SetState(col_results[i]->child,STATE_SCORE,NULL);
+  }
+}
+
+bool CheckWorldGridAdjacent(ent_t* e, ent_t* other){
+
+  return is_adjacent(e->intgrid_pos,other->intgrid_pos);
+}
+
 int WorldGetEnts(ent_t** results,EntFilterFn fn, void* params){
   int num_results = 0;
   for(int i = 0; i < world.num_ent; i++){
@@ -53,39 +124,6 @@ int WorldGetEnts(ent_t** results,EntFilterFn fn, void* params){
   }
 
   return num_results;
-}
-
-Vector2 GetWorldCoordsFromIntGrid(Vector2 pos, float len){
-  int grid_x = (int)pos.x/CELL_WIDTH;
-  int grid_y = (int)pos.y/CELL_HEIGHT;
-
-  int grid_step = (int)len/CELL_WIDTH;
-
-  int start_x = CLAMP(grid_x - grid_step,1,GRID_WIDTH);
-  int start_y = CLAMP(grid_y - grid_step,1,GRID_HEIGHT);
-
-  int end_x = CLAMP(grid_x + grid_step,1,GRID_WIDTH);
-  int end_y = CLAMP(grid_y + grid_step,1,GRID_HEIGHT);
-
- 
- Cell candidates[GRID_WIDTH * GRID_HEIGHT];
- int count = 0;
-  for (int x = start_x; x < end_x; x++)
-    for(int y = start_y; y < end_y; y++){
-      if(world.intgrid[x][y])
-        continue;
-      if(distance(grid_x,grid_y,x,y) > len)
-        continue;
-
-      candidates[count++] = (Cell){x,y};
-    }
-
-  if (count == 0)
-    return VEC_UNSET;
-
-  int r = rand() % count;
-
-  return CellToVector2(candidates[r],CELL_WIDTH);
 }
 
 bool RegisterBehaviorTree(BehaviorData data){
@@ -108,10 +146,6 @@ ent_t* WorldGetEntById(unsigned int uid){
   }
 
   return NULL;
-}
-
-Rectangle WorldRoomBounds(){
-  return world.room_bounds;
 }
 
 int RemoveSprite(int index){
@@ -237,10 +271,17 @@ void WorldPostUpdate(){
 
 void InitWorld(world_data_t data){
   world = (world_t){0};
+  float playX = (CELL_WIDTH/2)+VECTOR2_CENTER_SCREEN.x-(GRID_WIDTH*CELL_WIDTH)/2;
+  float playY = (CELL_HEIGHT/2)+VECTOR2_CENTER_SCREEN.y-(GRID_HEIGHT*CELL_HEIGHT)/2;
+  world.play_area =Rect(playX,playY,GRID_WIDTH*CELL_WIDTH,GRID_HEIGHT*CELL_HEIGHT);
   for(int x = 0; x < GRID_WIDTH; x++)
     for(int y = 0; y < GRID_HEIGHT; y++){
-      Vector2 pos = {CELL_WIDTH+x*CELL_WIDTH,CELL_HEIGHT+y*CELL_HEIGHT};
-      RegisterEnt(InitEntStatic(BASE_TILE,pos));
+      Vector2 pos = {x*CELL_WIDTH + world.play_area.x,y*CELL_HEIGHT+world.play_area.y};
+      ent_t* tile = InitEntStatic(BASE_TILE,pos);
+      tile->intgrid_pos = (Cell){x,y};
+      RegisterEnt(tile);
+      world.grid.combos[x][y] = malloc(sizeof(grid_combo_t));
+      world.grid.combos[x][y]->tile = tile;
     }
 
   for (int i = 0; i < data.num_ents; i++)
@@ -260,8 +301,6 @@ void FreeWorld(){
 }
 
 void WorldRender(){
-  DrawRectangleRec(world.room_bounds, BLACK);
-  
   for(int i = 0; i < world.num_spr;i++)
     if(world.sprs[i]->owner !=NULL)
       DrawSprite(world.sprs[i]);
