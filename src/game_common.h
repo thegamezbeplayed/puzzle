@@ -104,6 +104,7 @@ typedef enum{
   EVENT_SONG_END,
   EVENT_SONG_FADE_IN,
   EVENT_SONG_FADE_OUT,
+  EVENT_WAIT,
   EVENT_FINISH,
   EVENT_NONE,
   MAX_EVENTS
@@ -149,30 +150,4 @@ typedef enum{
   STATE_DIE,//<===== In MOST cases. Should not be able to go down from DIE
   STATE_END//sentinel entity state should never be this or greater
 }EntityState;
-
-typedef enum{
-  OBJECT_NONE,//if ent_t is properly initalized to {0} this is already set
-  OBJECT_INACTIVE,
-  OBJECT_LOAD,
-  OBJECT_START,//Should only be set after NONE
-  OBJECT_PAUSE,
-  OBJECT_RUN,
-  OBJECT_FINISH,
-  OBJECT_END//sentinel entity state should never be this or greater
-}ObjectState;
-
-typedef struct {
-  const char* name;
-  EntityState   state;
-}EntityStateAlias;
-
-static EntityStateAlias ent_state_alias[STATE_END] = {
-  {"STATE_IDLE",    STATE_IDLE},
-  {"STATE_SPAWN",   STATE_SPAWN},
-  {"STATE_DIE",     STATE_DIE},
-  {"STATE_END",     STATE_END} 
-};
-
-EntityState EntityStateLookup(const char* name);
-const char* EntityStateName(EntityState s);
 #endif

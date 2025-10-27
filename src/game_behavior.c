@@ -105,7 +105,7 @@ BehaviorStatus BehaviorSelectShape(behavior_params_t *params){
   if(e->child)
     return BEHAVIOR_SUCCESS;
 
-  ShapeID shape = SelectRandomShape(SHAPE_COLOR_NONE, SHAPE_TYPE_NONE);
+  ShapeID shape = SelectShapeFromRange(SHAPE_COLOR_NONE, SHAPE_TYPE_SQUARE,SHAPE_TYPE_STUD);
 
   EntSetOwner(InitEnt(GetObjectInstanceByShapeID(shape)),e,false,NULL);
 

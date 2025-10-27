@@ -21,8 +21,7 @@ void DrawTitleScreen(void)
   ClearBackground(RAYWHITE);
 
   DrawFPS(10, 10);
-  DrawNineSlice(NULL,VECTOR2_ZERO);
-  //UISync();
+  UISync();
   EndDrawing();
 }
 

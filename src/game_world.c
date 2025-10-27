@@ -65,7 +65,7 @@ int GridGetCol(int col,ent_t** out){
   return count;
 }
 
-int GridCompare(ent_t* start, int num_others, ent_t** others, ent_t** results){
+int GridCompare(ent_t* start, int num_others, ent_t** others, Cell** results){
   int matches = 0;
   ShapeFlags og_type = SHAPE_TYPE(start->child->shape);
   ShapeFlags og_col = SHAPE_COLOR(start->child->shape);
@@ -78,10 +78,22 @@ int GridCompare(ent_t* start, int num_others, ent_t** others, ent_t** results){
   }
   
   for(int i = 0; i<num_others;i++){
+
+    results[matches++]->x = 0;
+    results[matches]->y = 0;
     if(!IS_TYPE(others[i]->child->shape,og_type))
       continue;
 
-    results[matches++] = others[i];
+    results[matches]->x = 1;
+
+    if(IS_COLOR(others[i]->child->shape,og_col))
+      results[matches]->y=1;
+
+    if(IS_TYPE(others[i]->child->shape,bonus_type))
+      results[matches]->x*=1.5f;
+
+    if(IS_COLOR(others[i]->child->shape,bonus_col))
+      results[matches]->y*=1.5f;
   }
 
   return matches;
@@ -89,9 +101,9 @@ int GridCompare(ent_t* start, int num_others, ent_t** others, ent_t** results){
 
 void WorldCheckGrid(ent_t *e,ent_t* owner){
   ent_t* row_comp[GRID_WIDTH];
-  ent_t* row_results[GRID_WIDTH];
+  Cell* row_results[GRID_WIDTH];
   ent_t* col_comp[GRID_HEIGHT];
-  ent_t* col_results[GRID_HEIGHT];
+  Cell* col_results[GRID_HEIGHT];
 
   int row_start = GridGetRow(owner->intgrid_pos.y,row_comp);
   int col_start = GridGetCol(owner->intgrid_pos.x,col_comp);
@@ -99,12 +111,16 @@ void WorldCheckGrid(ent_t *e,ent_t* owner){
   int colComb = GridCompare(owner,col_start,col_comp, col_results);
 
   if(rowComb == GRID_WIDTH){
-    for(int i = 0; i < rowComb; i++)
-      SetState(row_results[i]->child,STATE_SCORE,NULL);
+    for(int i = 0; i < rowComb; i++){
+      world.grid.combos[row_comp[i]->intgrid_pos.x][row_comp[i]->intgrid_pos.y]->type_mul*=row_results[i]->x;
+      SetState(row_comp[i]->child,STATE_SCORE,EntAddPoints);
+    }
+    world.combo_mul+=.25f;
   }
   if(colComb == GRID_HEIGHT){
     for(int i = 0; i < colComb; i++)
-      SetState(col_results[i]->child,STATE_SCORE,NULL);
+      SetState(col_comp[i]->child,STATE_SCORE,EntAddPoints);
+    world.combo_mul+=.25f;
   }
 }
 
@@ -271,6 +287,7 @@ void WorldPostUpdate(){
 
 void InitWorld(world_data_t data){
   world = (world_t){0};
+  world.combo_mul=0.0f;
   float playX = (CELL_WIDTH/2)+VECTOR2_CENTER_SCREEN.x-(GRID_WIDTH*CELL_WIDTH)/2;
   float playY = (CELL_HEIGHT/2)+VECTOR2_CENTER_SCREEN.y-(GRID_HEIGHT*CELL_HEIGHT)/2;
   world.play_area =Rect(playX,playY,GRID_WIDTH*CELL_WIDTH,GRID_HEIGHT*CELL_HEIGHT);
@@ -427,15 +444,16 @@ void GameProcessEnd(){
 
 void AddPoints(float mul,float points, Vector2 pos){
   //TraceLog(LOG_INFO,"===Add %0.2f Points===",points*mul);
+  mul+=world.combo_mul;
   world.points+=mul*points;
 
   render_text_t *rt = malloc(sizeof(render_text_t));
   *rt = (render_text_t){
-    .text = strdup(TextFormat("x%d",(int)mul)),
+    .text = strdup(TextFormat("+%d",(int)(points*mul))),
     .pos = pos,
-    .size = 18,
+    .size = 24,
     .color =YELLOW,
-    .duration = (int)(39+mul*9)
+    .duration = (int)(45+mul*9)
   };
   AddFloatingText(rt);
 }

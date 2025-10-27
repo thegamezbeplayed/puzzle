@@ -24,4 +24,13 @@ static ShapeID SelectRandomShape(ShapeFlags color, ShapeFlags shape){
   return (ShapeID)(color | shape);
 }
 
+static ShapeID SelectShapeFromRange(ShapeFlags color, ShapeFlags start, ShapeFlags end){
+  if(color == SHAPE_COLOR_NONE)
+    color = ((rand() %2)+1) << 4;
+
+  ShapeFlags shape = (rand()%(int)end)+start;
+
+  return (ShapeID)(color | shape);
+
+}
 #endif

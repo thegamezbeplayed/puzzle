@@ -41,6 +41,7 @@ controller_t* InitController();
 typedef struct ent_s{
   int                   uid;
   ShapeID               shape;
+  int                   points;
   EntityType            type;
   Vector2               pos;
   Cell                  intgrid_pos;

@@ -46,7 +46,7 @@ static const ObjectInstance room_instances[SHAPE_COUNT] = {
   {SHAPE_GRAY_HEART,1},
 };
 
-static const TileInstance BASE_TILE = {BACKTILE_01,{[STATE_SPAWN]=BEHAVIOR_ACQUIRE_CHILD}};
+static const TileInstance BASE_TILE = {BACKTILE_01,{[STATE_EMPTY]=BEHAVIOR_ACQUIRE_CHILD,[STATE_SPAWN]=BEHAVIOR_ACQUIRE_CHILD}};
 
 typedef struct {
   BehaviorID           id;

@@ -151,7 +151,7 @@ typedef struct{
   grid_combo_t* combos[GRID_WIDTH][GRID_HEIGHT];
 }grid_manager_t;
 
-int GridCompare(ent_t* start, int num_others,ent_t** others, ent_t** results);
+int GridCompare(ent_t* start, int num_others,ent_t** others, Cell** results);
 int GridGetRow(int row, ent_t** out);
 int GridGetCol(int col, ent_t** out);
 
@@ -164,7 +164,8 @@ typedef struct world_s{
   unsigned int  num_spr;
   render_text_t *texts[MAX_EVENTS];
   bool          floatytext_used[MAX_EVENTS];
-  int           points;
+  float         points;
+  float         combo_mul;
 } world_t;
 
 ent_t* WorldGetEnt(const char* name);

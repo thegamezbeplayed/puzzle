@@ -61,7 +61,6 @@ typedef BehaviorStatus (*BehaviorTreeTickFunc)(behavior_tree_node_t* self, void*
 typedef struct behavior_params_s{
   struct ent_s*         owner;
   EntityState           state;
-  ObjectState           obj_state;
   EventType             event;
   CooldownCallback      eventFn;
   int                   duration;

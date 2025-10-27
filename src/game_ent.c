@@ -3,6 +3,8 @@
 #include "game_math.h"
 #include "game_process.h"
 
+MAKE_ADAPTER(StepState, ent_t*);
+
 ent_t* InitEnt(ObjectInstance data){
   ent_t* e = malloc(sizeof(ent_t));
   *e = (ent_t){0};  // zero initialize if needed
@@ -11,6 +13,9 @@ ent_t* InitEnt(ObjectInstance data){
   e->shape = data.id;
   e->sprite = InitSpriteByID(data.id,&shapedata);
   e->sprite->owner = e;
+
+  e->points = data.points;
+  e->events = InitEvents();
  
   SetState(e,STATE_SPAWN,NULL);
   return e;
@@ -31,31 +36,28 @@ ent_t* InitEntStatic(TileInstance data,Vector2 pos){
       continue;
     e->control->bt[i] = InitBehaviorTree(data.behaviors[i]);
   }
+  e->events = InitEvents();
 
   SetState(e,STATE_SPAWN,NULL);
   return e;
 }
 
 void EntAddPoints(ent_t *e,EntityState old, EntityState s){
-  //if(e->stats[STAT_POINTS].current <= 0)
-   // return;
-
-  //AddPoints(GetInteractions(e->lastdamage_sourceid)-1, e->stats[STAT_POINTS].current,e->pos);
-}
-
-bool EntKill(ent_t* e){
-  return SetState(e, STATE_DIE,NULL);
+  //TODO call function
+  //float mul = world.grid.combos[e->intgrid_pos.x][e->intgrid_pos.y]->type_mul;
+  AddPoints(1, e->points,e->pos);
 }
 
 void EntDestroy(ent_t* e){
-  if(!e || !SetState(e, STATE_END,EntAddPoints))
+  if(!e || !SetState(e, STATE_END,NULL))
     return;
- 
-  /*if(e->sprite!=NULL){
+
+  if(e->sprite!=NULL){
     e->sprite->owner = NULL;
     e->sprite->is_visible = false;
-  }*/
+  }
 
+  e->owner->child = NULL;
   e->control = NULL;
 }
 void EntPrepStep(ent_t* e){
@@ -84,6 +86,8 @@ void EntSync(ent_t* e){
   if(e->events)
     StepEvents(e->events);
 
+  if(e->type == ENT_TILE && !e->child)
+    SetState(e,STATE_EMPTY,NULL);
   if(!e->sprite)
     return;
 
@@ -124,8 +128,8 @@ bool SetState(ent_t *e, EntityState s,StateChangeCallback callback){
 
     if(callback!=NULL)
       callback(e,old,s);
-    else
-      OnStateChange(e,old,s);
+      
+    OnStateChange(e,old,s);
     return true;
   }
 
@@ -140,16 +144,7 @@ bool CanChangeState(EntityState old, EntityState s){
   if(old == s || old > STATE_END)
     return false;
 
-  switch (COMBO_KEY(old,s)){
-    case COMBO_KEY(STATE_NONE,!STATE_SPAWN):
-    case COMBO_KEY(!STATE_NONE,STATE_SPAWN):
-    case COMBO_KEY(!STATE_DIE,STATE_END):
-      return false;
-      break;
-    default:
-      return true;
-      break;
-  }
+  return true;
 } 
 
 void OnStateChange(ent_t *e, EntityState old, EntityState s){
@@ -164,10 +159,12 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s){
 
   switch(s){
     case STATE_DIE:
-      AudioPlayRandomSfx(SFX_ACTION,ACTION_BOOM);
+      EntDestroy(e);
       break;
     case STATE_SCORE:
-      TraceLog(LOG_INFO,"Scored at [%i,%i]",e->intgrid_pos.x,e->intgrid_pos.y);
+      cooldown_t* spawner = InitCooldown(3,EVENT_WAIT,StepState_Adapter,e);
+      AddEvent(e->events, spawner);
+
     default:
       break;
   }

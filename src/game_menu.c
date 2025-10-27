@@ -34,6 +34,20 @@ void InitUI(){
   strcpy(playBtn->text, "PLAY");
   playBtn->cb[ELEMENT_ACTIVATED] = GameTransitionScreen;
   ElementAddChild(ui.menus[MENU_MAIN].element,playBtn);
+
+ ui_element_t *hudPane = InitElement("HUD_PANE",UI_PANEL,VECTOR2_ZERO,VECTOR2_ZERO,ALIGN_CENTER,LAYOUT_HORIZONTAL);
+
+  ui.menus[MENU_HUD] = InitMenu(MENU_HUD,VECTOR2_ZERO,VECTOR2_ZERO,ALIGN_CENTER,LAYOUT_VERTICAL,false);
+
+  ui_element_t *scoreBox = InitElement("SCORE_BAR",UI_STATUSBAR,VECTOR2_ZERO, XS_PANEL_THIN_SIZE,0,0);
+  strcpy(scoreBox->text, "SCORE");
+
+  ui_element_t *scoreText = InitElement("POINT_BAR",UI_STATUSBAR,VECTOR2_ZERO,XS_PANEL_THIN_SIZE,0,0);
+  scoreText->get_val = GetDisplayPoints;
+  ElementAddChild(hudPane,scoreBox);
+  ElementAddChild(hudPane,scoreText);
+ ElementAddChild(ui.menus[MENU_HUD].element,hudPane);
+
 }
 
 ui_menu_t InitMenu(MenuId id,Vector2 pos, Vector2 size, UIAlignment align,UILayout layout, bool modal){

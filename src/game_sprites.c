@@ -105,8 +105,8 @@ void DrawNineSlice(scaling_slice_t *spr, Vector2 position){
     }
 
     Rectangle dst = {
-      position.x+spr->offsets[i].x,
-      position.y+spr->offsets[i].y,
+      position.x,
+      position.y,
       slice->bounds.width * wscale,
       slice->bounds.height * hscale
     };
