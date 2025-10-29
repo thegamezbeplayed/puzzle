@@ -39,11 +39,26 @@ void InitUI(){
 
   ui.menus[MENU_HUD] = InitMenu(MENU_HUD,VECTOR2_ZERO,VECTOR2_ZERO,ALIGN_CENTER,LAYOUT_VERTICAL,false);
 
-  ui_element_t *scoreBox = InitElement("SCORE_BAR",UI_STATUSBAR,VECTOR2_ZERO, XS_PANEL_THIN_SIZE,0,0);
+   ui_element_t *turnBox = InitElement("TURN_BAR",UI_STATUSBAR,VECTOR2_ZERO, XS_PANEL_THIN_SIZE,0,0);
+  strcpy(turnBox->text, "TURN");
+
+   ui_element_t *comboBox = InitElement("COMBO_BAR",UI_STATUSBAR,VECTOR2_ZERO, XS_PANEL_THIN_SIZE,0,0);
+  strcpy(comboBox->text, "COMBO");
+
+ ui_element_t *scoreBox = InitElement("SCORE_BAR",UI_STATUSBAR,VECTOR2_ZERO, XS_PANEL_THIN_SIZE,0,0);
   strcpy(scoreBox->text, "SCORE");
+   ui_element_t *turnText = InitElement("TURN_BAR",UI_STATUSBAR,VECTOR2_ZERO,XS_PANEL_THIN_SIZE,0,0);
+  turnText->get_val = GetDisplayTurn;
+
+ ui_element_t *comboText = InitElement("STREAK_BAR",UI_STATUSBAR,VECTOR2_ZERO,XS_PANEL_THIN_SIZE,0,0);
+  comboText->get_val = GetDisplayCombo;
 
   ui_element_t *scoreText = InitElement("POINT_BAR",UI_STATUSBAR,VECTOR2_ZERO,XS_PANEL_THIN_SIZE,0,0);
   scoreText->get_val = GetDisplayPoints;
+  ElementAddChild(hudPane,turnBox);
+  ElementAddChild(hudPane,turnText);
+  ElementAddChild(hudPane,comboBox);
+  ElementAddChild(hudPane,comboText);
   ElementAddChild(hudPane,scoreBox);
   ElementAddChild(hudPane,scoreText);
  ElementAddChild(ui.menus[MENU_HUD].element,hudPane);
@@ -311,6 +326,22 @@ ElementValue GetDisplayPoints(void){
   ev.type = VAL_CHAR;
   ev.c = GetPoints();
   return ev;
+}
+
+ElementValue GetDisplayTurn(void){
+  ElementValue ev = {0};
+  ev.type = VAL_CHAR;
+  ev.c = GetTurn();
+  return ev;
+
+}
+
+ElementValue GetDisplayCombo(void){
+  ElementValue ev = {0};
+  ev.type = VAL_CHAR;
+  ev.c = GetComboStreak();
+  return ev;
+
 }
 
 ElementValue GetDisplayTime(void){

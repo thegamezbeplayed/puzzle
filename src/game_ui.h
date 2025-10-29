@@ -143,11 +143,10 @@ bool UICloseOwner(ui_element_t* e);
 struct ui_menu_s;
 typedef bool (*MenuCallback)(struct ui_menu_s* self);
 
+ElementValue GetDisplayTurn(void);
 ElementValue GetDisplayPoints(void);
 ElementValue GetDisplayTime(void);
-ElementValue GetDisplayWave(void);
-ElementValue GetDisplayHealth(void);
-
+ElementValue GetDisplayCombo(void);
 typedef struct ui_menu_s{
   ui_element_t  *element;
   MenuCallback  cb[MENU_END];

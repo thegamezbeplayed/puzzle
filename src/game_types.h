@@ -31,6 +31,7 @@ typedef struct bounds_s {
 
 typedef struct{
   ent_t*                  target;
+  int                     moves;
   Vector2                 destination;
   bool                    has_arrived;
   behavior_tree_node_t*   bt[STATE_END];
@@ -41,7 +42,7 @@ controller_t* InitController();
 typedef struct ent_s{
   int                   uid;
   ShapeID               shape;
-  int                   points;
+  float                 points;
   EntityType            type;
   Vector2               pos;
   Cell                  intgrid_pos;
@@ -72,6 +73,7 @@ bool SetState(ent_t *e, EntityState s,StateChangeCallback callback);
 void StepState(ent_t *e);
 void OnStateChange(ent_t *e, EntityState old, EntityState s);
 bool CanChangeState(EntityState old, EntityState s);
+void ReduceMoveCount(ent_t *e, ent_t* old, ent_t* owner);
 
 typedef void (*OwnerChangeCallback)(ent_t *e, ent_t* old, ent_t* owner);
 void EntOnOwnerChange(ent_t *e, ent_t* old, ent_t* owner);

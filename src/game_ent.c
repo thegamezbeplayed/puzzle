@@ -14,9 +14,11 @@ ent_t* InitEnt(ObjectInstance data){
   e->sprite = InitSpriteByID(data.id,&shapedata);
   e->sprite->owner = e;
 
-  e->points = data.points;
+  e->points = 4;//data.points;
   e->events = InitEvents();
- 
+
+ e->control = InitController();
+ e->control->moves = 2;
   SetState(e,STATE_SPAWN,NULL);
   return e;
 }
@@ -43,8 +45,7 @@ ent_t* InitEntStatic(TileInstance data,Vector2 pos){
 }
 
 void EntAddPoints(ent_t *e,EntityState old, EntityState s){
-  //TODO call function
-  //float mul = world.grid.combos[e->intgrid_pos.x][e->intgrid_pos.y]->type_mul;
+  float mul = WorldGetGridCombo(e->intgrid_pos);
   AddPoints(1, e->points,e->pos);
 }
 
@@ -170,23 +171,34 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s){
   }
 }
 
+void ReduceMoveCount(ent_t *e, ent_t* old, ent_t* owner){
+  e->control->moves--;
+  e->points*=.5f;
+}
+
 void EntChangeOccupant(ent_t* e, ent_t* owner){
   ent_t* tenant = owner->child;
   ent_t* old = e->owner;
 
-  if(!EntSetOwner(e,owner,true,NULL))
+  if(!EntSetOwner(e,owner,true,ReduceMoveCount))
     return;
   
   if(!tenant)
     return;
 
-  if(!EntSetOwner(tenant,old,false,NULL)){
+  if(!EntSetOwner(tenant,old,false,ReduceMoveCount)){
     EntSetOwner(e,old,true,NULL);
     return;
   }
 
-  WorldCheckGrid(e,owner);
-  WorldCheckGrid(tenant,old);
+  TurnSetState(TURN_CALC);
+  bool scored = WorldCheckGrid(e,owner);
+  scored = WorldCheckGrid(tenant,old)||scored;
+
+  if(scored)
+    TurnSetState(TURN_SCORE);
+  else
+    TurnSetState(TURN_END);
 }
 
 void EntOnOwnerChange(ent_t *e, ent_t* old, ent_t* owner){

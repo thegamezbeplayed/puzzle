@@ -132,8 +132,11 @@ void GameProcessEnd();
 
 void AddPoints(float mul,float points,Vector2 pos);
 int GetPointsInt();
+int GetComboInt();
 const char* GetPoints();
+const char* GetTurn();
 const char* GetGameTime();
+const char* GetComboStreak();
 //===WORLD_T===>
 
 typedef struct{
@@ -147,13 +150,27 @@ typedef struct{
   float       color_mul,type_mul;
 }grid_combo_t;
 
+typedef enum{
+  TURN_START,
+  TURN_CALC,
+  TURN_SCORE,
+  TURN_END
+}TurnState;
+
 typedef struct{
+  TurnState     state;
+  int           turn;
+  int           turn_connections;
   grid_combo_t* combos[GRID_WIDTH][GRID_HEIGHT];
 }grid_manager_t;
 
-int GridCompare(ent_t* start, int num_others,ent_t** others, Cell** results);
+int GridCompare(ent_t* start, int num_others,ent_t** others, Cell* results);
 int GridGetRow(int row, ent_t** out);
 int GridGetCol(int col, ent_t** out);
+
+bool TurnSetState(TurnState state);
+bool TurnCanChangeState(TurnState state);
+void TurnOnChangeState(TurnState state);
 
 typedef struct world_s{
   grid_manager_t grid;
@@ -165,13 +182,18 @@ typedef struct world_s{
   render_text_t *texts[MAX_EVENTS];
   bool          floatytext_used[MAX_EVENTS];
   float         points;
+  ShapeFlags    max_shape;
+  int           combo_streak;
   float         combo_mul;
 } world_t;
 
 ent_t* WorldGetEnt(const char* name);
+ShapeFlags WorldGetPossibleShape();
 ent_t* WorldGetEntById(unsigned int uid);
+float WorldGetGridCombo(Cell intgrid);
 int WorldGetEnts(ent_t** results,EntFilterFn fn, void* params);
-void WorldCheckGrid(ent_t *e, ent_t* owner);
+bool WorldCheckGrid(ent_t *e, ent_t* owner);
+void WorldCalcGrid();
 bool RegisterEnt( ent_t *e);
 bool RegisterSprite(sprite_t *s);
 void WorldInitOnce();

@@ -58,6 +58,8 @@ ent_t* ScreenEntMouseCollision(void){
     return NULL;
 
   for(int i = 0; i < num_shapes; i++){
+    if(shape_pool[i]->control->moves<1)
+      continue;
     if(CheckEntPosition(shape_pool[i],mousectrl.pos))
       return shape_pool[i];
   }

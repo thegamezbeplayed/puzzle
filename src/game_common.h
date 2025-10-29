@@ -138,6 +138,37 @@ void StepEvents(events_t* pool);
 void StartEvent(events_t* pool, EventType type);
 void ResetEvent(events_t* pool, EventType type);
 bool CheckEvent(events_t* pool, EventType type);
+typedef enum{
+  STAT_POINTS,
+  STAT_TURNS,
+  STAT_COLOR_MUL,
+  STAT_TYPE_MUL,
+  STAT_BLANK
+}StatType;
+
+struct stat_s;
+typedef struct stat_s stat_t;
+typedef bool (*StatOwnerCallback)(struct ent_s* owner);
+typedef void (*StatCallback)(struct ent_s* owner, float old, float cur);
+typedef float (*StatGetter)(stat_t* self);
+typedef struct stat_s{
+  StatType  attribute;
+  float     min;
+  float     max;
+  float     current;
+  float     increment;
+  StatGetter ratio;
+  StatCallback on_stat_change;
+  StatOwnerCallback on_stat_empty;
+} stat_t;
+
+stat_t InitStatOnMax(StatType attr, float val);
+stat_t InitStatEmpty(void);
+void InitStats(stat_t stats[STAT_BLANK]);
+bool StatChangeValue(struct ent_s* owner, stat_t* attr, float val);
+void StatMaxOut(stat_t* s);
+float StatGetRatio(stat_t *self);
+//<====STATS
 
 typedef enum{
   STATE_NONE,//if ent_t is properly initalized to {0} this is already set
