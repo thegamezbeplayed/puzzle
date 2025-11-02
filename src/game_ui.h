@@ -45,8 +45,9 @@ typedef enum{
   ELEMENT_HIDDEN,
   ELEMENT_IDLE,
   ELEMENT_FOCUSED,
+  ELEMENT_ACTIVATE,
+  ELEMENT_TOGGLE,
   ELEMENT_ACTIVATED,
-  ELEMENT_TOGGLED,
   ELEMENT_DONE
 }ElementState;
 
@@ -138,6 +139,7 @@ typedef struct ui_element_s{
 
 ui_element_t* InitElement(const char* name, ElementType type, Vector2 pos, Vector2 size, UIAlignment align,UILayout layout);
 ui_element_t* GetElement(const char* name);
+void ElementStepState(ui_element_t* e, ElementState s);
 bool ElementSetState(ui_element_t* e, ElementState s);
 void ElementAddChild(ui_element_t *o, ui_element_t* c);
 void UISyncElement(ui_element_t* e);

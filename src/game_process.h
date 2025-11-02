@@ -201,10 +201,12 @@ typedef struct world_s{
   bool          floatytext_used[MAX_EVENTS];
   float         points;
   ShapeFlags    max_shape;
+  ShapeFlags    max_color;
   int           combo_streak;
   float         combo_mul;
 } world_t;
 
+Cell WorldGetMaxShapes();
 ent_t* WorldGetEnt(const char* name);
 ShapeFlags WorldGetPossibleShape();
 ent_t* WorldGetEntById(unsigned int uid);

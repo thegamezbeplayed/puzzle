@@ -29,7 +29,7 @@ void InitUI(void){
 
   ui_element_t *resumeBtn = InitElement("RESUME_BTN",UI_BUTTON,VECTOR2_ZERO,DEFAULT_BUTTON_SIZE,0,0); 
   strcpy(resumeBtn->text, "RESUME");
-  resumeBtn->cb[ELEMENT_ACTIVATED] = UICloseOwner;
+  resumeBtn->cb[ELEMENT_ACTIVATE] = UICloseOwner;
   ElementAddChild(ui.menus[MENU_PAUSE].element,resumeBtn);
   ui.menus[MENU_MAIN] = InitMenu(MENU_MAIN,VECTOR2_ZERO,DEFAULT_MENU_SIZE,ALIGN_CENTER|ALIGN_MID,LAYOUT_VERTICAL,false);
 
@@ -40,7 +40,7 @@ void InitUI(void){
   ui_element_t *playBtn = InitElement("PLAY_BTN",UI_BUTTON,VECTOR2_ZERO,DEFAULT_BUTTON_SIZE,ALIGN_CENTER|ALIGN_MID,0); 
   playBtn->texture = InitScalingElement(ELEMENT_BUTTON_GRAY);
   strcpy(playBtn->text, "PLAY");
-  playBtn->cb[ELEMENT_ACTIVATED] = UITransitionScreen;
+  playBtn->cb[ELEMENT_ACTIVATE] = UITransitionScreen;
   ElementAddChild(ui.menus[MENU_MAIN].element,playBtn);
 
   strcpy(turnBox->text, "TURN");
@@ -94,7 +94,7 @@ void InitUI(void){
   ui_element_t *recapBtn = InitElement("RECAP_BTN",UI_BUTTON,VECTOR2_ZERO,DEFAULT_BUTTON_SIZE,ALIGN_CENTER|ALIGN_MID,0); 
   recapBtn->texture =  InitScalingElement(ELEMENT_PANEL_GRAY_WIDE);
   strcpy(recapBtn->text, "CONTINUE");
-  recapBtn->cb[ELEMENT_ACTIVATED] = UITransitionScreen;
+  recapBtn->cb[ELEMENT_ACTIVATE] = UITransitionScreen;
 
   ElementAddChild(endScore,pointsBox);
   ElementAddChild(endScore,pointsText);
@@ -106,7 +106,8 @@ void InitUI(void){
   ui.menus[MENU_EXIT].element->texture = InitScalingElement(ELEMENT_ERROR_WIDE);
   ui_element_t *endBtn = InitElement("END_BTN",UI_BUTTON,VECTOR2_ZERO,DEFAULT_BUTTON_SIZE,ALIGN_CENTER|ALIGN_MID,0);
   strcpy(endBtn->text,"GAME OVER");
-  endBtn->cb[ELEMENT_ACTIVATED] = UITransitionScreen;
+  endBtn->cb[ELEMENT_ACTIVATE] = UITransitionScreen;
+  endBtn->cb[ELEMENT_ACTIVATED] = UICloseOwner;
   ElementAddChild(ui.menus[MENU_EXIT].element,endBtn);
 
 
@@ -291,7 +292,10 @@ void UISync(void){
 void UISyncMenu(ui_menu_t* m){
   if(m->state < MENU_ACTIVE)
     return;
-    
+
+  if(!m->element->menu )
+    m->element->menu = m; 
+
   UISyncElement(m->element);
 
   if(IsKeyPressed(KEY_ESCAPE)){
@@ -301,6 +305,9 @@ void UISyncMenu(ui_menu_t* m){
 }
 
 void UISyncElement(ui_element_t* e){
+  if(!e->menu && e->owner)
+    e->menu = e->owner->menu;
+
   if(e->state < ELEMENT_IDLE)
     return;
 
@@ -336,13 +343,16 @@ void UISyncElement(ui_element_t* e){
   }
 
    if(clicked>0)
-    e->cb[ELEMENT_ACTIVATED](e);
+    ElementSetState(e,ELEMENT_ACTIVATE);
 
   for(int i = 0; i<e->num_children; i++)
     UISyncElement(e->children[i]);
 }
 
 bool UICloseOwner(ui_element_t* e){
+  if(!e->menu)
+    return false;
+
   return UICloseMenu(e->menu);
 }
 
@@ -401,8 +411,25 @@ bool MenuSetState(ui_menu_t* m, MenuState s){
   return true;
 }
 
+bool ElementCanChangeState(ElementState old, ElementState s){
+  if(old == s)
+    return false;
+
+  return true;
+}
+
+void ElementStepState(ui_element_t* e, ElementState s){
+  if(s > ELEMENT_FOCUSED && s < ELEMENT_ACTIVATED)
+    ElementSetState(e,ELEMENT_ACTIVATED);
+}
+
 bool ElementSetState(ui_element_t* e, ElementState s){
+  if(!ElementCanChangeState(e->state, s))
+    return false;
+  
   e->state = s;
+  if(e->cb[s](e))
+    ElementStepState(e,s);
 
   return true;
 }

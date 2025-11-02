@@ -159,8 +159,8 @@ static ShapeID SelectHelpfulShape(){
       shapes[i]*=shapes[i];
     }
   }
-
-  ShapeFlags color = ((rand() %2)+1) << 4;
+  Cell maxes = WorldGetMaxShapes();
+  ShapeFlags color = ((rand() %maxes.y)+1)<<4;
   ShapeFlags shape = SelectWeightedIndex(shapes,num_shapes);
 
   if(shape<1)

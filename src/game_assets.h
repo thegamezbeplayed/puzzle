@@ -15,6 +15,21 @@ struct ent_s;
 void InitResources();
 
 typedef enum{
+  ANIM_NONE,
+  ANIM_IDLE,
+  ANIM_BOUNCE,
+  ANIM_RETURN,
+  ANIM_DONE,
+  ANIM_COUNT
+}AnimState;
+
+typedef struct{
+  int duration;
+  int elapsed;
+
+}anim_t;
+
+typedef enum{
   TILES,
   SHAPES,
 }SheetID;
@@ -243,6 +258,8 @@ void SpriteLoadSlicedTextures();
 //SPRITE_T===>
 typedef struct {
   int             suid;
+  AnimState       state;
+  anim_t          *anim;
   Texture2D       *sheet;
   sprite_slice_t* slice;
   gl_shader_t*    gls[SHADER_DONE];
@@ -262,5 +279,9 @@ scaling_slice_t* InitScalingElement(ElementID id);
 bool FreeSprite(sprite_t* s);
 void DrawSprite(sprite_t* s);
 void DrawSpriteAtPos(sprite_t*s , Vector2 pos);
+void SpriteSync(sprite_t *spr);
+bool SpriteSetAnimState(sprite_t* spr, AnimState s);
+bool SpriteCanChangeState(AnimState old, AnimState s);
+void SpriteAnimate(sprite_t *spr);
 //====SPRITE_T>>
 #endif

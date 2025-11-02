@@ -5,6 +5,7 @@
 #include "asset_ui.h"
 #include "asset_sprites.h"
 #include "asset_shapes.h"
+#include "game_types.h"
 
 sprite_sheet_data_t shapedata;
 sprite_sheet_data_t tiledata;
@@ -36,8 +37,11 @@ void InitResources(){
 
 sprite_t* InitSpriteByID(int id, sprite_sheet_data_t* data){
   sprite_t* spr =malloc(sizeof(sprite_t));
-  memset(spr,0,sizeof(sprite_t));
+  spr->anim = malloc(sizeof(anim_t));
+//  memset(spr,0,sizeof(sprite_t));
 
+  spr->state = ANIM_IDLE;
+  spr->anim->duration = 67;
   for (int i = 0; i < data->num_sprites; i++){
     if(data->sprites[i]->id != id)
       continue;
@@ -47,6 +51,7 @@ sprite_t* InitSpriteByID(int id, sprite_sheet_data_t* data){
 
     spr->slice->scale = SPRITE_SCALE;
   }
+  
   return spr;
 
 }
@@ -72,10 +77,89 @@ scaling_slice_t* InitScalingElement(ElementID id){
   return el;
 }
 
+void SpriteSync(sprite_t *spr){
+  if(!spr->anim)
+    return;
+
+  switch(spr->owner->state){
+    case STATE_IDLE:
+      SpriteSetAnimState(spr, ANIM_BOUNCE);
+      break;
+    default:
+      break;
+  }
+
+  SpriteAnimate(spr);
+}
+
+void SpriteOnAnimChange(sprite_t* spr, AnimState old, AnimState s){
+  spr->anim->elapsed = 0;
+  
+  switch(COMBO_KEY(old,s)){
+    case COMBO_KEY(ANIM_BOUNCE,ANIM_DONE):
+      SpriteSetAnimState(spr, ANIM_RETURN);
+      break;
+    case COMBO_KEY(ANIM_RETURN,ANIM_DONE):
+      SpriteSetAnimState(spr, ANIM_BOUNCE);
+      break;
+    default:
+      break;
+  }
+}
+
+bool SpriteCanChangeState(AnimState old, AnimState s){
+  if(old == s)
+    return false;
+
+  switch(COMBO_KEY(old,s)){
+    case COMBO_KEY(ANIM_DONE,ANIM_BOUNCE):
+    case COMBO_KEY(ANIM_DONE,ANIM_RETURN):
+    case COMBO_KEY(ANIM_IDLE,ANIM_BOUNCE):
+    case COMBO_KEY(ANIM_BOUNCE,ANIM_DONE):
+    case COMBO_KEY(ANIM_RETURN,ANIM_DONE):
+      return true;
+      break;
+    default:
+      return false;
+      break;
+  }
+}
+
+bool SpriteSetAnimState(sprite_t* spr, AnimState s){
+  if(!SpriteCanChangeState(spr->state, s))
+    return false;
+
+  AnimState old = spr->state;
+  spr->state = s;
+  
+  SpriteOnAnimChange(spr,old,s);
+}
+
+void SpriteAnimate(sprite_t *spr){
+  if(spr->state <= ANIM_IDLE)
+    return;
+
+  spr->anim->elapsed++;
+  float height = (spr->owner->control->moves-1) *9.9f;
+  switch(spr->state){
+    case ANIM_BOUNCE:
+      spr->offset.y=EaseLinearOut(spr->anim->elapsed, 0.0f,-height,spr->anim->duration);
+      break;
+    case ANIM_RETURN:
+     spr->offset.y=EaseLinearIn(spr->anim->elapsed,-height, height, spr->anim->duration);
+     break;
+  }
+
+  if(spr->anim->elapsed >= spr->anim->duration)
+    SpriteSetAnimState(spr, ANIM_DONE);
+
+}
+
 void DrawSlice(sprite_t *spr, Vector2 position,float rot){
   sprite_slice_t* slice = spr->slice; 
   Rectangle src = slice->bounds;
 
+  position = Vector2Add(position,spr->offset);
   Rectangle dst = {
     position.x,
     position.y,
@@ -150,11 +234,11 @@ void DrawNineSlice(scaling_slice_t *spr, Rectangle dst){
 bool FreeSprite(sprite_t* s){
   if(!s) return false;
 
-  /*if(s->slice)
-    free(s->slice);
-    */
-  for(int i = 0; i<SHADER_DONE;i++)
-    free(s->gls[i]);
+  if(s->anim)
+    free(s->anim);
+    
+  //for(int i = 0; i<SHADER_DONE;i++)
+    //free(s->gls[i]);
 
   free(s);
   return true;

@@ -108,6 +108,10 @@ float WorldGetGridCombo(Cell intgrid){
   return grid->color_mul + grid->type_mul;
 }
 
+Cell WorldGetMaxShapes(){
+  return (Cell){world.max_shape,world.max_color};
+}
+
 int WorldGetShapeSums(int* out){
   for (int x = 0; x < GRID_WIDTH; x++){
     for (int y = 0; y < GRID_HEIGHT; y++){
@@ -220,7 +224,9 @@ void TurnOnChangeState(TurnState state){
       break;
     case TURN_START:
       world.grid.turn++;
-      if(world.grid.turn%15==0)
+      if(world.grid.turn%21==0)
+        world.max_color++;
+      if(world.grid.turn%33==0)
         world.max_shape++;
       world.grid.turn_connections = 0;
       if(!WorldTestGrid())
@@ -396,6 +402,10 @@ void WorldInitOnce(){
 
 void WorldPreUpdate(){
   InteractionStep();
+  
+  for(int i = 0; i < world.num_spr; i++){
+    SpriteSync(world.sprs[i]);
+  }
 }
 
 void WorldFixedUpdate(){
@@ -450,6 +460,7 @@ void InitWorld(world_data_t data){
   world.combo_streak = 0;
   world.combo_mul=0.0f;
   world.max_shape = SHAPE_TYPE_STUD;
+  world.max_color = 2;
 
   TraceLog(LOG_INFO,"Screen Width %02f",+VECTOR2_CENTER_SCREEN.x);
   float playX = (CELL_WIDTH/2)+VECTOR2_CENTER_SCREEN.x-(GRID_WIDTH*CELL_WIDTH)/2;

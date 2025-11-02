@@ -2,6 +2,7 @@
 #define __GAME_MATH__
 #include <raylib.h>
 #include <raymath.h>
+#include "reasings.h"
 
 #define CLAMP(x, low, high) (((x) < (low)) ? (low) : (((x) > (high)) ? (high) : (x)))
 #define CLAMPF(val, min, max) ((val) < (min) ? (min) : ((val) > (max) ? (max) : (val)))
