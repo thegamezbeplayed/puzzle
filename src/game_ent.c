@@ -14,7 +14,7 @@ ent_t* InitEnt(ObjectInstance data){
   e->sprite = InitSpriteByID(data.id,&shapedata);
   e->sprite->owner = e;
 
-  e->points = 4;//data.points;
+  e->stats[STAT_POINTS] = InitStatOnMin(STAT_POINTS,(int)WorldGetPossibleShape()-2,10);
   e->events = InitEvents();
 
  e->control = InitController();
@@ -46,7 +46,7 @@ ent_t* InitEntStatic(TileInstance data,Vector2 pos){
 
 void EntAddPoints(ent_t *e,EntityState old, EntityState s){
   float mul = WorldGetGridCombo(e->intgrid_pos);
-  AddPoints(1, e->points,e->pos);
+  AddPoints(1, e->stats[STAT_POINTS]->current,e->pos);
 }
 
 void EntDestroy(ent_t* e){
@@ -122,6 +122,10 @@ void SetViableTile(ent_t* e, EntityState old, EntityState s){
   }
 }
 
+void EntToggleTooltip(ent_t* e){
+  TraceLog(LOG_INFO,"Ent %i moves left %i",e->uid,e->control->moves);
+}
+
 bool SetState(ent_t *e, EntityState s,StateChangeCallback callback){
   if(CanChangeState(e->state,s)){
     EntityState old = e->state;
@@ -150,7 +154,10 @@ bool CanChangeState(EntityState old, EntityState s){
 
 void OnStateChange(ent_t *e, EntityState old, EntityState s){
   switch(old){
-    case STATE_SPAWN:
+    case STATE_HOVER:
+      EntToggleTooltip(e);
+      break;
+     case STATE_SPAWN:
       if(e->sprite)
         e->sprite->is_visible = true;
       break;
@@ -159,6 +166,9 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s){
   }
 
   switch(s){
+    case STATE_HOVER:
+      EntToggleTooltip(e);
+      break;
     case STATE_DIE:
       TraceLog(LOG_INFO,"destroy shape %i",e->uid);
       EntDestroy(e);
@@ -174,7 +184,7 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s){
 
 void ReduceMoveCount(ent_t *e, ent_t* old, ent_t* owner){
   e->control->moves--;
-  e->points*=.5f;
+  StatIncrementValue(e->stats[STAT_POINTS],false);
 }
 
 void EntChangeOccupant(ent_t* e, ent_t* owner){

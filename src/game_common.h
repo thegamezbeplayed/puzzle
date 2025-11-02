@@ -65,6 +65,7 @@ typedef enum {
     SHAPE_COLOR_RED    = 0x40,
     // ... add more if needed
 
+    SHAPE_COLOR_MAX    =0x50,
     SHAPE_COLOR_MASK   = 0xF0,
 
     // Shapes (low nibble)
@@ -80,6 +81,7 @@ typedef enum {
     SHAPE_TYPE_CIRCLE   = 0x09,
     SHAPE_TYPE_HEART    = 0x0A,
 
+    SHAPE_TYPE_MAX     = 0x0B,
     SHAPE_TYPE_MASK     = 0x0F,
 } ShapeFlags;
 
@@ -176,8 +178,12 @@ bool CheckEvent(events_t* pool, EventType type);
 typedef enum{
   STAT_POINTS,
   STAT_TURNS,
+  STAT_ENT,
+  STAT_MAX_COLOR,
+  STAT_MAX_TYPE,
   STAT_COLOR_MUL,
   STAT_TYPE_MUL,
+  STAT_COMBO_MUL,
   STAT_BLANK
 }StatType;
 
@@ -196,11 +202,14 @@ typedef struct stat_s{
   StatOwnerCallback on_stat_empty;
 } stat_t;
 
+stat_t* InitStatOnMin(StatType attr, float min, float max);
 stat_t InitStatOnMax(StatType attr, float val);
 stat_t InitStatEmpty(void);
 void InitStats(stat_t stats[STAT_BLANK]);
+bool StatIncrementValue(stat_t* attr,bool increase);
 bool StatChangeValue(struct ent_s* owner, stat_t* attr, float val);
 void StatMaxOut(stat_t* s);
+void StatEmpty(stat_t* s);
 float StatGetRatio(stat_t *self);
 //<====STATS
 
@@ -210,6 +219,7 @@ typedef enum{
   STATE_EMPTY,
   STATE_IDLE, //should be able to move freely between these ==>
   STATE_SELECTED,
+  STATE_HOVER,
   STATE_CALCULATING,
   STATE_PLACED,
   STATE_SCORE,

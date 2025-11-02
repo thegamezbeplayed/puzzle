@@ -8,18 +8,10 @@
 #include "game_math.h"
 #include "game_tools.h"
 
-#define GRAVITY 0.65f
-#define MAX_VELOCITY  64.0f
-#define TERMINAL_VELOCITY 7.0f
 #define GRID_SIZE 128
 #define GRID_STEP 32
 
 #define MAX_ENTS 128  
-#define MAX_SPAWNS 8  
-#define MAX_ATTACKS 8
-
-#define RATIO(s) ((s).ratio(&(s)))
-
 typedef struct bounds_s {
   Vector2     pos,offset;
   float       radius;
@@ -40,7 +32,7 @@ controller_t* InitController();
 typedef struct ent_s{
   int                   uid;
   ShapeID               shape;
-  float                 points;
+  stat_t*               stats[STAT_ENT];
   EntityType            type;
   Vector2               pos;
   Cell                  intgrid_pos;
@@ -54,6 +46,8 @@ typedef struct ent_s{
 
 ent_t* InitEnt(ObjectInstance data);
 ent_t* InitEntStatic(TileInstance data,Vector2 pos);
+
+void EntToggleTooltip(ent_t* e);
 
 void EntSync(ent_t* e);
 bool EntKill(ent_t* e);

@@ -34,8 +34,7 @@ void ScreenSyncMouse(void){
     else
       mousectrl.is_dragging =false;
   }
-
-  if(IsMouseButtonReleased(MOUSE_LEFT_BUTTON)){
+  else if(IsMouseButtonReleased(MOUSE_LEFT_BUTTON)){
     if(mousectrl.target){
 
       SetState(mousectrl.target,STATE_PLACED,SetViableTile);
@@ -43,7 +42,17 @@ void ScreenSyncMouse(void){
     }
     ClearMouse(); 
   }
+  /*else{
+    ent_t* hover = ScreenEntMouseCollision();
+    if(mousectrl.hover && mousectrl.hover != hover){
+      SetState(mousectrl.hover,STATE_IDLE,NULL);
+    }
 
+    mousectrl.hover = hover;;
+    if(mousectrl.hover)
+      SetState(mousectrl.hover,STATE_HOVER,NULL);
+  }
+*/
   if(mousectrl.is_dragging){
     SetState(mousectrl.target,STATE_SELECTED,NULL);
     EntSetPos(mousectrl.target, Vector2Add(mousectrl.pos,mousectrl.offset));

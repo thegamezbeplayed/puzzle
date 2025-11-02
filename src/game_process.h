@@ -149,7 +149,7 @@ typedef struct{
 typedef struct{
   ent_t*      tile;
   ShapeFlags  bonus_color,bonus_type;
-  float       color_mul,type_mul;
+  stat_t      *color_mul,*type_mul;
 }grid_combo_t;
 
 typedef enum{
@@ -173,7 +173,6 @@ static TurnStateName turn_name[TURN_COUNT] = {
   {"End", TURN_END},
   {"Standby", TURN_STANDBY},
 };
-
 
 typedef struct{
   TurnState     state;
@@ -200,10 +199,9 @@ typedef struct world_s{
   render_text_t *texts[MAX_EVENTS];
   bool          floatytext_used[MAX_EVENTS];
   float         points;
-  ShapeFlags    max_shape;
-  ShapeFlags    max_color;
+  stat_t*        max_shape,*max_color;
   int           combo_streak;
-  float         combo_mul;
+  stat_t        *combo_mul;
 } world_t;
 
 Cell WorldGetMaxShapes();

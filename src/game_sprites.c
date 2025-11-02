@@ -81,9 +81,12 @@ void SpriteSync(sprite_t *spr){
   if(!spr->anim)
     return;
 
-  switch(spr->owner->state){
-    case STATE_IDLE:
-      SpriteSetAnimState(spr, ANIM_BOUNCE);
+  switch(COMBO_KEY(spr->owner->state,spr->state)){
+    case COMBO_KEY(STATE_IDLE,ANIM_IDLE):
+      if(spr->owner->control->moves>0)
+        SpriteSetAnimState(spr, ANIM_BOUNCE);
+      else
+        SpriteSetAnimState(spr, ANIM_IDLE);
       break;
     default:
       break;
@@ -140,7 +143,7 @@ void SpriteAnimate(sprite_t *spr){
     return;
 
   spr->anim->elapsed++;
-  float height = (spr->owner->control->moves-1) *9.9f;
+  float height = (spr->owner->control->moves) *6.9f;
   switch(spr->state){
     case ANIM_BOUNCE:
       spr->offset.y=EaseLinearOut(spr->anim->elapsed, 0.0f,-height,spr->anim->duration);

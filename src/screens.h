@@ -14,6 +14,7 @@ typedef struct{
   bool    is_dragging;
   Vector2 offset,pos;
   ent_t   *target;
+  ent_t   *hover;
 }mouse_controller_t;
 void InitScreenInteractive(void);
 void ScreenSyncMouse(void);

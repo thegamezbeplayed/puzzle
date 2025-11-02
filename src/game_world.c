@@ -91,10 +91,10 @@ int GridCompare(ent_t* start, int num_others, ent_t** others, Cell* results){
       results[i].y=1;
 
     if(IS_TYPE(others[i]->child->shape,bonus_type))
-      results[i].x*=1.5f;
+      results[i].x+=1;
 
     if(IS_COLOR(others[i]->child->shape,bonus_col))
-      results[i].y*=1.5f;
+      results[i].y+=1;
 
     matches++;
   }
@@ -105,11 +105,11 @@ int GridCompare(ent_t* start, int num_others, ent_t** others, Cell* results){
 float WorldGetGridCombo(Cell intgrid){
   grid_combo_t *grid = world.grid.combos[intgrid.x][intgrid.y];
 
-  return grid->color_mul + grid->type_mul;
+  return grid->color_mul->current + grid->type_mul->current;
 }
 
 Cell WorldGetMaxShapes(){
-  return (Cell){world.max_shape,world.max_color};
+  return (Cell){(int)world.max_shape->current,(int)world.max_color->current};
 }
 
 int WorldGetShapeSums(int* out){
@@ -123,7 +123,7 @@ int WorldGetShapeSums(int* out){
     }
   }
 
-  return world.max_shape;
+  return (int)world.max_shape->current;
 }
 
 bool WorldTestGrid(void){
@@ -155,12 +155,14 @@ bool WorldCheckGrid(ent_t *e,ent_t* owner){
   for(int i = 0; i < rowComb; i++){
     if(rowComb == GRID_WIDTH){
       world.grid.turn_connections++;
-      world.grid.combos[row_comp[i]->intgrid_pos.x][row_comp[i]->intgrid_pos.y]->type_mul+=row_results[i].x;
-      world.grid.combos[row_comp[i]->intgrid_pos.x][row_comp[i]->intgrid_pos.y]->color_mul+=row_results[i].y;
+      for(int j = 0; j <row_results[i].x;j++)
+        StatIncrementValue(world.grid.combos[row_comp[i]->intgrid_pos.x][row_comp[i]->intgrid_pos.y]->type_mul,true);
+      for(int k = 0; k < row_results[i].y;k++)
+        StatIncrementValue(world.grid.combos[row_comp[i]->intgrid_pos.x][row_comp[i]->intgrid_pos.y]->color_mul,true);
     }
     else{
-      world.grid.combos[row_comp[i]->intgrid_pos.x][row_comp[i]->intgrid_pos.y]->type_mul=1;
-      world.grid.combos[row_comp[i]->intgrid_pos.x][row_comp[i]->intgrid_pos.y]->color_mul=1;
+      StatEmpty(world.grid.combos[row_comp[i]->intgrid_pos.x][row_comp[i]->intgrid_pos.y]->type_mul);
+      StatEmpty(world.grid.combos[row_comp[i]->intgrid_pos.x][row_comp[i]->intgrid_pos.y]->color_mul);
 
     }
   }
@@ -168,8 +170,12 @@ bool WorldCheckGrid(ent_t *e,ent_t* owner){
   for(int i = 0; i < colComb; i++)
     if(colComb == GRID_HEIGHT){
       world.grid.turn_connections++;
-      world.grid.combos[col_comp[i]->intgrid_pos.x][col_comp[i]->intgrid_pos.y]->type_mul+=col_results[i].x;
-      world.grid.combos[col_comp[i]->intgrid_pos.x][col_comp[i]->intgrid_pos.y]->color_mul+=col_results[i].y;
+
+      for(int j = 0; j <col_results[i].x;j++)
+        StatIncrementValue(world.grid.combos[col_comp[i]->intgrid_pos.x][col_comp[i]->intgrid_pos.y]->type_mul,true);
+      for(int k = 0; k < col_results[i].y;k++)
+        StatIncrementValue(world.grid.combos[col_comp[i]->intgrid_pos.x][col_comp[i]->intgrid_pos.y]->color_mul,true);
+ 
     } 
     else{
       //world.grid.combos[col_comp[i]->intgrid_pos.x][col_comp[i]->intgrid_pos.y]->type_mul=1;
@@ -225,9 +231,9 @@ void TurnOnChangeState(TurnState state){
     case TURN_START:
       world.grid.turn++;
       if(world.grid.turn%21==0)
-        world.max_color++;
+        StatIncrementValue(world.max_color,true);
       if(world.grid.turn%33==0)
-        world.max_shape++;
+        StatIncrementValue(world.max_shape,true);
       world.grid.turn_connections = 0;
       if(!WorldTestGrid())
         MenuSetState(&ui.menus[MENU_EXIT],MENU_ACTIVE);
@@ -236,13 +242,19 @@ void TurnOnChangeState(TurnState state){
       if(world.grid.turn_connections > 0)
         world.combo_streak+=(int)(world.grid.turn_connections/3);
       else{
-        world.combo_mul = 1.0f;
+        StatEmpty(world.combo_mul);
         world.combo_streak = 0;
       }
       for(int x = 0; x < GRID_WIDTH; x++)
         for(int y = 0; y < GRID_HEIGHT; y++){
-          world.grid.combos[x][y]->type_mul = 1;
-          world.grid.combos[x][y]->color_mul = 1;
+          StatEmpty(world.grid.combos[x][y]->type_mul);
+          StatEmpty(world.grid.combos[x][y]->color_mul);
+        
+          if(world.grid.turn%21==0)
+            world.grid.combos[x][y]->color_mul->increment+=0.25f;
+          if(world.grid.turn%33==0)
+            world.grid.combos[x][y]->type_mul->increment +=0.25f;
+
         }
       
       TurnSetState(TURN_STANDBY);
@@ -258,11 +270,12 @@ void WorldCalcGrid(void){
     TurnSetState(TURN_END);
     return;
   }
-  world.combo_mul+=world.grid.turn_connections/2;
+  for(int i = 0; i < world.grid.turn_connections; i++)
+    StatIncrementValue(world.combo_mul,true);
 
   for(int x = 0; x < GRID_WIDTH; x++){
     for(int y = 0; y < GRID_HEIGHT; y++){
-      if(world.grid.combos[x][y]->type_mul == 1)
+      if(world.grid.combos[x][y]->type_mul->current == 1)
         continue;
 
       SetState(world.grid.combos[x][y]->tile->child,STATE_SCORE,EntAddPoints);
@@ -458,10 +471,12 @@ void WorldPostUpdate(){
 void InitWorld(world_data_t data){
   world = (world_t){0};
   world.combo_streak = 0;
-  world.combo_mul=0.0f;
-  world.max_shape = SHAPE_TYPE_STUD;
-  world.max_color = 2;
+  world.combo_mul=InitStatOnMin(STAT_COMBO_MUL,1.0f,16.0F);
+  world.combo_mul->increment = 0.25f;
+  world.max_shape = InitStatOnMin(STAT_MAX_TYPE,SHAPE_TYPE_STUD,SHAPE_TYPE_MAX);
+  world.max_color = InitStatOnMin(STAT_MAX_COLOR,SHAPE_COLOR_GRAY,SHAPE_COLOR_MAX);
 
+  world.max_color->increment = 16;
   TraceLog(LOG_INFO,"Screen Width %02f",+VECTOR2_CENTER_SCREEN.x);
   float playX = (CELL_WIDTH/2)+VECTOR2_CENTER_SCREEN.x-(GRID_WIDTH*CELL_WIDTH)/2;
   
@@ -479,8 +494,10 @@ void InitWorld(world_data_t data){
       RegisterEnt(tile);
       world.grid.combos[x][y] = malloc(sizeof(grid_combo_t));
       world.grid.combos[x][y]->tile = tile;
-      world.grid.combos[x][y]->type_mul = 1.0f;
-      world.grid.combos[x][y]->color_mul = 1.0f;
+      world.grid.combos[x][y]->type_mul = InitStatOnMin(STAT_TYPE_MUL,1.0f,10.0f);
+      world.grid.combos[x][y]->color_mul = InitStatOnMin(STAT_COLOR_MUL,1.0f,10.0f);
+      world.grid.combos[x][y]->type_mul->increment=0.25f;
+      world.grid.combos[x][y]->color_mul->increment=0.5f;
     }
 
   for (int i = 0; i < data.num_ents; i++)
@@ -626,7 +643,7 @@ void GameProcessEnd(){
 
 void AddPoints(float mul,float points, Vector2 pos){
   //TraceLog(LOG_INFO,"===Add %0.2f Points===",points*mul);
-  mul+=world.combo_mul;
+  mul+=world.combo_mul->current;
   world.points+=mul*points;
 
   render_text_t *rt = malloc(sizeof(render_text_t));
@@ -641,7 +658,7 @@ void AddPoints(float mul,float points, Vector2 pos){
 }
 
 ShapeFlags WorldGetPossibleShape(){
-  return world.max_shape;
+  return world.max_shape->current;
 }
 
 const char* GetGameTime(){
