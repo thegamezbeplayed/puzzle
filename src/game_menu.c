@@ -104,6 +104,11 @@ void InitUI(void){
 
   ui.menus[MENU_EXIT] = InitMenu(MENU_EXIT,VECTOR2_ZERO,SMALL_PANEL_SIZE,ALIGN_CENTER|ALIGN_MID,LAYOUT_VERTICAL,true);
   ui.menus[MENU_EXIT].element->texture = InitScalingElement(ELEMENT_ERROR_WIDE);
+  ui_element_t *endBtn = InitElement("END_BTN",UI_BUTTON,VECTOR2_ZERO,DEFAULT_BUTTON_SIZE,ALIGN_CENTER|ALIGN_MID,0);
+  strcpy(endBtn->text,"GAME OVER");
+  endBtn->cb[ELEMENT_ACTIVATED] = UITransitionScreen;
+  ElementAddChild(ui.menus[MENU_EXIT].element,endBtn);
+
 
 }
 
