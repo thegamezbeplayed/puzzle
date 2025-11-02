@@ -5350,7 +5350,7 @@ static void GuiDrawText(const char *text, Rectangle textBounds, int alignment, C
 }
 
 // Gui draw rectangle using default raygui plain style with borders
-static void GuiDrawRectangle(Rectangle rec, int borderWidth, Color borderColor, Color color)
+static void CUSTOMGuiDrawRectangle(Rectangle rec, int borderWidth, Color borderColor, Color color)
 {
     if (color.a > 0)
     {

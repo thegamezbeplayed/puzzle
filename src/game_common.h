@@ -11,12 +11,36 @@ typedef enum{
   ENT_DONE
 }EntityType;
 
+typedef enum {
+  BACKTILE_01,
+  BACKTILE_02,
+  BACKTILE_03,
+  BACKTILE_04,
+  BACKTILE_05,
+  BACKTILE_06,
+  BACKTILE_07,
+  BACKTILE_08,
+  BACKTILE_09,
+  BACKTILE_10,
+  BACKTILE_11,
+  BACKTILE_12,
+  BACKTILE_13,
+  BACKTILE_14,
+  BACKTILE_15,
+  BACKTILE_16,
+  BACKTILE_17,
+  BACKTILE_18,
+  BACKTILE_DONE
+} BackTileID;
+
 typedef enum{
   BEHAVIOR_NONE,
   BEHAVIOR_CHANGE_STATE,
   BEHAVIOR_SELECT_SHAPE,
+  BEHAVIOR_HELPFUL_SHAPE,
   BEHAVIOR_INIT_CHILD,
   BEHAVIOR_ACQUIRE_CHILD,
+  BEHAVIOR_SOLVABLE_CHILD,
   BEHAVIOR_COUNT
 }BehaviorID;
 
@@ -84,6 +108,7 @@ typedef enum{
   SHAPE_DONE = 0xFF
 }ShapeID;
 
+
 typedef struct{
   const char* text;
   Vector2     pos;
@@ -147,10 +172,9 @@ typedef enum{
 }StatType;
 
 struct stat_s;
-typedef struct stat_s stat_t;
 typedef bool (*StatOwnerCallback)(struct ent_s* owner);
 typedef void (*StatCallback)(struct ent_s* owner, float old, float cur);
-typedef float (*StatGetter)(stat_t* self);
+typedef float (*StatGetter)(struct stat_s* self);
 typedef struct stat_s{
   StatType  attribute;
   float     min;
@@ -176,9 +200,32 @@ typedef enum{
   STATE_EMPTY,
   STATE_IDLE, //should be able to move freely between these ==>
   STATE_SELECTED,
+  STATE_CALCULATING,
   STATE_PLACED,
   STATE_SCORE,
   STATE_DIE,//<===== In MOST cases. Should not be able to go down from DIE
   STATE_END//sentinel entity state should never be this or greater
 }EntityState;
+
+typedef struct {
+  ShapeID     id;
+  int         points;
+} ObjectInstance;
+
+typedef struct {
+  BackTileID  id;
+  BehaviorID  behaviors[STATE_END];
+} TileInstance;
+
+typedef enum{
+  ELEMENT_EMPTY,
+  ELEMENT_PANEL_GRAY,
+  ELEMENT_PANEL_GRAY_WIDE,
+  ELEMENT_BUTTON_GRAY_ACTIVE,
+  ELEMENT_BUTTON_GRAY,
+  ELEMENT_BOX_GRAY,
+  ELEMENT_ERROR_WIDE,
+  ELEMENT_COUNT
+}ElementID;
+
 #endif

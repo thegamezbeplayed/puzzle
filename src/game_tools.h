@@ -2,6 +2,7 @@
 #define __GAME_TOOLS__
 #include <float.h>
 #include "game_math.h"
+#include <string.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -9,8 +10,8 @@
 #define CLAMPV2(v,a,b) ((v)<(a)?(a):((v)>(b)?(b):(v)))
 #define VEC_UNSET (Vector2){FLT_MAX, FLT_MAX}
 #define EPS 1e-6f
-#define VECTOR2_CENTER_SCREEN   (Vector2){ screenWidth/2, screenHeight/2}
-#define VECTOR2_SCREEN   (Vector2){ GetScreenWidth(), GetScreenHeight()}
+#define VECTOR2_CENTER_SCREEN   (Vector2){ GetScreenWidth()/2, screenHeight/2}
+#define VECTOR2_SCREEN   (Vector2){ GetScreenWidth(), screenHeight}
 #define VECTOR2_ZERO   (Vector2){ 0.0f, 0.0f}
 #define VECTOR2_ONE    (Vector2){ 1.0f, 1.0f }
 #define VECTOR2_UP     (Vector2){ 0.0f, 1.0f }
@@ -25,7 +26,6 @@
 #define Rect(px,py,sx,sy) ((Rectangle){ (px),(py), (sx), (sy) })
 #define RECT_ZERO   (Rectangle){ 0.0f, 0.0f,0.0f,0.0f}
 #define RectInc(r,xi,yi) ((Rectangle){ (r.x+xi), (r.y+yi),(r.width),(r.height) })
-
 
 static void shuffle_array(void *base, size_t n, size_t size) {
     char *arr = base;

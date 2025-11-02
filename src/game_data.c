@@ -1,6 +1,16 @@
 #include <raylib.h>
-#include "game_utils.h"
-
+#include "game_tools.h"
+#include "game_process.h"
+void UploadScore(void){
+TraceLog(LOG_INFO,"Call EMSCRIPTEN");
+#ifdef __EMSCRIPTEN__
+  
+TraceLog(LOG_INFO,"Call JS");
+EM_ASM({
+      sendScore($0);
+      }, GetPointsInt());
+#endif
+}
 // Allocates a copy of the filename without extension
 char* GetFileStem(const char* filename) {
     const char* dot = strrchr(filename, '.');

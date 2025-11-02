@@ -10,8 +10,8 @@ const interaction_t default_interaction = {
 };
 
 int InitInteractions(){
-  int i = 0;
-  for (i; i < MAX_INTERACTIONS; i++){
+  int i;
+  for (i=0; i < MAX_INTERACTIONS; i++){
     interactions[i] = default_interaction;
     interaction_used[i] = false;
   }

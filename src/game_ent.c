@@ -160,6 +160,7 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s){
 
   switch(s){
     case STATE_DIE:
+      TraceLog(LOG_INFO,"destroy shape %i",e->uid);
       EntDestroy(e);
       break;
     case STATE_SCORE:
@@ -191,14 +192,11 @@ void EntChangeOccupant(ent_t* e, ent_t* owner){
     return;
   }
 
-  TurnSetState(TURN_CALC);
-  bool scored = WorldCheckGrid(e,owner);
-  scored = WorldCheckGrid(tenant,old)||scored;
-
-  if(scored)
-    TurnSetState(TURN_SCORE);
-  else
-    TurnSetState(TURN_END);
+  if(TurnSetState(TURN_CALC))
+    if(WorldCheckGrid(e,owner)|WorldCheckGrid(tenant,old))
+      TurnSetState(TURN_SCORE);
+    else
+      TurnSetState(TURN_END);
 }
 
 void EntOnOwnerChange(ent_t *e, ent_t* old, ent_t* owner){

@@ -3,6 +3,7 @@
 #include "game_process.h"
 #include "game_tools.h"
 #include "game_helpers.h"
+#include "game_utils.h"
 #include "game_ui.h"
 
 game_process_t game_process;
@@ -25,7 +26,7 @@ void GameSetState(GameState state){
   game_process.state[SCREEN_GAMEPLAY] = state;
 }
 
-void GameReady(){
+void GameReady(void *context){
   WorldInitOnce();
   game_process.state[SCREEN_GAMEPLAY] = GAME_READY;
 }
@@ -107,7 +108,36 @@ float WorldGetGridCombo(Cell intgrid){
   return grid->color_mul + grid->type_mul;
 }
 
+int WorldGetShapeSums(int* out){
+  for (int x = 0; x < GRID_WIDTH; x++){
+    for (int y = 0; y < GRID_HEIGHT; y++){
+      ent_t* t = world.grid.combos[x][y]->tile;
+      if(!t->child)
+        continue;
+      ShapeFlags s = SHAPE_TYPE(t->child->shape);
+      out[s]++;
+    }
+  }
+
+  return world.max_shape;
+}
+
+bool WorldTestGrid(void){
+  ShapeID grid[GRID_WIDTH][GRID_HEIGHT];
+  for(int x = 0; x < GRID_WIDTH; x++){
+    for(int y = 0; y < GRID_HEIGHT; y++)
+      grid[x][y] =world.grid.combos[x][y]->tile->child->shape;
+  }
+
+  return CanBeSolvedInMoves(grid,4);
+}
+
 bool WorldCheckGrid(ent_t *e,ent_t* owner){
+  for(int x = 0; x < GRID_WIDTH; x++){
+    for(int y = 0; y < GRID_HEIGHT; y++){
+      SetState(world.grid.combos[x][y]->tile,STATE_CALCULATING, NULL);
+    }
+  }
   ent_t* row_comp[GRID_WIDTH];
   Cell row_results[GRID_WIDTH];
   ent_t* col_comp[GRID_HEIGHT];
@@ -138,12 +168,21 @@ bool WorldCheckGrid(ent_t *e,ent_t* owner){
       world.grid.combos[col_comp[i]->intgrid_pos.x][col_comp[i]->intgrid_pos.y]->color_mul+=col_results[i].y;
     } 
     else{
-      world.grid.combos[col_comp[i]->intgrid_pos.x][col_comp[i]->intgrid_pos.y]->type_mul=1;
-      world.grid.combos[col_comp[i]->intgrid_pos.x][col_comp[i]->intgrid_pos.y]->color_mul=1;
+      //world.grid.combos[col_comp[i]->intgrid_pos.x][col_comp[i]->intgrid_pos.y]->type_mul=1;
+      //world.grid.combos[col_comp[i]->intgrid_pos.x][col_comp[i]->intgrid_pos.y]->color_mul=1;
 
     }
 
   return (colComb == GRID_HEIGHT || rowComb == GRID_WIDTH);
+}
+
+bool CheckWorldTilesReady(void){
+  for(int x = 0; x < GRID_WIDTH; x++){
+    for(int y = 0; y < GRID_HEIGHT; y++)
+      if(world.grid.combos[x][y]->tile->state!=STATE_IDLE)
+        return false;
+  }
+  return true;
 }
 
 bool TurnSetState(TurnState state){
@@ -152,8 +191,8 @@ bool TurnSetState(TurnState state){
 
   world.grid.state = state;
 
+  TraceLog(LOG_INFO,"Turn State now - %s",turn_name[state].name);
   TurnOnChangeState(state);
-
   return true;
 }
 
@@ -162,31 +201,34 @@ bool TurnCanChangeState(TurnState state){
     return false;
 
   switch(COMBO_KEY(world.grid.state, state)){
-    case COMBO_KEY(TURN_END,!TURN_START):
-    case COMBO_KEY(TURN_SCORE,!TURN_CALC):
-      return false;
-      break;
     default:
       return true;
       break;
   }
+
+  return true;
 }
 
 void TurnOnChangeState(TurnState state){
   switch(state){
+    case TURN_STANDBY:
+      if(CheckWorldTilesReady())
+        TurnSetState(TURN_START);
+      break;
     case TURN_SCORE:
       WorldCalcGrid();
-      TurnSetState(TURN_END);
       break;
     case TURN_START:
       world.grid.turn++;
       if(world.grid.turn%15==0)
         world.max_shape++;
       world.grid.turn_connections = 0;
-      break;
+      if(!WorldTestGrid())
+        MenuSetState(&ui.menus[MENU_EXIT],MENU_ACTIVE);
+        break;
     case TURN_END:
       if(world.grid.turn_connections > 0)
-        world.combo_streak+=world.grid.turn_connections;
+        world.combo_streak+=(int)(world.grid.turn_connections/3);
       else{
         world.combo_mul = 1.0f;
         world.combo_streak = 0;
@@ -196,7 +238,8 @@ void TurnOnChangeState(TurnState state){
           world.grid.combos[x][y]->type_mul = 1;
           world.grid.combos[x][y]->color_mul = 1;
         }
-      TurnSetState(TURN_START);
+      
+      TurnSetState(TURN_STANDBY);
       break;
     default:
       break;
@@ -204,9 +247,11 @@ void TurnOnChangeState(TurnState state){
 }
 
 void WorldCalcGrid(void){
-  if(world.grid.turn_connections == 0)
-    return;
+  if(world.grid.turn_connections == 0){
 
+    TurnSetState(TURN_END);
+    return;
+  }
   world.combo_mul+=world.grid.turn_connections/2;
 
   for(int x = 0; x < GRID_WIDTH; x++){
@@ -217,6 +262,8 @@ void WorldCalcGrid(void){
       SetState(world.grid.combos[x][y]->tile->child,STATE_SCORE,EntAddPoints);
     }
   }
+
+  TurnSetState(TURN_END);
 }
 
 bool CheckWorldGridAdjacent(ent_t* e, ent_t* other){
@@ -297,7 +344,7 @@ int AddEnt(ent_t *e) {
     world.ents[index] = e;
     world.num_ent++;
 
-    return index;
+    return CURRENT_ENT_IDENTIFIER++;
   }
   return -1;
 } 
@@ -378,7 +425,24 @@ void WorldPostUpdate(){
     }
 
     world.texts[i]->duration--;
+  
   }
+  if(world.grid.state != TURN_STANDBY)
+    return;
+
+  for(int x = 0; x < GRID_WIDTH; x++){
+    for(int y = 0; y < GRID_HEIGHT; y++){
+      if(world.grid.combos[x][y]->tile->state == STATE_CALCULATING){
+        SetState(world.grid.combos[x][y]->tile,STATE_IDLE, NULL);
+        return;
+      }
+    if(world.grid.combos[x][y]->tile->state != STATE_IDLE)
+      return;
+    }
+  }
+
+  TurnSetState(TURN_START);
+
 }
 
 void InitWorld(world_data_t data){
@@ -386,8 +450,15 @@ void InitWorld(world_data_t data){
   world.combo_streak = 0;
   world.combo_mul=0.0f;
   world.max_shape = SHAPE_TYPE_STUD;
+
+  TraceLog(LOG_INFO,"Screen Width %02f",+VECTOR2_CENTER_SCREEN.x);
   float playX = (CELL_WIDTH/2)+VECTOR2_CENTER_SCREEN.x-(GRID_WIDTH*CELL_WIDTH)/2;
-  float playY = (CELL_HEIGHT/2)+VECTOR2_CENTER_SCREEN.y-(GRID_HEIGHT*CELL_HEIGHT)/2;
+  
+  TraceLog(LOG_INFO,"Start Pos x %02f",+playX);
+  float playY = XS_PANEL_THIN_SIZE.y+(CELL_HEIGHT/2)+VECTOR2_CENTER_SCREEN.y-(GRID_HEIGHT*CELL_HEIGHT)/2;
+  
+  TraceLog(LOG_INFO,"Start Pos Y %02f",+playY);
+  TraceLog(LOG_INFO,"HUD Height %02f",ui.menus[MENU_HUD].element->bounds.height);
   world.play_area =Rect(playX,playY,GRID_WIDTH*CELL_WIDTH,GRID_HEIGHT*CELL_HEIGHT);
   for(int x = 0; x < GRID_WIDTH; x++)
     for(int y = 0; y < GRID_HEIGHT; y++){
@@ -473,7 +544,7 @@ void InitGameProcess(){
 
   game_process.screen = SCREEN_TITLE;
   game_process.state[SCREEN_GAMEPLAY] = GAME_LOADING;
-  game_process.events = InitEvents(64);
+  game_process.events = InitEvents();
   game_process.init[SCREEN_TITLE]();
 
 }
@@ -567,7 +638,7 @@ const char* GetGameTime(){
 }
 
 const char* GetPoints(){
-  return TextFormat("%09i",GetPointsInt());
+  return TextFormat("%08i",GetPointsInt());
 }
 
 const char* GetTurn(){

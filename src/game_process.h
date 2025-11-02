@@ -3,11 +3,13 @@
 
 #include "game_types.h"
 #include "game_common.h"
+#include "room_data.h"
 #include "screens.h"
 
 #define MAX_INTERACTIONS 256
 #define DEBUG false
 #define CURRENT_LEVEL levels.levels[levels.current]
+static int CURRENT_ENT_IDENTIFIER = 0;
 
 extern Font font;
 static int fixedFPS = 60;
@@ -154,8 +156,24 @@ typedef enum{
   TURN_START,
   TURN_CALC,
   TURN_SCORE,
-  TURN_END
+  TURN_END,
+  TURN_STANDBY,
+  TURN_COUNT
 }TurnState;
+
+typedef struct{
+  const char* name;
+  TurnState  state;
+}TurnStateName;
+
+static TurnStateName turn_name[TURN_COUNT] = {
+  {"Start", TURN_START},
+  {"Calc", TURN_CALC},
+  {"Score", TURN_SCORE},
+  {"End", TURN_END},
+  {"Standby", TURN_STANDBY},
+};
+
 
 typedef struct{
   TurnState     state;
@@ -192,8 +210,12 @@ ShapeFlags WorldGetPossibleShape();
 ent_t* WorldGetEntById(unsigned int uid);
 float WorldGetGridCombo(Cell intgrid);
 int WorldGetEnts(ent_t** results,EntFilterFn fn, void* params);
+bool WorldTestGrid(void);
+bool CheckWorldTilesReady(void);
 bool WorldCheckGrid(ent_t *e, ent_t* owner);
+int WorldGetShapeSums(int* out);
 void WorldCalcGrid();
+bool RegisterBehaviorTree(BehaviorData data);
 bool RegisterEnt( ent_t *e);
 bool RegisterSprite(sprite_t *s);
 void WorldInitOnce();

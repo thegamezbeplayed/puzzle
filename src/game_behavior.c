@@ -97,6 +97,23 @@ struct ent_s* e = params->owner;
 
 }
 
+BehaviorStatus BehaviorSelectHelpfulShape(behavior_params_t *params){
+  struct ent_s* e = params->owner;
+  if(!e || !e->control)
+    return BEHAVIOR_FAILURE;
+
+  if(e->child)
+    return BEHAVIOR_SUCCESS;
+
+
+  ShapeID shape = SelectHelpfulShape();
+
+  EntSetOwner(InitEnt(GetObjectInstanceByShapeID(shape)),e,false,NULL);
+
+  return BEHAVIOR_SUCCESS;
+
+}
+
 BehaviorStatus BehaviorSelectShape(behavior_params_t *params){
   struct ent_s* e = params->owner;
   if(!e || !e->control)
@@ -112,6 +129,8 @@ BehaviorStatus BehaviorSelectShape(behavior_params_t *params){
   return BEHAVIOR_SUCCESS;
 
 }
+
+
 
 BehaviorStatus BehaviorMoveToDestination(behavior_params_t *params){
   struct ent_s* e = params->owner;

@@ -5,14 +5,21 @@
 #include <string.h>
 #include "game_common.h"
 
+#define MAX_PLAYERS 32
+
 #define MAX_BEHAVIOR_TREE 8
 #define MAX_NAME_LEN 64
 #define COMBO_KEY(a, b) ((a << 8) | b)
 #define CALL_FUNC(type, ptr, ...) ((type)(ptr))(__VA_ARGS__)
 #define MAKE_ADAPTER(name, T) \
     static void name##_Adapter(void *p) { name((T)p); }
-
-typedef struct ent_s ent_t;
+#pragma once
+#ifdef __EMSCRIPTEN__
+  #include <emscripten/emscripten.h>
+#else
+  #define EMSCRIPTEN_KEEPALIVE
+#endif
+void UploadScore(void);
 
 //====FILE & STRINGS====>
 char* GetFileStem(const char* filename);
@@ -24,14 +31,14 @@ static inline const char* CHAR_DO_NOTHING(){return "\0";}
 //<===BEHAVIOR TREES
 
 //forward declare
-typedef struct behavior_tree_node_s behavior_tree_node_t;
+struct behavior_tree_node_s;
 
 typedef struct {
     const char           *name;
-    behavior_tree_node_t *tree;
+    struct behavior_tree_node_s *tree;
 } bt_register_entry_t;
 
-behavior_tree_node_t *BehaviorGetTree( BehaviorID id);
+struct behavior_tree_node_s *BehaviorGetTree( BehaviorID id);
 
 typedef enum{
   BEHAVIOR_SUCCESS,
@@ -48,15 +55,15 @@ typedef enum{
 
 typedef struct {
   BehaviorID           id;
-  behavior_tree_node_t *root;
+  struct behavior_tree_node_s *root;
 } TreeCacheEntry;
 
 extern TreeCacheEntry tree_cache[16];
 extern int tree_cache_count;
 
-static behavior_tree_node_t* BehaviorFindLeafFactory(const char *name);
+static struct behavior_tree_node_s* BehaviorFindLeafFactory(const char *name);
 
-typedef BehaviorStatus (*BehaviorTreeTickFunc)(behavior_tree_node_t* self, void* context);
+typedef BehaviorStatus (*BehaviorTreeTickFunc)(struct behavior_tree_node_s* self, void* context);
 
 typedef struct behavior_params_s{
   struct ent_s*         owner;
@@ -66,7 +73,7 @@ typedef struct behavior_params_s{
   int                   duration;
 }behavior_params_t;
 
-behavior_tree_node_t *BuildTreeNode(BehaviorID id, behavior_params_t* parent_params);
+struct behavior_tree_node_s *BuildTreeNode(BehaviorID id, behavior_params_t* parent_params);
 
 typedef struct behavior_tree_node_s{
   BehaviorTreeType      bt_type;
@@ -113,10 +120,12 @@ BehaviorStatus BehaviorInitChild(behavior_params_t *params);
 BehaviorStatus BehaviorMoveToTarget(behavior_params_t *params);
 BehaviorStatus BehaviorMoveToDestination(behavior_params_t *params);
 BehaviorStatus BehaviorSelectShape(behavior_params_t *params);
+BehaviorStatus BehaviorSelectHelpfulShape(behavior_params_t *params);
 
 static inline behavior_tree_node_t* LeafInitChild(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorInitChild,params); }
 static inline behavior_tree_node_t* LeafChangeState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorChangeState,params); }
 static inline behavior_tree_node_t* LeafSelectShape(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorSelectShape,params); }
+static inline behavior_tree_node_t* LeafSelectHelpfulShape(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorSelectHelpfulShape,params); }
 static inline behavior_tree_node_t* LeafMoveToTarget(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorMoveToTarget,params); }
 static inline behavior_tree_node_t* LeafMoveToDestination(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorMoveToDestination,params); }
 #endif

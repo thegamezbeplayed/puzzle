@@ -12,16 +12,6 @@
 
 #define ROOM_LEVEL_COUNT 3
 
-typedef struct {
-  ShapeID     id;
-  int         points;
-} ObjectInstance;
-
-typedef struct {
-  BackTileID  id;
-  BehaviorID  behaviors[STATE_END];
-} TileInstance;
-
 static const ObjectInstance room_instances[SHAPE_COUNT] = {
   {SHAPE_NONE},
   {SHAPE_GREEN_SQUARE,1},
@@ -46,7 +36,7 @@ static const ObjectInstance room_instances[SHAPE_COUNT] = {
   {SHAPE_GRAY_HEART,1},
 };
 
-static const TileInstance BASE_TILE = {BACKTILE_01,{[STATE_EMPTY]=BEHAVIOR_ACQUIRE_CHILD,[STATE_SPAWN]=BEHAVIOR_ACQUIRE_CHILD}};
+static const TileInstance BASE_TILE = {BACKTILE_01,{[STATE_EMPTY]=BEHAVIOR_SOLVABLE_CHILD,[STATE_SPAWN]=BEHAVIOR_ACQUIRE_CHILD}};
 
 typedef struct {
   BehaviorID           id;
@@ -63,7 +53,9 @@ static const BehaviorData room_behaviors[BEHAVIOR_COUNT] = {
   {BEHAVIOR_NONE},
   {BEHAVIOR_CHANGE_STATE,false,BT_LEAF,LeafChangeState,false, STATE_IDLE,0,{}},
   {BEHAVIOR_SELECT_SHAPE,false,BT_LEAF,LeafSelectShape,false, STATE_NONE,0,{}},
+  {BEHAVIOR_HELPFUL_SHAPE,false,BT_LEAF,LeafSelectHelpfulShape,false, STATE_NONE,0,{}},
   {BEHAVIOR_INIT_CHILD,false,BT_LEAF,LeafInitChild,false, STATE_NONE,0,{}},
   {BEHAVIOR_ACQUIRE_CHILD,true,BT_SEQUENCE,NULL,true,STATE_IDLE,2, {BEHAVIOR_SELECT_SHAPE,BEHAVIOR_CHANGE_STATE}},
+  {BEHAVIOR_SOLVABLE_CHILD,true,BT_SEQUENCE,NULL,true,STATE_IDLE,2, {BEHAVIOR_HELPFUL_SHAPE,BEHAVIOR_CHANGE_STATE}},
 };
 #endif

@@ -2,6 +2,9 @@
 #include "game_utils.h"
 #include "game_math.h"
 #include "game_tools.h"
+#include "asset_ui.h"
+#include "asset_sprites.h"
+#include "asset_shapes.h"
 
 sprite_sheet_data_t shapedata;
 sprite_sheet_data_t tiledata;
@@ -12,7 +15,6 @@ void InitShaderChainCache(ShapeID type,int maxWidth, int maxHeight) {
   if(TexChain.has_chain[type])
     return;
 
-  TexChain.has_chain[type] = true;
   TexChain.chain1[type]= LoadRenderTexture(maxWidth, maxHeight);
   TexChain.chain2[type]= LoadRenderTexture(maxWidth, maxHeight);
 }
@@ -60,6 +62,16 @@ sprite_t* InitSpriteByIndex(int index, sprite_sheet_data_t* data){
   return spr;
 }
 
+scaling_slice_t* InitScalingElement(ElementID id){
+
+  scaling_slice_t* el = malloc(sizeof(scaling_slice_t));
+
+  if(uidata.sprites[id])
+    el = uidata.sprites[id];
+
+  return el;
+}
+
 void DrawSlice(sprite_t *spr, Vector2 position,float rot){
   sprite_slice_t* slice = spr->slice; 
   Rectangle src = slice->bounds;
@@ -81,38 +93,57 @@ void DrawSlice(sprite_t *spr, Vector2 position,float rot){
   return;
 }
 
-void DrawNineSlice(scaling_slice_t *spr, Vector2 position){
+void DrawNineSlice(scaling_slice_t *spr, Rectangle dst){
+
+    float border = spr->slices[SLICE_TOP_LEFT]->bounds.width; // assuming uniform border
+    float left   = dst.x;
+    float top    = dst.y;
+    float right  = dst.x + dst.width;
+    float bottom = dst.y + dst.height;
+
+    float midWidth  = dst.width  - 2 * border;
+    float midHeight = dst.height - 2 * border;
 
   spr = uidata.sprites[1];
   for(int i = 0; i<SLICE_ALL;i++){
     sprite_slice_t* slice = spr->slices[i];
     Rectangle src = slice->bounds;
 
-    float wscale = 1.0f;
-    float hscale = 1.0f;
-    switch(spr->scaling[i]){
-      case SCALE_STRETCH_W:
-        wscale = spr->scale;
+    Rectangle d = {0};
+
+    switch (i) {
+      case SLICE_TOP_LEFT:
+        d = (Rectangle){ left, top, border, border };
         break;
-      case SCALE_STRETCH_H:
-        hscale = spr->scale;
+      case SLICE_TOP_MID:
+        d = (Rectangle){ left + border, top, midWidth, border };
         break;
-      case SCALE_NORMAL:
-        hscale = wscale =spr->scale;
+      case SLICE_TOP_RIGHT:
+        d = (Rectangle){ right - border, top, border, border };
+        break;
+      case SLICE_EDGE_LEFT:
+        d = (Rectangle){ left, top + border, border, midHeight };
+        break;
+      case SLICE_CENTER:
+        d = (Rectangle){ left + border, top + border, midWidth, midHeight };
+        break;
+      case SLICE_EDGE_RIGHT:
+        d = (Rectangle){ right - border, top + border, border, midHeight };
+        break;
+      case SLICE_BOT_LEFT:
+        d = (Rectangle){ left, bottom - border, border, border };
+        break;
+      case SLICE_BOT_MID:
+        d = (Rectangle){ left + border, bottom - border, midWidth, border };
+        break;
+      case SLICE_BOT_RIGHT:
+        d = (Rectangle){ right - border, bottom - border, border, border };
         break;
       default:
-        break;
+        continue;
     }
-
-    Rectangle dst = {
-      position.x,
-      position.y,
-      slice->bounds.width * wscale,
-      slice->bounds.height * hscale
-    };
-
     Vector2 origin = VECTOR2_ZERO;
-    DrawTexturePro(*uidata.sprite_sheet,src,dst, origin, 0, WHITE);
+    DrawTexturePro(*uidata.sprite_sheet,src,d, origin, 0, WHITE);
   }
   return;
 }
@@ -186,12 +217,12 @@ void SpriteLoadSlicedTextures(){
     int start_y = sprData.positionY;
     
     Rectangle bounds[SLICE_ALL] = {
-      {start_x,start_y, border_w, border_w},
-      {start_x+border_w,start_y, width-2*border_w, border_w},
-      {start_x+width-border_w,start_y, border_w, border_w},
-      {start_x,border_w+start_y, border_w, height-2*border_w},
-      {start_x+border_w,border_w+start_y, width-2*border_w, height-2*border_w},
-      {start_x+border_w-width,border_w, border_w, height-2*border_w},
+      /*TL*/{start_x,start_y, border_w, border_w},
+      /*TM*/{start_x+border_w,start_y, width-2*border_w, border_w},
+      /*TR*/{start_x+width-border_w,start_y, border_w, border_w},
+      /*EL*/{start_x,border_w+start_y, border_w, height-2*border_w},
+      /*MC*/{start_x+border_w,border_w+start_y, width-2*border_w, height-2*border_w},
+      /*ER*/{start_x+width-border_w,border_w, border_w, height-2*border_w},
       {start_x,start_y+height-border_w, border_w, border_w},
       {start_x+border_w,start_y+height-border_w, width-2*border_w, border_w},
       {start_x+width-border_w,start_y+height-border_w, border_w, border_w},

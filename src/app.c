@@ -19,7 +19,7 @@ double previousTime = 0.0;    // Previous time measure
 double waitTime = 0.0;              // Wait time (if target fps required)
 float deltaTime = 0.0f;             // Frame time (Update + Draw + Wait time)
 
-static void UpdateDrawFrame(void);          // Update and draw one frame
+void UpdateDrawFrame(void);          // Update and draw one frame
 static void ChangeToScreen(GameScreen screen);     // Change to screen, no transition effect
 
 static void TransitionToScreen(GameScreen screen); // Request transition to next screen
@@ -29,13 +29,21 @@ bool wantQuit = false;
 
 int main(void)
 {
-    srand((unsigned int)time(NULL));  // seed once using current time
-  // Initialization
-  //---------------------------------------------------------
-  InitWindow(screenWidth, screenHeight, "raylib game template");
+  srand((unsigned int)time(NULL));  // seed once using current time
+                                    // Initialization
+                                    //---------------------------------------------------------
 
-  TraceLog(LOG_INFO, "OpenGL version string: %s", glGetString(GL_VERSION));
-  TraceLog(LOG_INFO, "GLSL version string: %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
+#if defined(PLATFORM_WEB)
+  int vw = EM_ASM_INT({ return window.innerWidth; });
+  int vh = EM_ASM_INT({ return window.innerHeight; });
+  //screenWidth = vw;
+  //screenHeight = vh;
+
+  TraceLog(LOG_INFO, "Mobile view detected (%dx%d)", vw, vh);
+#else
+  TraceLog(LOG_INFO, "Desktop view detected");
+#endif
+  InitWindow(screenWidth, screenHeight, "raylib game template");
 
   InitAudioDevice();      // Initialize audio device
                           //--------------------------------------------------------------------------------------
@@ -43,13 +51,13 @@ int main(void)
   //InitAudio();
   InitResources();
   InitUI();
-  InitShaders();
+  //InitShaders();
 //  ToggleFullscreen();
   LoadShaders();
   InitGameProcess();
 
 #if defined(PLATFORM_WEB)
-  emscripten_set_main_loop(UpdateDrawFrame, 60, 1);
+  emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
 #else
 
   SetExitKey(KEY_NULL);
@@ -96,3 +104,15 @@ int main(void)
 
   return 0;
 }
+
+void UpdateDrawFrame(void){
+  if (IsKeyPressed(KEY_ENTER))// || IsGestureDetected(GESTURE_TAP))
+    {
+      GameTransitionScreen();
+    }
+
+    previousTime = currentTime;
+    GameProcessSync(false);
+}
+
+

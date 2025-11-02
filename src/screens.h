@@ -3,11 +3,11 @@
 #include "game_types.h"
 
 #if defined(PLATFORM_WEB)
-static const int screenWidth = 1538;
-static const int screenHeight = 866;
+static int screenWidth = 1538;
+static int screenHeight = 956;
 #else
-static const int screenWidth = 1920;
-static const int screenHeight = 1080;
+static int screenWidth = 1920;
+static int screenHeight = 1080;
 #endif
 
 typedef struct{

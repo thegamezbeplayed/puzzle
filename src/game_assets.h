@@ -5,19 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include "game_common.h"
-#include "game_ui.h"
-#include "asset_sprites.h"
-#include "asset_shapes.h"
-#include "asset_ui.h"
 
 #define MAX_SONGS 4
 #define MAX_SPRITES 64
 
-#if defined(PLATFORM_WEB)
-#define SPRITE_SCALE .8
-#else
 #define SPRITE_SCALE 1.0
-#endif
 
 struct ent_s;
 void InitResources();
@@ -128,12 +120,6 @@ typedef enum{
 }SfxGroup;
 
 typedef enum {
-  ACTION_SHOOT,
-  ACTION_SHOT,
-  ACTION_FRAG,
-  ACTION_COMBO,
-  ACTION_REFLECT,
-  ACTION_BOOM,
   END_SFX
 }SfxType;
 
@@ -151,12 +137,6 @@ typedef struct{
 }sfx_sound_t;
 
 static sfx_info_t sfx_catalog[]={
-  {ACTION_SHOOT,SFX_ACTION,4,{"close_001.ogg","close_002.ogg","close_003.ogg","close_004.ogg"}},
-  {ACTION_SHOT,SFX_ACTION,4,{"select_001.ogg","select_002.ogg","select_003.ogg","select_004.ogg"}},
-  {ACTION_FRAG,SFX_ACTION,4,{"scratch_001.ogg","scratch_002.ogg","scratch_003.ogg","scratch_004.ogg"}},
-  {ACTION_COMBO,SFX_IMPORTANT,5,{"combo_001.ogg","combo_002.ogg","combo_003.ogg","combo_004.ogg","combo_005.ogg"}},
-  {ACTION_REFLECT,SFX_ACTION,4,{"error_001.ogg","error_002.ogg","error_003.ogg","error_004.ogg"}},
-  {ACTION_BOOM,SFX_ACTION,3,{"boom_001.ogg","boom_002.ogg","boom_003.ogg"}},
 };
 
 typedef struct{
@@ -234,12 +214,6 @@ typedef struct{
 }scaling_sprite_data_t;
 
 typedef struct{
-  int             num_sprites;
-  sprite_slice_t  *sprites[128];
-  Texture2D       *sprite_sheet;
-}sprite_sheet_data_t;
-
-typedef struct{
   SliceParts  type;
   ScalingType rules;
 }scaling_rules_t;
@@ -255,6 +229,12 @@ static scaling_rules_t scaling_rules[SLICE_ALL] = {
   {SLICE_BOT_MID,  SCALE_STRETCH_W},
   {SLICE_BOT_RIGHT, SCALE_NONE}
 };
+
+typedef struct{
+  int             num_sprites;
+  sprite_slice_t  *sprites[128];
+  Texture2D       *sprite_sheet;
+}sprite_sheet_data_t;
 
 extern sprite_sheet_data_t shapedata;
 extern sprite_sheet_data_t tiledata;
@@ -275,9 +255,10 @@ typedef struct {
 } sprite_t;
 
 void DrawSlice(sprite_t *spr, Vector2 position,float rot);
-void DrawNineSlice(scaling_slice_t *spr, Vector2 position);
+void DrawNineSlice(scaling_slice_t *spr, Rectangle dst);
 sprite_t* InitSpriteByID(int id, sprite_sheet_data_t* data);
 sprite_t* InitSpriteByIndex(int index, sprite_sheet_data_t* spritesheet);
+scaling_slice_t* InitScalingElement(ElementID id);
 bool FreeSprite(sprite_t* s);
 void DrawSprite(sprite_t* s);
 void DrawSpriteAtPos(sprite_t*s , Vector2 pos);

@@ -7,7 +7,7 @@ static audio_manager_t AudioMan;
 MAKE_ADAPTER(AudioPlayNext, music_group_t*);
 MAKE_ADAPTER(AudioMusicFade, music_track_t*);
 
-void InitAudio(){
+void InitAudio(void){
   AudioMan = (audio_manager_t){0};
   char fullpath[256]; // make sure it's large enough
 
@@ -123,6 +123,8 @@ bool AudioPlayNext(music_group_t* t){
     t->current_index = 1;
 
   AudioPlayMusic(t->index);
+
+  return true;
 }
 
 void AudioMusicFade(music_track_t* t){

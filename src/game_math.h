@@ -6,8 +6,6 @@
 #define CLAMP(x, low, high) (((x) < (low)) ? (low) : (((x) > (high)) ? (high) : (x)))
 #define CLAMPF(val, min, max) ((val) < (min) ? (min) : ((val) > (max) ? (max) : (val)))
 
-typedef struct bounds_s bounds_t;
-
 static inline Vector2 Vector2FromXY(float x, float y){
   Vector2 result = {
     x,y

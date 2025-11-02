@@ -3,14 +3,23 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "raylib.h"
+#include "game_assets.h"
 
 #define MAX_ELEMENTS 64
 #define UI_SCALE 1.0F
-
+#if defined(PLATFORM_WEB)
+#define DEFAULT_MENU_SIZE (Vector2){screenWidth*.5, GetScreenHeight()/2}
+#define DEFAULT_MENU_THIN_SIZE (Vector2){GetScreenWidth(), 64*UI_SCALE}
+#define DEFAULT_BUTTON_SIZE (Vector2){120*UI_SCALE, 64*UI_SCALE}
+#define XS_PANEL_SIZE (Vector2){144*UI_SCALE, 72*UI_SCALE}
+#define XS_PANEL_THIN_SIZE (Vector2){144*UI_SCALE, 54*UI_SCALE}
+#else
 #define DEFAULT_MENU_SIZE (Vector2){GetScreenWidth()/2, GetScreenHeight()*.75f}
 #define DEFAULT_MENU_THIN_SIZE (Vector2){GetScreenWidth()/2, 64*UI_SCALE}
-
-#define DEFAULT_BUTTON_SIZE (Vector2){120*UI_SCALE, 32*UI_SCALE}
+#define DEFAULT_BUTTON_SIZE (Vector2){120*UI_SCALE, 48*UI_SCALE}
+#define XS_PANEL_SIZE (Vector2){128*UI_SCALE, 64*UI_SCALE}
+#define XS_PANEL_THIN_SIZE (Vector2){128*UI_SCALE, 32*UI_SCALE}
+#endif
 #define LARGE_BUTTON_SIZE (Vector2){164*UI_SCALE, 32*UI_SCALE}
 
 #define DEFAULT_PANEL_SIZE (Vector2){GetScreenWidth(), 64*UI_SCALE}
@@ -18,16 +27,7 @@
 #define LARGE_PANEL_THIN_SIZE (Vector2){GetScreenWidth(), 32*UI_SCALE}
 #define SMALL_PANEL_SIZE (Vector2){192*UI_SCALE, 64*UI_SCALE}
 #define SMALL_PANEL_THIN_SIZE (Vector2){184*UI_SCALE, 32*UI_SCALE}
-#define XS_PANEL_SIZE (Vector2){128*UI_SCALE, 64*UI_SCALE}
-#define XS_PANEL_THIN_SIZE (Vector2){128*UI_SCALE, 32*UI_SCALE}
-
 #define DEFAULT_LINE_SIZE (Vector2){2 *UI_SCALE, 64*UI_SCALE}
-
-typedef enum{
-  ELEMENT_EMPTY,
-  ELEMENT_PANEL_GRAY,
-  ELEMENT_COUNT
-}ElementID;
 
 typedef enum{
   MENU_INACTIVE,
@@ -97,6 +97,7 @@ typedef enum{
   MENU_PAUSE,
   MENU_RECAP,
   MENU_HUD,
+  MENU_EXIT,
   MENU_DEBUG,
   MENU_DONE
 }MenuId;
@@ -124,6 +125,7 @@ typedef struct ui_element_s{
   ElementState        state;
   ElementCallback     cb[ELEMENT_DONE];
   Rectangle           bounds;
+  scaling_slice_t     *texture;
   float               width,height;
   UILayout            layout;
   UIAlignment         align;
@@ -157,6 +159,7 @@ typedef struct ui_menu_s{
 ui_menu_t InitMenu(MenuId id,Vector2 pos, Vector2 size, UIAlignment align,UILayout layout, bool modal);
 void UISyncMenu(ui_menu_t* m);
 bool UICloseMenu(ui_menu_t* m);
+bool UITransitionScreen(ui_element_t* e);
 void DrawMenu(ui_menu_t* m);
 bool MenuCanChangeState(MenuState old, MenuState s);
 bool MenuSetState(ui_menu_t* m, MenuState s);
@@ -175,9 +178,11 @@ typedef struct{
 
 extern ui_manager_t ui;
 
-void InitUI();
+void InitUI(void);
 
-void UISync();
-void UIRender();
+void UISync(void);
+void UIRender(void);
 bool TogglePause(ui_menu_t* m);
+static inline bool UI_BOOL_DO_NOTHING(ui_element_t* self){return false;}
+
 #endif

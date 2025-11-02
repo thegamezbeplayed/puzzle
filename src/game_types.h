@@ -4,7 +4,6 @@
 #include "game_common.h"
 #include "game_assets.h"
 #include "game_utils.h"
-#include "room_data.h"
 #include "raylib.h"
 #include "game_math.h"
 #include "game_tools.h"
@@ -20,7 +19,6 @@
 #define MAX_ATTACKS 8
 
 #define RATIO(s) ((s).ratio(&(s)))
-typedef struct ent_s ent_t;
 
 typedef struct bounds_s {
   Vector2     pos,offset;
@@ -30,7 +28,7 @@ typedef struct bounds_s {
 } bounds_t;
 
 typedef struct{
-  ent_t*                  target;
+  struct ent_s*                  target;
   int                     moves;
   Vector2                 destination;
   bool                    has_arrived;
