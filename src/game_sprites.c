@@ -24,13 +24,14 @@ void InitResources(){
   SpriteLoadSubTextures(&shapedata,SHAPES);
   SpriteLoadSubTextures(&tiledata,TILES);
   SpriteLoadSlicedTextures();
-  Image spritesImg = LoadImage(TextFormat("resources/%s",TILES_IMAGE_PATH)); 
+  Image *spritesImg = malloc(sizeof(Image));
+  *spritesImg = LoadImage(TextFormat("resources/%s",TILES_IMAGE_PATH)); 
   Image shapesImg = LoadImage(TextFormat("resources/%s",SHAPES_IMAGE_PATH)); 
   Image uiImg = LoadImage(TextFormat("resources/%s",UI_IMAGE_PATH)); 
   tiledata.sprite_sheet = malloc(sizeof(Texture2D));
   shapedata.sprite_sheet = malloc(sizeof(Texture2D));
   uidata.sprite_sheet = malloc(sizeof(Texture2D));
-  *tiledata.sprite_sheet = LoadTextureFromImage(spritesImg);
+  SpritePreprocessImg(spritesImg,tiledata.sprite_sheet);
   *shapedata.sprite_sheet = LoadTextureFromImage(shapesImg);
   *uidata.sprite_sheet = LoadTextureFromImage(uiImg);
 }
@@ -329,4 +330,31 @@ void SpriteLoadSlicedTextures(){
     }
   }
 }
+void SpritePreprocessImg(Image *img, Texture2D *out){
+    ImageFormat(img, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+  // Access pixels
+    Color *pixels = LoadImageColors(*img);
 
+    int pixelCount = img->width * img->height;
+    for (int i = 0; i < pixelCount; i++)
+    {
+        // If pixel is white (tolerate near-white)
+        if (pixels[i].r > 240 && pixels[i].g > 240 && pixels[i].b > 240)
+        {
+            pixels[i].a = 0; // Make transparent
+        }
+    }
+
+    // Apply modified pixels back to image
+    Image newImg = {
+        .data = pixels,
+        .width = img->width,
+        .height = img->height,
+        .format = img->format,
+        .mipmaps = 1
+    };
+
+    // Create a texture from modified image
+    *out = LoadTextureFromImage(newImg);
+    UnloadImageColors(pixels);
+}

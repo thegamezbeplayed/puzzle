@@ -230,7 +230,7 @@ void TurnOnChangeState(TurnState state){
       break;
     case TURN_START:
       world.grid.turn++;
-      if(world.grid.turn%21==0)
+      if(world.grid.turn%19==0)
         StatIncrementValue(world.max_color,true);
       if(world.grid.turn%33==0)
         StatIncrementValue(world.max_shape,true);
@@ -481,7 +481,7 @@ void InitWorld(world_data_t data){
   float playX = (CELL_WIDTH/2)+VECTOR2_CENTER_SCREEN.x-(GRID_WIDTH*CELL_WIDTH)/2;
   
   TraceLog(LOG_INFO,"Start Pos x %02f",+playX);
-  float playY = XS_PANEL_THIN_SIZE.y+(CELL_HEIGHT/2)+VECTOR2_CENTER_SCREEN.y-(GRID_HEIGHT*CELL_HEIGHT)/2;
+  float playY = (XS_PANEL_THIN_SIZE.y/2)+(CELL_HEIGHT/2)+VECTOR2_CENTER_SCREEN.y-(GRID_HEIGHT*CELL_HEIGHT)/2;
   
   TraceLog(LOG_INFO,"Start Pos Y %02f",+playY);
   TraceLog(LOG_INFO,"HUD Height %02f",ui.menus[MENU_HUD].element->bounds.height);

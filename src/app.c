@@ -48,7 +48,7 @@ int main(void)
   InitAudioDevice();      // Initialize audio device
                           //--------------------------------------------------------------------------------------
 
-  //InitAudio();
+  InitAudio();
   InitResources();
   InitUI();
   //InitShaders();

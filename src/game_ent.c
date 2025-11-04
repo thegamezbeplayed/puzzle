@@ -118,12 +118,13 @@ void SetViableTile(ent_t* e, EntityState old, EntityState s){
       continue;
 
     EntChangeOccupant(e, neighbors[i]);
-
+      
+    AudioPlayRandomSfx(SFX_ACTION,ACTION_PLACE);
   }
 }
 
 void EntToggleTooltip(ent_t* e){
-  TraceLog(LOG_INFO,"Ent %i moves left %i",e->uid,e->control->moves);
+  //TraceLog(LOG_INFO,"Ent %i moves left %i",e->uid,e->control->moves);
 }
 
 bool SetState(ent_t *e, EntityState s,StateChangeCallback callback){
@@ -167,6 +168,7 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s){
 
   switch(s){
     case STATE_HOVER:
+      AudioPlayRandomSfx(SFX_ACTION,ACTION_HOVER);
       EntToggleTooltip(e);
       break;
     case STATE_DIE:
@@ -176,7 +178,9 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s){
     case STATE_SCORE:
       cooldown_t* spawner = InitCooldown(3,EVENT_WAIT,StepState_Adapter,e);
       AddEvent(e->events, spawner);
-
+      break;
+    case STATE_PLACED:
+      break;
     default:
       break;
   }
@@ -241,6 +245,9 @@ bool EntSetOwner(ent_t* e, ent_t* owner, bool evict, OwnerChangeCallback cb){
 }
 
 bool CheckEntPosition(ent_t* e, Vector2 pos){
+  if(!e)
+    return false;
+
   Vector2 topCorner = Vector2Subtract(e->sprite->pos,e->sprite->slice->center);
 
   Rectangle bounds = RectPos(topCorner, e->sprite->slice->bounds);

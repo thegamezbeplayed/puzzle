@@ -135,6 +135,8 @@ typedef enum{
 }SfxGroup;
 
 typedef enum {
+  ACTION_HOVER,
+  ACTION_PLACE,
   END_SFX
 }SfxType;
 
@@ -152,6 +154,8 @@ typedef struct{
 }sfx_sound_t;
 
 static sfx_info_t sfx_catalog[]={
+  {ACTION_PLACE,SFX_ACTION,4,{"switch_001.ogg","switch_002.ogg","switch_003.ogg","switch_004.ogg"}},
+  {ACTION_HOVER,SFX_ACTION,5,{"click_001.ogg","click_002.ogg","click_003.ogg","click_004.ogg","click_005.ogg"}},
 };
 
 typedef struct{
@@ -283,5 +287,6 @@ void SpriteSync(sprite_t *spr);
 bool SpriteSetAnimState(sprite_t* spr, AnimState s);
 bool SpriteCanChangeState(AnimState old, AnimState s);
 void SpriteAnimate(sprite_t *spr);
+void SpritePreprocessImg(Image *img, Texture2D* out);
 //====SPRITE_T>>
 #endif

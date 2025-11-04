@@ -3,8 +3,8 @@
 #include "game_types.h"
 
 #if defined(PLATFORM_WEB)
-static int screenWidth = 1538;
-static int screenHeight = 956;
+static int screenWidth = 844;
+static int screenHeight = 844;
 #else
 static int screenWidth = 1920;
 static int screenHeight = 1080;
@@ -19,7 +19,7 @@ typedef struct{
 void InitScreenInteractive(void);
 void ScreenSyncMouse(void);
 ent_t* ScreenEntMouseCollision(void);
-
+ent_t* ScreenEntMouseHover(void);
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------

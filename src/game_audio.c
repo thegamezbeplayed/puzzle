@@ -175,7 +175,7 @@ void AudioStep(){
 
     StepEvents(AudioMan.timers[g]);
   }
-
+/*
   int curTrack = AudioMan.current_track;
   int curSong = AudioMan.tracks[curTrack].current_index;
   if(AudioMan.tracks[curTrack].track[curSong].events)
@@ -196,5 +196,5 @@ void AudioStep(){
     SetMusicVolume(AudioMan.tracks[curTrack].track[curSong].music,vol);
 
   }
-
+*/
 }

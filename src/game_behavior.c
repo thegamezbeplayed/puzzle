@@ -108,6 +108,7 @@ BehaviorStatus BehaviorSelectHelpfulShape(behavior_params_t *params){
 
   ShapeID shape = SelectHelpfulShape();
 
+  TraceLog(LOG_INFO,"New Shape Selected: %i",shape);
   EntSetOwner(InitEnt(GetObjectInstanceByShapeID(shape)),e,false,NULL);
 
   return BEHAVIOR_SUCCESS;

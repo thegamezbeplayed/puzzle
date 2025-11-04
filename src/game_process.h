@@ -19,6 +19,8 @@ typedef bool EntFilterFn(ent_t* e, ent_t* other);
 bool CheckWorldGridAdjacent(ent_t* e, ent_t* other);
 
 static bool FilterEntShape(ent_t* e,ent_t* other){
+  if(e->state < STATE_IDLE || e->state > STATE_CALCULATING)
+    return false;
   if(e->type == ENT_SHAPE)
     return true;
   else

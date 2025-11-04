@@ -23,7 +23,6 @@ void ClearMouse(void){
 void ScreenSyncMouse(void){
 
   mousectrl.pos = GetMousePosition();
-
   if(!mousectrl.target && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
 
     mousectrl.target = ScreenEntMouseCollision();
@@ -42,23 +41,37 @@ void ScreenSyncMouse(void){
     }
     ClearMouse(); 
   }
-  /*else{
-    ent_t* hover = ScreenEntMouseCollision();
+  else if (!mousectrl.is_dragging){
+    ent_t* hover = ScreenEntMouseHover();
     if(mousectrl.hover && mousectrl.hover != hover){
       SetState(mousectrl.hover,STATE_IDLE,NULL);
     }
 
-    mousectrl.hover = hover;;
+    mousectrl.hover = hover;
     if(mousectrl.hover)
       SetState(mousectrl.hover,STATE_HOVER,NULL);
   }
-*/
+
   if(mousectrl.is_dragging){
     SetState(mousectrl.target,STATE_SELECTED,NULL);
     EntSetPos(mousectrl.target, Vector2Add(mousectrl.pos,mousectrl.offset));
   }
 }
 
+ent_t* ScreenEntMouseHover(void){
+  ent_t* shape_pool[GRID_WIDTH * GRID_HEIGHT];
+
+  int num_shapes = WorldGetEnts(shape_pool,FilterEntShape, NULL);
+  if(num_shapes <= 0)
+    return NULL;
+
+  for(int i = 0; i < num_shapes; i++){
+    if(CheckEntPosition(shape_pool[i],mousectrl.pos))
+      return shape_pool[i];
+  }
+
+  return NULL;
+}
 ent_t* ScreenEntMouseCollision(void){
   ent_t* shape_pool[GRID_WIDTH * GRID_HEIGHT];
 

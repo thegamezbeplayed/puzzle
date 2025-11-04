@@ -150,21 +150,27 @@ static ShapeID SelectShapeFromRange(ShapeFlags color, ShapeFlags start, ShapeFla
 static ShapeID SelectHelpfulShape(){
   int shapes[SHAPE_TYPE_MASK]={0};
 
+  Cell maxes = WorldGetMaxShapes();
   int num_shapes = WorldGetShapeSums(shapes);
-  for(int i = 0; i < num_shapes ; i++){
+  int num_empty = 9;
+  for (int i = 0; i < maxes.x; i++){
+    num_empty-=shapes[i];
+  }
+
+  for(int i = 0; i < maxes.x ; i++){
     if(shapes[i] > 2)
-      shapes[i] = 0;
+      shapes[i] = num_empty-1;
+    else if (shapes[i] ==0)
+      shapes[i] = num_empty;
     else{
-      shapes[i] = 3-shapes[i];
-      shapes[i]*=shapes[i];
+      shapes[i]*=shapes[i]*shapes[i];
     }
   }
-  Cell maxes = WorldGetMaxShapes();
-  ShapeFlags color = ((rand() % (maxes.y >> 4)) + 1) << 4;
-  ShapeFlags shape = SelectWeightedIndex(shapes,num_shapes);
+  ShapeFlags color = (rand() % (maxes.y>>4) + 1)<<4;
+  ShapeFlags shape = SelectWeightedIndex(shapes,maxes.x);
 
   if(shape<1)
-    shape = (rand()%(int)num_shapes)+1;
+    shape = (rand()%maxes.x)+1;
 
   return (ShapeID)(color|shape);
 }

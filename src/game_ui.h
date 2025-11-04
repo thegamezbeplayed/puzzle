@@ -17,8 +17,8 @@
 #define DEFAULT_MENU_SIZE (Vector2){GetScreenWidth()/2, GetScreenHeight()*.75f}
 #define DEFAULT_MENU_THIN_SIZE (Vector2){GetScreenWidth()/2, 64*UI_SCALE}
 #define DEFAULT_BUTTON_SIZE (Vector2){120*UI_SCALE, 48*UI_SCALE}
-#define XS_PANEL_SIZE (Vector2){128*UI_SCALE, 64*UI_SCALE}
-#define XS_PANEL_THIN_SIZE (Vector2){128*UI_SCALE, 32*UI_SCALE}
+#define XS_PANEL_SIZE (Vector2){108*UI_SCALE, 64*UI_SCALE}
+#define XS_PANEL_THIN_SIZE (Vector2){108*UI_SCALE, 32*UI_SCALE}
 #endif
 #define LARGE_BUTTON_SIZE (Vector2){164*UI_SCALE, 32*UI_SCALE}
 

@@ -26,6 +26,7 @@ void PreUpdate(void){
 }
 
 void FixedUpdate(void){
+  AudioStep();
   WorldFixedUpdate();
 }
 
@@ -45,7 +46,7 @@ void DrawGameplayScreen(void)
   //  if(game_process.state == GAME_LOADING)
   //  return;
   BeginDrawing();
-  ClearBackground(RAYWHITE);
+  ClearBackground(GRAY);
   BeginMode2D(camera);
 
   WorldRender();
