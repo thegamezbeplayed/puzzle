@@ -108,6 +108,13 @@ float WorldGetGridCombo(Cell intgrid){
   return grid->color_mul->current + grid->type_mul->current;
 }
 
+
+bool WorldGetShapeMoves(int y, int x){
+    ent_t *shape = world.grid.combos[x][y]->tile->child;
+
+    return shape->control->moves > 0;
+}
+
 Cell WorldGetMaxShapes(){
   return (Cell){(int)world.max_shape->current,(int)world.max_color->current};
 }
@@ -477,18 +484,13 @@ void InitWorld(world_data_t data){
   world.max_color = InitStatOnMin(STAT_MAX_COLOR,SHAPE_COLOR_GRAY,SHAPE_COLOR_MAX);
 
   world.max_color->increment = 16;
-  TraceLog(LOG_INFO,"Screen Width %02f",+VECTOR2_CENTER_SCREEN.x);
-  float playX = (CELL_WIDTH/2)+VECTOR2_CENTER_SCREEN.x-(GRID_WIDTH*CELL_WIDTH)/2;
-  
-  TraceLog(LOG_INFO,"Start Pos x %02f",+playX);
-  float playY = (XS_PANEL_THIN_SIZE.y/2)+(CELL_HEIGHT/2)+VECTOR2_CENTER_SCREEN.y-(GRID_HEIGHT*CELL_HEIGHT)/2;
-  
-  TraceLog(LOG_INFO,"Start Pos Y %02f",+playY);
-  TraceLog(LOG_INFO,"HUD Height %02f",ui.menus[MENU_HUD].element->bounds.height);
-  world.play_area =Rect(playX,playY,GRID_WIDTH*CELL_WIDTH,GRID_HEIGHT*CELL_HEIGHT);
+
+  float cs = ScreenSized(SIZE_CELL);
+  float gs = ScreenSized(SIZE_GRID);
+  Vector2 gridStart = ScreenAreaStart(AREA_PLAY); 
   for(int x = 0; x < GRID_WIDTH; x++)
     for(int y = 0; y < GRID_HEIGHT; y++){
-      Vector2 pos = {x*CELL_WIDTH + world.play_area.x,y*CELL_HEIGHT+world.play_area.y};
+      Vector2 pos = {x*cs + gridStart.x,y*cs+gridStart.y};
       ent_t* tile = InitEntStatic(BASE_TILE,pos);
       tile->intgrid_pos = (Cell){x,y};
       RegisterEnt(tile);
@@ -527,7 +529,7 @@ void WorldRender(){
     if(!world.floatytext_used[i])
       continue;
     render_text_t rt = *world.texts[i];
-    DrawText(rt.text, rt.pos.x,rt.pos.y,rt.size,rt.color);
+    DrawTextEx(ui.font,rt.text, rt.pos,rt.size,1,rt.color);
   }
 
 }
@@ -650,11 +652,12 @@ void AddPoints(float mul,float points, Vector2 pos){
   *rt = (render_text_t){
     .text = strdup(TextFormat("+%d",(int)(points*mul))),
     .pos = pos,
-    .size = 24,
+    .size = 54,
     .color =YELLOW,
     .duration = (int)(45+mul*9)
   };
   AddFloatingText(rt);
+  UploadScore();
 }
 
 ShapeFlags WorldGetPossibleShape(){

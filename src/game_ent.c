@@ -28,9 +28,9 @@ ent_t* InitEntStatic(TileInstance data,Vector2 pos){
   *e = (ent_t){0};  // zero initialize if needed
   e->type = ENT_TILE;
 
-  e->pos = pos;
   e->sprite = InitSpriteByIndex(data.id,&tiledata);
   e->sprite->owner = e;
+  e->pos = Vector2Add(Vector2Scale(e->sprite->slice->center,SPRITE_SCALE),pos);
 
   e->control = InitController();
   for (int i = STATE_SPAWN; i < STATE_END; i++){
@@ -120,7 +120,10 @@ void SetViableTile(ent_t* e, EntityState old, EntityState s){
     EntChangeOccupant(e, neighbors[i]);
       
     AudioPlayRandomSfx(SFX_ACTION,ACTION_PLACE);
+    return;
   }
+
+  SetState(e,STATE_IDLE,NULL);
 }
 
 void EntToggleTooltip(ent_t* e){
@@ -201,7 +204,7 @@ void EntChangeOccupant(ent_t* e, ent_t* owner){
   if(!tenant)
     return;
 
-  if(!EntSetOwner(tenant,old,false,ReduceMoveCount)){
+  if(!EntSetOwner(tenant,old,false,NULL)){
     EntSetOwner(e,old,true,NULL);
     return;
   }

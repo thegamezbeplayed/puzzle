@@ -8,11 +8,8 @@
 #if defined(PLATFORM_WEB)
 #include <emscripten/emscripten.h>
 #endif
-#if defined(PLATFORM_DESKTOP)
-    #include <GL/gl.h>  // for GL_VERSION, GL_VENDOR, etc.
-#elif defined(PLATFORM_WEB)
-    #include <GLES2/gl2.h>
-#endif
+float screenWidth = 1600.0f;
+float screenHeight = 900.0f; 
 double currentTime = 0.0;           // Current time measure
 double updateDrawTime = 0.0;        // Update + Draw time
 double previousTime = 0.0;    // Previous time measure
@@ -30,37 +27,28 @@ bool wantQuit = false;
 int main(void)
 {
   srand((unsigned int)time(NULL));  // seed once using current time
-                                    // Initialization
-                                    //---------------------------------------------------------
 
-#if defined(PLATFORM_WEB)
-  int vw = EM_ASM_INT({ return window.innerWidth; });
-  int vh = EM_ASM_INT({ return window.innerHeight; });
-  //screenWidth = vw;
-  //screenHeight = vh;
-
-  TraceLog(LOG_INFO, "Mobile view detected (%dx%d)", vw, vh);
-#else
-  TraceLog(LOG_INFO, "Desktop view detected");
+#if defined(PLATFORM_ANDROID)
+  screenWidth = GetScreenWidth();
+  screenHeight = GetScreenHeight();
 #endif
-  InitWindow(screenWidth, screenHeight, "raylib game template");
+
+  InitWindow(screenWidth,screenHeight, "raylib game template");
 
   InitAudioDevice();      // Initialize audio device
-                          //--------------------------------------------------------------------------------------
 
+  InitPlayArea();
   InitAudio();
   InitResources();
   InitUI();
-  //InitShaders();
-//  ToggleFullscreen();
-  LoadShaders();
+  
   InitGameProcess();
 
 #if defined(PLATFORM_WEB)
   emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
 #else
 
-  SetExitKey(KEY_NULL);
+  //SetExitKey(KEY_NULL);
   // Main game loop
   while (!WindowShouldClose() && !wantQuit)    // Detect window close button or ESC key
   {
@@ -107,12 +95,12 @@ int main(void)
 
 void UpdateDrawFrame(void){
   if (IsKeyPressed(KEY_ENTER))// || IsGestureDetected(GESTURE_TAP))
-    {
-      GameTransitionScreen();
-    }
+  {
+    GameTransitionScreen();
+  }
 
-    previousTime = currentTime;
-    GameProcessSync(false);
+  previousTime = currentTime;
+  GameProcessSync(false);
 }
 
 

@@ -2,13 +2,16 @@
 #define SCREENS_H
 #include "game_types.h"
 
-#if defined(PLATFORM_WEB)
-static int screenWidth = 844;
-static int screenHeight = 844;
+#if defined(PLATFORM_ANDROID)
+#define DESIGN_WIDTH 1080.0f
+#define DESIGN_HEIGHT 1920.0f
 #else
-static int screenWidth = 1920;
-static int screenHeight = 1080;
+#define DESIGN_WIDTH 1920.0f
+#define DESIGN_HEIGHT 1080.0f
 #endif
+
+static float SPRITE_SCALE = 1.0f;
+static float UI_SCALE = 1.0f;
 
 typedef struct{
   bool    is_dragging;
@@ -16,6 +19,34 @@ typedef struct{
   ent_t   *target;
   ent_t   *hover;
 }mouse_controller_t;
+
+typedef enum{
+  SIZE_GRID,
+  SIZE_CELL,
+  SIZE_SCALE,
+  SIZE_UI,
+  SIZE_FONT,
+  SIZE_ALL
+}PlaySizes;
+
+typedef enum{
+  AREA_PLAY,
+  AREA_UI,
+  AREA_ALL
+}ScreenArea;
+
+typedef float (*PlaySizeSync)(PlaySizes);
+typedef struct{
+  Rectangle      area[AREA_ALL];
+  float          sizes[SIZE_ALL];
+  PlaySizeSync   get_size;
+}play_area_t;
+float GetApproxDPIScale(void);
+void InitPlayArea(void);
+void ScreenCalcAreas(void);
+Vector2 ScreenAreaStart(ScreenArea t);
+float ScreenSized(PlaySizes s);
+
 void InitScreenInteractive(void);
 void ScreenSyncMouse(void);
 ent_t* ScreenEntMouseCollision(void);

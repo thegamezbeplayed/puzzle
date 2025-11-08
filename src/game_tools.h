@@ -10,8 +10,8 @@
 #define CLAMPV2(v,a,b) ((v)<(a)?(a):((v)>(b)?(b):(v)))
 #define VEC_UNSET (Vector2){FLT_MAX, FLT_MAX}
 #define EPS 1e-6f
-#define VECTOR2_CENTER_SCREEN   (Vector2){ GetScreenWidth()/2, screenHeight/2}
-#define VECTOR2_SCREEN   (Vector2){ GetScreenWidth(), screenHeight}
+#define VECTOR2_CENTER_SCREEN   (Vector2){ GetScreenWidth()/2, GetScreenHeight()/2}
+#define VECTOR2_SCREEN   (Vector2){ GetScreenWidth(), GetScreenHeight()}
 #define VECTOR2_ZERO   (Vector2){ 0.0f, 0.0f}
 #define VECTOR2_ONE    (Vector2){ 1.0f, 1.0f }
 #define VECTOR2_UP     (Vector2){ 0.0f, 1.0f }
@@ -21,8 +21,9 @@
 #define Vector2X(x) ((Vector2){ (x), 0.0f })
 #define Vector2Y(y) ((Vector2){ 0.0f, (y) })
 #define Vector2Inc(v,xi,yi) ((Vector2){ (v.x+xi), (v.y+yi) })
-
+#define RectStart(r1,r2) ((Vector2){(r1.width / 2 - r2.width/2),(r1.height/2 - r2.height/2)})
 #define RectPos(v,r) ((Rectangle){(v.x),(v.y),(r.width),(r.height)})
+#define RectXY(r) ((Vector2){(r.x),(r.y)})
 #define Rect(px,py,sx,sy) ((Rectangle){ (px),(py), (sx), (sy) })
 #define RECT_ZERO   (Rectangle){ 0.0f, 0.0f,0.0f,0.0f}
 #define RectInc(r,xi,yi) ((Rectangle){ (r.x+xi), (r.y+yi),(r.width),(r.height) })

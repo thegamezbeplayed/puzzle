@@ -6,13 +6,12 @@
 #include "game_assets.h"
 
 #define MAX_ELEMENTS 64
-#define UI_SCALE 1.0F
-#if defined(PLATFORM_WEB)
-#define DEFAULT_MENU_SIZE (Vector2){screenWidth*.5, GetScreenHeight()/2}
+#if defined(PLATFORM_ANDROID)
+#define DEFAULT_MENU_SIZE (Vector2){GetScreenWidth()/2, GetScreenHeight()/2}
 #define DEFAULT_MENU_THIN_SIZE (Vector2){GetScreenWidth(), 64*UI_SCALE}
-#define DEFAULT_BUTTON_SIZE (Vector2){120*UI_SCALE, 64*UI_SCALE}
-#define XS_PANEL_SIZE (Vector2){144*UI_SCALE, 72*UI_SCALE}
-#define XS_PANEL_THIN_SIZE (Vector2){144*UI_SCALE, 54*UI_SCALE}
+#define DEFAULT_BUTTON_SIZE (Vector2){160*UI_SCALE, 96*UI_SCALE}
+#define XS_PANEL_SIZE (Vector2){264*UI_SCALE, 112*UI_SCALE}
+#define XS_PANEL_THIN_SIZE (Vector2){264*UI_SCALE, 80*UI_SCALE}
 #else
 #define DEFAULT_MENU_SIZE (Vector2){GetScreenWidth()/2, GetScreenHeight()*.75f}
 #define DEFAULT_MENU_THIN_SIZE (Vector2){GetScreenWidth()/2, 64*UI_SCALE}
@@ -22,9 +21,9 @@
 #endif
 #define LARGE_BUTTON_SIZE (Vector2){164*UI_SCALE, 32*UI_SCALE}
 
-#define DEFAULT_PANEL_SIZE (Vector2){GetScreenWidth(), 64*UI_SCALE}
+#define DEFAULT_PANEL_SIZE (Vector2){GetScreenWidth()*UI_SCALE, 64*UI_SCALE}
 #define DEFAULT_PANEL_THIN_SIZE (Vector2){224*UI_SCALE, 32*UI_SCALE}
-#define LARGE_PANEL_THIN_SIZE (Vector2){GetScreenWidth(), 32*UI_SCALE}
+#define LARGE_PANEL_THIN_SIZE (Vector2){GetScreenWidth()*UI_SCALE, 32*UI_SCALE}
 #define SMALL_PANEL_SIZE (Vector2){192*UI_SCALE, 64*UI_SCALE}
 #define SMALL_PANEL_THIN_SIZE (Vector2){184*UI_SCALE, 32*UI_SCALE}
 #define DEFAULT_LINE_SIZE (Vector2){2 *UI_SCALE, 64*UI_SCALE}
@@ -171,6 +170,7 @@ static bool MenuInert(ui_menu_t* self){
 }
 
 typedef struct{
+  Font         font;
   //MenuId      open_menu;
   KeyboardKey  menu_key[MENU_DONE];
   ui_menu_t    menus[MENU_DONE];

@@ -31,6 +31,9 @@ static bool FilterEntNeighbor(ent_t* e,ent_t* other){
   if(e->type!= other->type)
     return false;
 
+  if(e->uid == other->uid)
+    return false;
+
   if(CheckWorldGridAdjacent(e, other))
     return true;
 
@@ -193,7 +196,6 @@ void TurnOnChangeState(TurnState state);
 
 typedef struct world_s{
   grid_manager_t grid;
-  Rectangle     play_area;
   ent_t*        ents[MAX_ENTS];
   unsigned int  num_ent;
   sprite_t*     sprs[MAX_ENTS];
@@ -216,6 +218,7 @@ bool WorldTestGrid(void);
 bool CheckWorldTilesReady(void);
 bool WorldCheckGrid(ent_t *e, ent_t* owner);
 int WorldGetShapeSums(int* out);
+bool WorldGetShapeMoves(int y, int x);
 void WorldCalcGrid();
 bool RegisterBehaviorTree(BehaviorData data);
 bool RegisterEnt( ent_t *e);

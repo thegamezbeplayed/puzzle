@@ -9,11 +9,19 @@
 void GuiDrawRectangle(Rectangle rec, int borderWidth, Color borderColor, Color baseColor) { }
 ui_manager_t ui;
 void InitUI(void){
+  Font font = LoadFontEx("resources/fonts/kenney-pixel-square.ttf", 64, 0, 0);
+  SetTextureFilter(font.texture, TEXTURE_FILTER_POINT);
+  GuiSetFont(font);
+  ui.font = font;
 #if defined(PLATFORM_WEB)
   GuiSetStyle(DEFAULT,TEXT_SIZE,27);
+#elif defined(PLATFORM_ANDROID)
+  GuiSetStyle(DEFAULT,TEXT_SIZE,58);
 #else
-  GuiSetStyle(DEFAULT,TEXT_SIZE,20);
+  GuiSetStyle(DEFAULT,TEXT_SIZE,20*UI_SCALE);
 #endif
+
+  SetTextureFilter(font.texture, TEXTURE_FILTER_POINT);
   GuiSetStyle(DEFAULT,TEXT_ALIGNMENT,TEXT_ALIGN_CENTER);
   GuiSetStyle(LABEL,TEXT_ALIGNMENT,TEXT_ALIGN_LEFT);
   GuiSetStyle(DEFAULT,BORDER_COLOR_NORMAL,ColorToInt(WHITE));
@@ -75,7 +83,7 @@ void InitUI(void){
   ElementAddChild(scorePanel,scoreText);
 
 
-  ElementAddChild(ui.menus[MENU_HUD].element,turnPanel);
+  //ElementAddChild(ui.menus[MENU_HUD].element,turnPanel);
   ElementAddChild(ui.menus[MENU_HUD].element,comboPanel);
   ElementAddChild(ui.menus[MENU_HUD].element,scorePanel);
 

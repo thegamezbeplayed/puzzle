@@ -1,8 +1,8 @@
 #ifndef ROOM_DATA_H
 #define ROOM_DATA_H
 
-#define ROOM_WIDTH 1920
-#define ROOM_HEIGHT 1080
+#define ROOM_WIDTH 774
+#define ROOM_HEIGHT 774
 
 #define GRID_WIDTH 3
 #define GRID_HEIGHT 3

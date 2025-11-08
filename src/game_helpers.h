@@ -52,7 +52,11 @@ static bool CanBeSolvedInMoves(ShapeID grid[GRID_WIDTH][GRID_HEIGHT], int depth)
 
                 // Swap
                 ShapeID tmp = newGrid[y][x];
-                newGrid[y][x] = newGrid[ny][nx];
+                if(WorldGetShapeMoves(y,x) && WorldGetShapeMoves(ny,nx))
+                  newGrid[y][x] = newGrid[ny][nx];
+                else
+                  TraceLog(LOG_INFO,"%i,%i cant move",x,y);
+
                 newGrid[ny][nx] = tmp;
 
                 if (CanBeSolvedInMoves(newGrid, depth - 1)){

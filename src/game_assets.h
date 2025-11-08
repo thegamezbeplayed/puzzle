@@ -9,8 +9,6 @@
 #define MAX_SONGS 4
 #define MAX_SPRITES 64
 
-#define SPRITE_SCALE 1.0
-
 struct ent_s;
 void InitResources();
 

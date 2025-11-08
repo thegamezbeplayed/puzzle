@@ -1,8 +1,41 @@
 #include "raylib.h"
 #include "game_tools.h"
 #include "game_process.h"
-
+#if defined(PLATFORM_ANDROID)
+#include <jni.h>
+#endif
 mouse_controller_t mousectrl;
+play_area_t play_area;
+
+void InitPlayArea(void){
+  float sx = GetScreenWidth()/DESIGN_WIDTH;
+  float sy = GetScreenHeight()/DESIGN_HEIGHT;
+  float scale = (sx>sy? sx:sy)*GetApproxDPIScale();
+  TraceLog(LOG_INFO,"Window Scaling %0.2f",scale);
+  SPRITE_SCALE = scale;
+  UI_SCALE = scale;
+  play_area.sizes[SIZE_SCALE] = scale;
+  play_area.sizes[SIZE_GRID] = GRID_WIDTH * scale;
+  play_area.sizes[SIZE_CELL] = CELL_WIDTH * scale;
+
+  play_area.area[AREA_PLAY] = Rect(0,0,ROOM_WIDTH*scale,ROOM_HEIGHT * scale);
+  play_area.area[AREA_UI] = Rect(0,0,DESIGN_WIDTH*scale,DESIGN_HEIGHT * scale);
+}
+
+float ScreenSized(PlaySizes s){
+  return play_area.sizes[s];
+}
+
+Vector2 ScreenAreaStart(ScreenArea t){
+  ScreenCalcAreas();
+
+  return RectXY(play_area.area[AREA_PLAY]);
+}
+
+void ScreenCalcAreas(void){
+  Vector2 ps = RectStart(play_area.area[AREA_UI],play_area.area[AREA_PLAY]);
+  play_area.area[AREA_PLAY] = RectPos(ps,play_area.area[AREA_PLAY]);
+}
 
 void InitScreenInteractive(void){
   mousectrl = (mouse_controller_t) {
@@ -11,7 +44,6 @@ void InitScreenInteractive(void){
       .offset = VECTOR2_ZERO,
       .target = NULL
   };
-
 }
 
 void ClearMouse(void){
@@ -42,6 +74,7 @@ void ScreenSyncMouse(void){
     ClearMouse(); 
   }
   else if (!mousectrl.is_dragging){
+    /*
     ent_t* hover = ScreenEntMouseHover();
     if(mousectrl.hover && mousectrl.hover != hover){
       SetState(mousectrl.hover,STATE_IDLE,NULL);
@@ -50,6 +83,7 @@ void ScreenSyncMouse(void){
     mousectrl.hover = hover;
     if(mousectrl.hover)
       SetState(mousectrl.hover,STATE_HOVER,NULL);
+      */
   }
 
   if(mousectrl.is_dragging){
@@ -87,4 +121,9 @@ ent_t* ScreenEntMouseCollision(void){
   }
 
   return NULL;
+}
+
+float GetApproxDPIScale(void)
+{
+    return (float)GetScreenWidth() / (float)GetRenderWidth();
 }

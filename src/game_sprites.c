@@ -5,7 +5,7 @@
 #include "asset_ui.h"
 #include "asset_sprites.h"
 #include "asset_shapes.h"
-#include "game_types.h"
+#include "screens.h"
 
 sprite_sheet_data_t shapedata;
 sprite_sheet_data_t tiledata;
@@ -34,12 +34,13 @@ void InitResources(){
   SpritePreprocessImg(spritesImg,tiledata.sprite_sheet);
   *shapedata.sprite_sheet = LoadTextureFromImage(shapesImg);
   *uidata.sprite_sheet = LoadTextureFromImage(uiImg);
+
 }
 
 sprite_t* InitSpriteByID(int id, sprite_sheet_data_t* data){
   sprite_t* spr =malloc(sizeof(sprite_t));
   spr->anim = malloc(sizeof(anim_t));
-//  memset(spr,0,sizeof(sprite_t));
+  //  memset(spr,0,sizeof(sprite_t));
 
   spr->state = ANIM_IDLE;
   spr->anim->duration = 67;
@@ -50,9 +51,9 @@ sprite_t* InitSpriteByID(int id, sprite_sheet_data_t* data){
     spr->slice = data->sprites[i];
     spr->sheet = data->sprite_sheet;
 
-    spr->slice->scale = SPRITE_SCALE;
+    //spr->slice->scale = SPRITE_SCALE;
   }
-  
+
   return spr;
 
 }
@@ -64,7 +65,7 @@ sprite_t* InitSpriteByIndex(int index, sprite_sheet_data_t* data){
   spr->sheet = data->sprite_sheet;
   spr->slice = data->sprites[index];
 
-  spr->slice->scale = SPRITE_SCALE;
+  //spr->slice->scale = SPRITE_SCALE;
   return spr;
 }
 
@@ -98,7 +99,7 @@ void SpriteSync(sprite_t *spr){
 
 void SpriteOnAnimChange(sprite_t* spr, AnimState old, AnimState s){
   spr->anim->elapsed = 0;
-  
+
   switch(COMBO_KEY(old,s)){
     case COMBO_KEY(ANIM_BOUNCE,ANIM_DONE):
       SpriteSetAnimState(spr, ANIM_RETURN);
@@ -135,7 +136,7 @@ bool SpriteSetAnimState(sprite_t* spr, AnimState s){
 
   AnimState old = spr->state;
   spr->state = s;
-  
+
   SpriteOnAnimChange(spr,old,s);
 }
 
@@ -150,8 +151,8 @@ void SpriteAnimate(sprite_t *spr){
       spr->offset.y=EaseLinearOut(spr->anim->elapsed, 0.0f,-height,spr->anim->duration);
       break;
     case ANIM_RETURN:
-     spr->offset.y=EaseLinearIn(spr->anim->elapsed,-height, height, spr->anim->duration);
-     break;
+      spr->offset.y=EaseLinearIn(spr->anim->elapsed,-height, height, spr->anim->duration);
+      break;
   }
 
   if(spr->anim->elapsed >= spr->anim->duration)
@@ -183,14 +184,14 @@ void DrawSlice(sprite_t *spr, Vector2 position,float rot){
 
 void DrawNineSlice(scaling_slice_t *spr, Rectangle dst){
 
-    float border = spr->slices[SLICE_TOP_LEFT]->bounds.width; // assuming uniform border
-    float left   = dst.x;
-    float top    = dst.y;
-    float right  = dst.x + dst.width;
-    float bottom = dst.y + dst.height;
+  float border = spr->slices[SLICE_TOP_LEFT]->bounds.width; // assuming uniform border
+  float left   = dst.x;
+  float top    = dst.y;
+  float right  = dst.x + dst.width;
+  float bottom = dst.y + dst.height;
 
-    float midWidth  = dst.width  - 2 * border;
-    float midHeight = dst.height - 2 * border;
+  float midWidth  = dst.width  - 2 * border;
+  float midHeight = dst.height - 2 * border;
 
   spr = uidata.sprites[1];
   for(int i = 0; i<SLICE_ALL;i++){
@@ -240,9 +241,9 @@ bool FreeSprite(sprite_t* s){
 
   if(s->anim)
     free(s->anim);
-    
+
   //for(int i = 0; i<SHADER_DONE;i++)
-    //free(s->gls[i]);
+  //free(s->gls[i]);
 
   free(s);
   return true;
@@ -283,6 +284,7 @@ void SpriteLoadSubTextures(sprite_sheet_data_t *out, int sheet_id){
     sprite_slice_t *spr = malloc(sizeof(sprite_slice_t));
     memset(spr,0,sizeof(sprite_slice_t));
 
+    spr->scale = ScreenSized(SIZE_SCALE);
     spr->id = sprData.tag;
     spr->center = center;
     spr->offset = offset;
@@ -303,7 +305,7 @@ void SpriteLoadSlicedTextures(){
     int height = sprData.sourceHeight;
     int start_x = sprData.positionX;
     int start_y = sprData.positionY;
-    
+
     Rectangle bounds[SLICE_ALL] = {
       /*TL*/{start_x,start_y, border_w, border_w},
       /*TM*/{start_x+border_w,start_y, width-2*border_w, border_w},
@@ -315,7 +317,7 @@ void SpriteLoadSlicedTextures(){
       {start_x+border_w,start_y+height-border_w, width-2*border_w, border_w},
       {start_x+width-border_w,start_y+height-border_w, border_w, border_w},
     };
-    
+
     for(int s = 0; s < SLICE_ALL; s++){
       sprite_slice_t *spr = malloc(sizeof(sprite_slice_t));
       memset(spr,0,sizeof(sprite_slice_t));
@@ -331,30 +333,30 @@ void SpriteLoadSlicedTextures(){
   }
 }
 void SpritePreprocessImg(Image *img, Texture2D *out){
-    ImageFormat(img, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+  ImageFormat(img, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
   // Access pixels
-    Color *pixels = LoadImageColors(*img);
+  Color *pixels = LoadImageColors(*img);
 
-    int pixelCount = img->width * img->height;
-    for (int i = 0; i < pixelCount; i++)
+  int pixelCount = img->width * img->height;
+  for (int i = 0; i < pixelCount; i++)
+  {
+    // If pixel is white (tolerate near-white)
+    if (pixels[i].r > 240 && pixels[i].g > 240 && pixels[i].b > 240)
     {
-        // If pixel is white (tolerate near-white)
-        if (pixels[i].r > 240 && pixels[i].g > 240 && pixels[i].b > 240)
-        {
-            pixels[i].a = 0; // Make transparent
-        }
+      pixels[i].a = 0; // Make transparent
     }
+  }
 
-    // Apply modified pixels back to image
-    Image newImg = {
-        .data = pixels,
-        .width = img->width,
-        .height = img->height,
-        .format = img->format,
-        .mipmaps = 1
-    };
+  // Apply modified pixels back to image
+  Image newImg = {
+    .data = pixels,
+    .width = img->width,
+    .height = img->height,
+    .format = img->format,
+    .mipmaps = 1
+  };
 
-    // Create a texture from modified image
-    *out = LoadTextureFromImage(newImg);
-    UnloadImageColors(pixels);
+  // Create a texture from modified image
+  *out = LoadTextureFromImage(newImg);
+  UnloadImageColors(pixels);
 }
