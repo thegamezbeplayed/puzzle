@@ -20,7 +20,7 @@ typedef struct bounds_s {
 } bounds_t;
 
 typedef struct{
-  struct ent_s*                  target;
+  struct ent_s*           target;
   int                     moves;
   Vector2                 destination;
   bool                    has_arrived;

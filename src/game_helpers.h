@@ -179,4 +179,11 @@ static ShapeID SelectHelpfulShape(){
   return (ShapeID)(color|shape);
 }
 
+static bool COMPARE_ALL_BOOL(bool *all, int count){
+  for (int i = 0; i < count; i++)
+    if(!all[i])
+      return false;
+
+  return true;
+}
 #endif

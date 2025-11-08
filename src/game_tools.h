@@ -116,4 +116,5 @@ static inline Vector2 rand_unit(){
   float a = ((float)rand() / (float)RAND_MAX) * 6.28318530718f;
   return (Vector2){cosf(a), sinf(a)};
 }
+
 #endif

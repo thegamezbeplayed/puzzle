@@ -8,7 +8,6 @@
 
 #define MAX_INTERACTIONS 256
 #define DEBUG false
-#define CURRENT_LEVEL levels.levels[levels.current]
 static int CURRENT_ENT_IDENTIFIER = 0;
 
 extern Font font;
@@ -19,8 +18,9 @@ typedef bool EntFilterFn(ent_t* e, ent_t* other);
 bool CheckWorldGridAdjacent(ent_t* e, ent_t* other);
 
 static bool FilterEntShape(ent_t* e,ent_t* other){
-  if(e->state < STATE_IDLE || e->state > STATE_CALCULATING)
+  if(e->state < STATE_IDLE || e->state > STATE_SCORE)
     return false;
+  
   if(e->type == ENT_SHAPE)
     return true;
   else
@@ -85,29 +85,6 @@ typedef enum{
 
 void GameSetState(GameState state);
 
-typedef enum{
-  LEVEL_NONE,
-  LEVEL_LOADING,
-  LEVEL_RELOADING,
-  LEVEL_START,
-  LEVEL_RUNNING,
-  LEVEL_FINISH,
-  LEVEL_COMPLETE,
-  LEVEL_DONE
-}LevelState;
-
-typedef enum{
-  DEFINE_LVL_NONE,
-  DEFINE_LVL_TUT,
-  DEFINE_LVL_DEMO,
-  DEFINE_LVL_DONE
-}LevelDefine;
-
-typedef struct{
-  LevelDefine   define;
-  const char*   subdir;
-}level_info_t;
-
 typedef struct{
   ProcessType process;
   GameState   state[PROCESS_DONE];
@@ -157,32 +134,11 @@ typedef struct{
   stat_t      *color_mul,*type_mul;
 }grid_combo_t;
 
-typedef enum{
-  TURN_START,
-  TURN_CALC,
-  TURN_SCORE,
-  TURN_END,
-  TURN_STANDBY,
-  TURN_COUNT
-}TurnState;
-
-typedef struct{
-  const char* name;
-  TurnState  state;
-}TurnStateName;
-
-static TurnStateName turn_name[TURN_COUNT] = {
-  {"Start", TURN_START},
-  {"Calc", TURN_CALC},
-  {"Score", TURN_SCORE},
-  {"End", TURN_END},
-  {"Standby", TURN_STANDBY},
-};
-
 typedef struct{
   TurnState     state;
   int           turn;
   int           turn_connections;
+  ent_t         *matches[2][GRID_WIDTH][GRID_HEIGHT];
   grid_combo_t* combos[GRID_WIDTH][GRID_HEIGHT];
 }grid_manager_t;
 
@@ -193,6 +149,7 @@ int GridGetCol(int col, ent_t** out);
 bool TurnSetState(TurnState state);
 bool TurnCanChangeState(TurnState state);
 void TurnOnChangeState(TurnState state);
+TurnState TurnGetState();
 
 typedef struct world_s{
   grid_manager_t grid;
@@ -213,6 +170,7 @@ ent_t* WorldGetEnt(const char* name);
 ShapeFlags WorldGetPossibleShape();
 ent_t* WorldGetEntById(unsigned int uid);
 float WorldGetGridCombo(Cell intgrid);
+void WorldTurnAddMatch(ent_t* e, bool color_matches);
 int WorldGetEnts(ent_t** results,EntFilterFn fn, void* params);
 bool WorldTestGrid(void);
 bool CheckWorldTilesReady(void);

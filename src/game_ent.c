@@ -17,8 +17,14 @@ ent_t* InitEnt(ObjectInstance data){
   e->stats[STAT_POINTS] = InitStatOnMin(STAT_POINTS,(int)WorldGetPossibleShape()-2,10);
   e->events = InitEvents();
 
- e->control = InitController();
- e->control->moves = 2;
+  e->control = InitController();
+  for (int i = STATE_SPAWN; i < STATE_END; i++){
+    if(BASE_SHAPE.behaviors[i] == BEHAVIOR_NONE)
+      continue;
+    e->control->bt[i] = InitBehaviorTree(BASE_SHAPE.behaviors[i]);
+  }
+
+  e->control->moves = 2;
   SetState(e,STATE_SPAWN,NULL);
   return e;
 }
@@ -110,7 +116,7 @@ void EntControlStep(ent_t *e){
 
 void SetViableTile(ent_t* e, EntityState old, EntityState s){
   ent_t* neighbors[4];
-  
+
   int num_neighbors = WorldGetEnts(neighbors, FilterEntNeighbor, e->owner);
 
   for (int i = 0; i < num_neighbors; i++){
@@ -118,7 +124,7 @@ void SetViableTile(ent_t* e, EntityState old, EntityState s){
       continue;
 
     EntChangeOccupant(e, neighbors[i]);
-      
+
     AudioPlayRandomSfx(SFX_ACTION,ACTION_PLACE);
     return;
   }
@@ -137,7 +143,7 @@ bool SetState(ent_t *e, EntityState s,StateChangeCallback callback){
 
     if(callback!=NULL)
       callback(e,old,s);
-      
+
     OnStateChange(e,old,s);
     return true;
   }
@@ -153,6 +159,18 @@ bool CanChangeState(EntityState old, EntityState s){
   if(old == s || old > STATE_END)
     return false;
 
+  switch(s){
+    case STATE_SCORE:
+      if(old < STATE_CALCULATING)
+        return false;
+      break;
+    case STATE_CALCULATING:
+      if(old<STATE_PLACED)
+        return false;
+    default:
+      return true;
+  }
+
   return true;
 } 
 
@@ -161,7 +179,7 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s){
     case STATE_HOVER:
       EntToggleTooltip(e);
       break;
-     case STATE_SPAWN:
+    case STATE_SPAWN:
       if(e->sprite)
         e->sprite->is_visible = true;
       break;
@@ -200,7 +218,7 @@ void EntChangeOccupant(ent_t* e, ent_t* owner){
 
   if(!EntSetOwner(e,owner,true,ReduceMoveCount))
     return;
-  
+
   if(!tenant)
     return;
 
@@ -208,12 +226,6 @@ void EntChangeOccupant(ent_t* e, ent_t* owner){
     EntSetOwner(e,old,true,NULL);
     return;
   }
-
-  if(TurnSetState(TURN_CALC))
-    if(WorldCheckGrid(e,owner)|WorldCheckGrid(tenant,old))
-      TurnSetState(TURN_SCORE);
-    else
-      TurnSetState(TURN_END);
 }
 
 void EntOnOwnerChange(ent_t *e, ent_t* old, ent_t* owner){
@@ -239,7 +251,7 @@ bool EntSetOwner(ent_t* e, ent_t* owner, bool evict, OwnerChangeCallback cb){
   owner->child = e;
   if(old && old->child && old->child == e)
     old->child = NULL;
-  
+
   EntOnOwnerChange(e,old, e->owner);
   if(cb)
     cb(e,old,e->owner);

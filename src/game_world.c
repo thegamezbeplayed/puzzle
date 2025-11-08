@@ -66,40 +66,13 @@ int GridGetCol(int col,ent_t** out){
   return count;
 }
 
-int GridCompare(ent_t* start, int num_others, ent_t** others, Cell* results){
-  int matches = 0;
-  ShapeFlags og_type = SHAPE_TYPE(start->child->shape);
-  ShapeFlags og_col = SHAPE_COLOR(start->child->shape);
-  ShapeFlags bonus_type = SHAPE_TYPE_NONE;
-  ShapeFlags bonus_col = SHAPE_COLOR_NONE;
-  
-  if(start->shape){
-    bonus_type = SHAPE_TYPE(start->shape);
-    bonus_col = SHAPE_COLOR(start->shape);
-  }
-  
-  for(int i = 0; i<num_others;i++){
-    if(!IS_TYPE(others[i]->child->shape,og_type)){
-      results[i].x = 1.0f;
-      results[i].y = 1.0f;
-      continue;
-    }
+void WorldTurnAddMatch(ent_t* e, bool color_matches){
+  Cell epos = e->intgrid_pos;
+  if(world.grid.matches[0][epos.x][epos.y]==NULL)
+    world.grid.matches[0][epos.x][epos.y] = e;
+  else
+    world.grid.matches[1][epos.x][epos.y] = e;
 
-    results[matches].x = 1;
-
-    if(IS_COLOR(others[i]->child->shape,og_col))
-      results[i].y=1;
-
-    if(IS_TYPE(others[i]->child->shape,bonus_type))
-      results[i].x+=1;
-
-    if(IS_COLOR(others[i]->child->shape,bonus_col))
-      results[i].y+=1;
-
-    matches++;
-  }
-
-  return matches;
 }
 
 float WorldGetGridCombo(Cell intgrid){
@@ -133,75 +106,6 @@ int WorldGetShapeSums(int* out){
   return (int)world.max_shape->current;
 }
 
-bool WorldTestGrid(void){
-  ShapeID grid[GRID_WIDTH][GRID_HEIGHT];
-  for(int x = 0; x < GRID_WIDTH; x++){
-    for(int y = 0; y < GRID_HEIGHT; y++)
-      grid[x][y] =world.grid.combos[x][y]->tile->child->shape;
-  }
-
-  return CanBeSolvedInMoves(grid,4);
-}
-
-bool WorldCheckGrid(ent_t *e,ent_t* owner){
-  for(int x = 0; x < GRID_WIDTH; x++){
-    for(int y = 0; y < GRID_HEIGHT; y++){
-      SetState(world.grid.combos[x][y]->tile,STATE_CALCULATING, NULL);
-    }
-  }
-  ent_t* row_comp[GRID_WIDTH];
-  Cell row_results[GRID_WIDTH];
-  ent_t* col_comp[GRID_HEIGHT];
-  Cell col_results[GRID_HEIGHT];
-
-  int row_start = GridGetRow(owner->intgrid_pos.y,row_comp);
-  int col_start = GridGetCol(owner->intgrid_pos.x,col_comp);
-  int rowComb = GridCompare(owner,row_start,row_comp,row_results);
-  int colComb = GridCompare(owner,col_start,col_comp, col_results);
-
-  for(int i = 0; i < rowComb; i++){
-    if(rowComb == GRID_WIDTH){
-      world.grid.turn_connections++;
-      for(int j = 0; j <row_results[i].x;j++)
-        StatIncrementValue(world.grid.combos[row_comp[i]->intgrid_pos.x][row_comp[i]->intgrid_pos.y]->type_mul,true);
-      for(int k = 0; k < row_results[i].y;k++)
-        StatIncrementValue(world.grid.combos[row_comp[i]->intgrid_pos.x][row_comp[i]->intgrid_pos.y]->color_mul,true);
-    }
-    else{
-      StatEmpty(world.grid.combos[row_comp[i]->intgrid_pos.x][row_comp[i]->intgrid_pos.y]->type_mul);
-      StatEmpty(world.grid.combos[row_comp[i]->intgrid_pos.x][row_comp[i]->intgrid_pos.y]->color_mul);
-
-    }
-  }
-
-  for(int i = 0; i < colComb; i++)
-    if(colComb == GRID_HEIGHT){
-      world.grid.turn_connections++;
-
-      for(int j = 0; j <col_results[i].x;j++)
-        StatIncrementValue(world.grid.combos[col_comp[i]->intgrid_pos.x][col_comp[i]->intgrid_pos.y]->type_mul,true);
-      for(int k = 0; k < col_results[i].y;k++)
-        StatIncrementValue(world.grid.combos[col_comp[i]->intgrid_pos.x][col_comp[i]->intgrid_pos.y]->color_mul,true);
- 
-    } 
-    else{
-      //world.grid.combos[col_comp[i]->intgrid_pos.x][col_comp[i]->intgrid_pos.y]->type_mul=1;
-      //world.grid.combos[col_comp[i]->intgrid_pos.x][col_comp[i]->intgrid_pos.y]->color_mul=1;
-
-    }
-
-  return (colComb == GRID_HEIGHT || rowComb == GRID_WIDTH);
-}
-
-bool CheckWorldTilesReady(void){
-  for(int x = 0; x < GRID_WIDTH; x++){
-    for(int y = 0; y < GRID_HEIGHT; y++)
-      if(world.grid.combos[x][y]->tile->state!=STATE_IDLE)
-        return false;
-  }
-  return true;
-}
-
 bool TurnSetState(TurnState state){
   if(!TurnCanChangeState(state))
     return false;
@@ -217,79 +121,21 @@ bool TurnCanChangeState(TurnState state){
   if(state == world.grid.state)
     return false;
 
-  switch(COMBO_KEY(world.grid.state, state)){
-    default:
-      return true;
-      break;
-  }
-
-  return true;
+  state_change_requirement_t *req = &turn_reqs[state];
+  return req->can(world.grid.state, req->required);
 }
 
 void TurnOnChangeState(TurnState state){
   switch(state){
-    case TURN_STANDBY:
-      if(CheckWorldTilesReady())
-        TurnSetState(TURN_START);
-      break;
-    case TURN_SCORE:
-      WorldCalcGrid();
-      break;
     case TURN_START:
-      world.grid.turn++;
-      if(world.grid.turn%19==0)
-        StatIncrementValue(world.max_color,true);
-      if(world.grid.turn%33==0)
-        StatIncrementValue(world.max_shape,true);
-      world.grid.turn_connections = 0;
-      if(!WorldTestGrid())
-        MenuSetState(&ui.menus[MENU_EXIT],MENU_ACTIVE);
-        break;
-    case TURN_END:
-      if(world.grid.turn_connections > 0)
-        world.combo_streak+=(int)(world.grid.turn_connections/3);
-      else{
-        StatEmpty(world.combo_mul);
-        world.combo_streak = 0;
-      }
-      for(int x = 0; x < GRID_WIDTH; x++)
-        for(int y = 0; y < GRID_HEIGHT; y++){
-          StatEmpty(world.grid.combos[x][y]->type_mul);
-          StatEmpty(world.grid.combos[x][y]->color_mul);
-        
-          if(world.grid.turn%21==0)
-            world.grid.combos[x][y]->color_mul->increment+=0.25f;
-          if(world.grid.turn%33==0)
-            world.grid.combos[x][y]->type_mul->increment +=0.25f;
-
-        }
-      
-      TurnSetState(TURN_STANDBY);
-      break;
+      TurnSetState(TURN_INPUT);
     default:
       break;
   }
 }
 
-void WorldCalcGrid(void){
-  if(world.grid.turn_connections == 0){
-
-    TurnSetState(TURN_END);
-    return;
-  }
-  for(int i = 0; i < world.grid.turn_connections; i++)
-    StatIncrementValue(world.combo_mul,true);
-
-  for(int x = 0; x < GRID_WIDTH; x++){
-    for(int y = 0; y < GRID_HEIGHT; y++){
-      if(world.grid.combos[x][y]->type_mul->current == 1)
-        continue;
-
-      SetState(world.grid.combos[x][y]->tile->child,STATE_SCORE,EntAddPoints);
-    }
-  }
-
-  TurnSetState(TURN_END);
+TurnState TurnGetState(void){
+  return world.grid.state;
 }
 
 bool CheckWorldGridAdjacent(ent_t* e, ent_t* other){
@@ -416,7 +262,7 @@ void WorldInitOnce(){
   
   InteractionStep();
 
-  TurnSetState(TURN_START);
+  TurnSetState(TURN_INPUT);
 
 }
 
@@ -457,22 +303,6 @@ void WorldPostUpdate(){
     world.texts[i]->duration--;
   
   }
-  if(world.grid.state != TURN_STANDBY)
-    return;
-
-  for(int x = 0; x < GRID_WIDTH; x++){
-    for(int y = 0; y < GRID_HEIGHT; y++){
-      if(world.grid.combos[x][y]->tile->state == STATE_CALCULATING){
-        SetState(world.grid.combos[x][y]->tile,STATE_IDLE, NULL);
-        return;
-      }
-    if(world.grid.combos[x][y]->tile->state != STATE_IDLE)
-      return;
-    }
-  }
-
-  TurnSetState(TURN_START);
-
 }
 
 void InitWorld(world_data_t data){
@@ -626,7 +456,6 @@ void GameProcessSync(bool wait){
     game_process.update_steps[game_process.screen][i]();
   }
 
-  //AudioStep();
   for(int i = 0; i < PROCESS_DONE;i++){
     if(game_process.children[game_process.screen].process==PROCESS_NONE)
       continue;

@@ -4,6 +4,18 @@
 #include "raylib.h"
 #define SHAPE_COUNT 41
 
+static inline bool LESS_THAN(int a, int b){
+  return a<b;
+}
+
+static inline bool GREATER_THAN(int a, int b){
+  return a>b;
+}
+
+static inline bool EQUAL_TO(int a, int b){
+  return a==b;
+}
+
 typedef enum{
   ENT_NONE,
   ENT_SHAPE,
@@ -41,6 +53,16 @@ typedef enum{
   BEHAVIOR_INIT_CHILD,
   BEHAVIOR_ACQUIRE_CHILD,
   BEHAVIOR_SOLVABLE_CHILD,
+  BEHAVIOR_CHECK_OTHERS_STATE,
+  BEHAVIOR_PROGRESS_WORLD_STATE,
+  BEHAVIOR_CHECK_WORLD_STATE,
+  BEHAVIOR_SHAPE_PLACED,
+  BEHAVIOR_START_CALC,
+  BEHAVIOR_MATCH_NEIGHBORS,
+  BEHAVIOR_STANDBY,
+  BEHAVIOR_DEPOSIT_POINTS,
+  BEHAVIOR_MATCH_GRID,
+  BEHAVIOR_CALCULATE,
   BEHAVIOR_COUNT
 }BehaviorID;
 
@@ -129,7 +151,6 @@ typedef enum{
   SHAPE_RED_HEART = SHAPE_COLOR_RED | SHAPE_TYPE_HEART,
   SHAPE_DONE = 0xFF
 }ShapeID;
-
 
 typedef struct{
   const char* text;
@@ -230,16 +251,58 @@ typedef enum{
   STATE_IDLE, //should be able to move freely between these ==>
   STATE_SELECTED,
   STATE_HOVER,
-  STATE_CALCULATING,
   STATE_PLACED,
+  STATE_CALCULATING,
   STATE_SCORE,
   STATE_DIE,//<===== In MOST cases. Should not be able to go down from DIE
   STATE_END//sentinel entity state should never be this or greater
 }EntityState;
 
+typedef enum{
+  TURN_START,
+  TURN_INPUT,
+  TURN_CALC,
+  TURN_SCORE,
+  TURN_END,
+  TURN_STANDBY,
+  TURN_COUNT
+}TurnState;
+
+typedef struct{
+  const char* name;
+  TurnState  state;
+}TurnStateName;
+
+typedef bool (*StateComparator)(int a, int b);
+
+typedef struct{
+  int             state;
+  StateComparator can;
+  int             required;
+}state_change_requirement_t;
+
+static state_change_requirement_t turn_reqs[TURN_COUNT] = {
+  {TURN_START,EQUAL_TO,TURN_STANDBY},
+  {TURN_INPUT,LESS_THAN, TURN_CALC},
+  {TURN_CALC, EQUAL_TO, TURN_INPUT},
+  {TURN_SCORE, EQUAL_TO, TURN_CALC},
+  {TURN_END, EQUAL_TO, TURN_SCORE},
+  {TURN_STANDBY, EQUAL_TO, TURN_END},
+};
+
+static TurnStateName turn_name[TURN_COUNT] = {
+  {"Start", TURN_START},
+  {"Input", TURN_INPUT},
+  {"Calc", TURN_CALC},
+  {"Score", TURN_SCORE},
+  {"End", TURN_END},
+  {"Standby", TURN_STANDBY},
+};
+
 typedef struct {
   ShapeID     id;
   int         points;
+  BehaviorID  behaviors[STATE_END];
 } ObjectInstance;
 
 typedef struct {
