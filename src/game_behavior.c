@@ -68,6 +68,23 @@ behavior_tree_node_t* InitBehaviorTree( BehaviorID id){
   return NULL;
 }
 
+BehaviorStatus BehaviorChangeOwnerState(behavior_params_t *params){
+  struct ent_s* e = params->owner;
+  if(!e || !e->control)
+    return BEHAVIOR_FAILURE;
+
+  if(!params->state)
+    return BEHAVIOR_FAILURE;
+  
+  if(!e->owner)
+    return BEHAVIOR_FAILURE;
+
+  if(SetState(e->owner, params->state,NULL))
+    return BEHAVIOR_SUCCESS;
+
+  return BEHAVIOR_FAILURE;
+}
+
 BehaviorStatus BehaviorChangeState(behavior_params_t *params){
   struct ent_s* e = params->owner;
   if(!e || !e->control)
@@ -76,12 +93,9 @@ BehaviorStatus BehaviorChangeState(behavior_params_t *params){
   if(!params->state)
     return BEHAVIOR_FAILURE;
 
-  if(SetState(e, params->state,NULL)){
-    if(e->type==ENT_SHAPE)
-      TraceLog(LOG_INFO,"shape %i state changed to %i",e->uid, (EntityState)e->state);
-  
+  if(SetState(e, params->state,NULL))
     return BEHAVIOR_SUCCESS;
-  }
+    
   return BEHAVIOR_FAILURE;
 
 }
@@ -201,6 +215,29 @@ BehaviorStatus BehaviorSelectShape(behavior_params_t *params){
   ShapeID shape = SelectShapeFromRange(SHAPE_COLOR_NONE, SHAPE_TYPE_SQUARE,WorldGetPossibleShape());
 
   EntSetOwner(InitEnt(GetObjectInstanceByShapeID(shape)),e,false,NULL);
+
+  return BEHAVIOR_SUCCESS;
+
+}
+
+BehaviorStatus BehaviorCheckOwnersState(behavior_params_t *params){
+  struct ent_s* e = params->owner;
+  if(!e || !e->control)
+    return BEHAVIOR_FAILURE;
+
+  if(!e->owner && e->type == ENT_SHAPE)
+    return BEHAVIOR_FAILURE;
+ 
+  ent_t* shape_pool[GRID_WIDTH * GRID_HEIGHT];
+
+  int num_shapes = WorldGetEnts(shape_pool,FilterEntShape, NULL);
+  for (int i = 0; i < num_shapes; i++){
+    if(!shape_pool[i]->owner)
+      return BEHAVIOR_RUNNING;
+    
+    if(!CanChangeState(shape_pool[i]->owner->state, params->state))
+      return BEHAVIOR_RUNNING;
+  }
 
   return BEHAVIOR_SUCCESS;
 

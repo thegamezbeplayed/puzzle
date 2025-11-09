@@ -165,7 +165,7 @@ bool CanChangeState(EntityState old, EntityState s){
         return false;
       break;
     case STATE_CALCULATING:
-      if(old<STATE_PLACED)
+      if(old>STATE_PLACED)
         return false;
     default:
       return true;
@@ -197,8 +197,6 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s){
       EntDestroy(e);
       break;
     case STATE_SCORE:
-      cooldown_t* spawner = InitCooldown(3,EVENT_WAIT,StepState_Adapter,e);
-      AddEvent(e->events, spawner);
       break;
     case STATE_PLACED:
       break;

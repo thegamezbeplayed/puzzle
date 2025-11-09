@@ -83,7 +83,7 @@ void InitUI(void){
   ElementAddChild(scorePanel,scoreText);
 
 
-  //ElementAddChild(ui.menus[MENU_HUD].element,turnPanel);
+  ElementAddChild(ui.menus[MENU_HUD].element,turnPanel);
   ElementAddChild(ui.menus[MENU_HUD].element,comboPanel);
   ElementAddChild(ui.menus[MENU_HUD].element,scorePanel);
 

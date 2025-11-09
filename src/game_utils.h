@@ -114,20 +114,24 @@ behavior_tree_node_t* BehaviorCreateSelector(behavior_tree_node_t **children, in
 behavior_tree_node_t* BehaviorCreateConcurrent(behavior_tree_node_t **children, int count);
 
 BehaviorStatus BehaviorChangeState(behavior_params_t *params);
+BehaviorStatus BehaviorChangeOwnerState(behavior_params_t *params);
 BehaviorStatus BehaviorInitChild(behavior_params_t *params);
 BehaviorStatus BehaviorMatchNeighbors(behavior_params_t *params);
 BehaviorStatus BehaviorProgressWorldState(behavior_params_t *params);
 BehaviorStatus BehaviorCheckOthersState(behavior_params_t *params);
+BehaviorStatus BehaviorCheckOwnersState(behavior_params_t *params);
 BehaviorStatus BehaviorCheckWorldState(behavior_params_t *params);
 BehaviorStatus BehaviorSelectShape(behavior_params_t *params);
 BehaviorStatus BehaviorSelectHelpfulShape(behavior_params_t *params);
 
 static inline behavior_tree_node_t* LeafCheckOthersState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCheckOthersState,params); }
+static inline behavior_tree_node_t* LeafCheckOwnersState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCheckOwnersState,params); }
 static inline behavior_tree_node_t* LeafCheckWorldState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCheckWorldState,params); }
 static inline behavior_tree_node_t* LeafInitChild(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorInitChild,params); }
 static inline behavior_tree_node_t* LeafMatchNeighbors(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorMatchNeighbors,params); }
 static inline behavior_tree_node_t* LeafProgressWorldState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorProgressWorldState,params); }
 static inline behavior_tree_node_t* LeafChangeState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorChangeState,params); }
+static inline behavior_tree_node_t* LeafChangeOwnerState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorChangeOwnerState,params); }
 static inline behavior_tree_node_t* LeafSelectShape(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorSelectShape,params); }
 static inline behavior_tree_node_t* LeafSelectHelpfulShape(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorSelectHelpfulShape,params); }
 #endif

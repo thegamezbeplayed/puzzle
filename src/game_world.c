@@ -106,6 +106,23 @@ int WorldGetShapeSums(int* out){
   return (int)world.max_shape->current;
 }
 
+int WorldGetMatches(void){
+
+  int matches = 0;
+  for (int i = 0; i < 2; i++){
+    for(int x = 0; x < GRID_WIDTH;x++){
+      for (int y = 0; y < GRID_HEIGHT; y++){
+        if(world.grid.matches[i][x][y]==NULL)
+          continue;
+
+        matches++;
+      }
+    }
+  }
+      
+  return matches;
+}
+
 bool TurnSetState(TurnState state){
   if(!TurnCanChangeState(state))
     return false;
@@ -129,6 +146,10 @@ void TurnOnChangeState(TurnState state){
   switch(state){
     case TURN_START:
       TurnSetState(TURN_INPUT);
+    case TURN_SCORE:
+      if(WorldGetMatches() <1)
+        TurnSetState(TURN_END);
+      break;
     default:
       break;
   }
@@ -502,7 +523,7 @@ const char* GetPoints(){
 }
 
 const char* GetTurn(){
-  return TextFormat("%02i",world.grid.turn);
+  return turn_name[world.grid.state].name;
 }
 
 const char* GetComboStreak(){
