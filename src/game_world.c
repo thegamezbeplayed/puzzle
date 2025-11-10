@@ -7,7 +7,7 @@
 #include "game_ui.h"
 
 game_process_t game_process;
-TreeCacheEntry tree_cache[16] = {0};
+TreeCacheEntry tree_cache[18] = {0};
 int tree_cache_count = 0;
 
 bool TogglePause(ui_menu_t* m){
@@ -106,6 +106,20 @@ int WorldGetShapeSums(int* out){
   return (int)world.max_shape->current;
 }
 
+void WorldClearMatches(void){
+
+  for (int i = 0; i < 2; i++){
+    for(int x = 0; x < GRID_WIDTH;x++){
+      for (int y = 0; y < GRID_HEIGHT; y++){
+        world.grid.matches[i][x][y]=NULL;
+
+      }
+    }
+  }
+      
+}
+
+
 int WorldGetMatches(void){
 
   int matches = 0;
@@ -146,9 +160,18 @@ void TurnOnChangeState(TurnState state){
   switch(state){
     case TURN_START:
       TurnSetState(TURN_INPUT);
+      break;
     case TURN_SCORE:
-      if(WorldGetMatches() <1)
-        TurnSetState(TURN_END);
+      //TODO needs to be progressed by behavior tree
+      //if(WorldGetMatches() <1)
+        //TurnSetState(TURN_END);
+      break;
+    case TURN_END:
+      TurnSetState(TURN_STANDBY);
+      break;
+    case TURN_STANDBY:
+      WorldClearMatches();
+      TurnSetState(TURN_START);
       break;
     default:
       break;

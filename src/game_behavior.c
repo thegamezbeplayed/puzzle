@@ -4,9 +4,6 @@
 #include "game_tools.h"
 #include "game_helpers.h"
 
-static bt_register_entry_t BT_Registry[MAX_BEHAVIOR_TREE];
-static int registry_count = 0;
-
 behavior_tree_node_t *BehaviorGetTree(BehaviorID id) {
    for (int i = 0; i < tree_cache_count; i++){
     if (tree_cache[i].id == id)
@@ -68,6 +65,23 @@ behavior_tree_node_t* InitBehaviorTree( BehaviorID id){
   return NULL;
 }
 
+BehaviorStatus BehaviorChangeChildState(behavior_params_t *params){
+  struct ent_s* e = params->owner;
+  if(!e || !e->control)
+    return BEHAVIOR_FAILURE;
+
+  if(!params->state)
+    return BEHAVIOR_FAILURE;
+
+  if(!e->child)
+    return BEHAVIOR_FAILURE;
+
+  if(SetState(e->child, params->state,NULL))
+    return BEHAVIOR_SUCCESS;
+
+  return BEHAVIOR_FAILURE;
+}  
+
 BehaviorStatus BehaviorChangeOwnerState(behavior_params_t *params){
   struct ent_s* e = params->owner;
   if(!e || !e->control)
@@ -100,13 +114,80 @@ BehaviorStatus BehaviorChangeState(behavior_params_t *params){
 
 }
 
+BehaviorStatus BehaviorMatchChild(behavior_params_t *params){
+struct ent_s* e = params->owner;
+  if(!e || !e->control)
+    return BEHAVIOR_FAILURE;
+
+  if(!e->child)
+    return BEHAVIOR_FAILURE;
+ 
+  ent_t* shape_pool[GRID_WIDTH * GRID_HEIGHT];
+  int num_shapes = WorldGetEnts(shape_pool,FilterEntShape, NULL);
+  bool shape_match_row[GRID_WIDTH]={0};
+  bool shape_match_col[GRID_HEIGHT]={0};
+
+  bool color_match_row[GRID_WIDTH]={0};
+  bool color_match_col[GRID_HEIGHT]={0};
+
+  color_match_row[e->intgrid_pos.y]=true;
+  shape_match_row[e->intgrid_pos.y]=true;
+
+  color_match_col[e->intgrid_pos.x]=true;
+  shape_match_col[e->intgrid_pos.x]=true;
+
+  ShapeFlags compareShape = SHAPE_TYPE(e->child->shape);
+  ShapeFlags compareColor = SHAPE_COLOR(e->child->shape);
+  for (int i = 0; i < num_shapes; i++){
+    Cell otherPos = shape_pool[i]->intgrid_pos;
+
+    ShapeFlags otherShape = SHAPE_TYPE(shape_pool[i]->shape);
+    ShapeFlags otherColor = SHAPE_COLOR(shape_pool[i]->shape);
+
+    if(!IS_TYPE(compareShape,otherShape))
+      continue;
+
+    if(otherPos.x == e->intgrid_pos.x){
+      shape_match_row[otherPos.y] = true;
+
+      if(IS_COLOR(compareColor,otherColor))
+        color_match_row[otherPos.y] = true;
+    }
+
+    if(otherPos.y == e->intgrid_pos.y){
+      shape_match_col[otherPos.x] = true;
+
+      if(IS_COLOR(compareColor,otherColor))
+        color_match_col[otherPos.x] = true;
+    }
+  }
+
+  bool has_match = false;
+  if(COMPARE_ALL_BOOL(shape_match_row,GRID_WIDTH)){
+    bool add_color_match_row = COMPARE_ALL_BOOL(color_match_row,GRID_WIDTH);
+    TraceLog(LOG_INFO,"Match on row %i",e->intgrid_pos.y);
+    has_match = true;
+    WorldTurnAddMatch(e->child,add_color_match_row);
+  }
+
+  if(COMPARE_ALL_BOOL(shape_match_col,GRID_HEIGHT)){
+    bool add_color_match_col = COMPARE_ALL_BOOL(color_match_col,GRID_HEIGHT);
+    TraceLog(LOG_INFO,"Match on col %i",e->intgrid_pos.x);
+    has_match = true;
+
+    WorldTurnAddMatch(e->child,add_color_match_col);
+  }
+
+  return BEHAVIOR_SUCCESS;
+}
+
 BehaviorStatus BehaviorMatchNeighbors(behavior_params_t *params){
 struct ent_s* e = params->owner;
   if(!e || !e->control)
     return BEHAVIOR_FAILURE;
 
   ent_t* shape_pool[GRID_WIDTH * GRID_HEIGHT];
-  int num_shapes = WorldGetEnts(shape_pool,FilterEntNeighbor, e);
+  int num_shapes = WorldGetEnts(shape_pool,FilterEntShape, e);
   
   bool shape_match_row[GRID_WIDTH]={0};
   bool shape_match_col[GRID_HEIGHT]={0};
@@ -220,6 +301,22 @@ BehaviorStatus BehaviorSelectShape(behavior_params_t *params){
 
 }
 
+
+BehaviorStatus BehaviorCheckChildState(behavior_params_t *params){
+  struct ent_s* e = params->owner;
+  if(!e || !e->control)
+    return BEHAVIOR_FAILURE;
+
+  if(!e->child)
+    return BEHAVIOR_FAILURE;
+
+  if(e->child->state==params->turn)
+    return BEHAVIOR_SUCCESS;
+
+  return BEHAVIOR_RUNNING;
+
+}
+ 
 BehaviorStatus BehaviorCheckOwnersState(behavior_params_t *params){
   struct ent_s* e = params->owner;
   if(!e || !e->control)

@@ -7,7 +7,7 @@
 
 #define MAX_PLAYERS 32
 
-#define MAX_BEHAVIOR_TREE 8
+#define MAX_BEHAVIOR_TREE 12
 #define MAX_NAME_LEN 64
 #define COMBO_KEY(a, b) ((a << 8) | b)
 #define CALL_FUNC(type, ptr, ...) ((type)(ptr))(__VA_ARGS__)
@@ -33,11 +33,6 @@ static inline const char* CHAR_DO_NOTHING(){return "\0";}
 //forward declare
 struct behavior_tree_node_s;
 
-typedef struct {
-    const char           *name;
-    struct behavior_tree_node_s *tree;
-} bt_register_entry_t;
-
 struct behavior_tree_node_s *BehaviorGetTree( BehaviorID id);
 
 typedef enum{
@@ -58,7 +53,7 @@ typedef struct {
   struct behavior_tree_node_s *root;
 } TreeCacheEntry;
 
-extern TreeCacheEntry tree_cache[16];
+extern TreeCacheEntry tree_cache[18];
 extern int tree_cache_count;
 
 static struct behavior_tree_node_s* BehaviorFindLeafFactory(const char *name);
@@ -115,23 +110,29 @@ behavior_tree_node_t* BehaviorCreateConcurrent(behavior_tree_node_t **children, 
 
 BehaviorStatus BehaviorChangeState(behavior_params_t *params);
 BehaviorStatus BehaviorChangeOwnerState(behavior_params_t *params);
+BehaviorStatus BehaviorChangeChildState(behavior_params_t *params);
 BehaviorStatus BehaviorInitChild(behavior_params_t *params);
 BehaviorStatus BehaviorMatchNeighbors(behavior_params_t *params);
+BehaviorStatus BehaviorMatchChild(behavior_params_t *params);
 BehaviorStatus BehaviorProgressWorldState(behavior_params_t *params);
 BehaviorStatus BehaviorCheckOthersState(behavior_params_t *params);
 BehaviorStatus BehaviorCheckOwnersState(behavior_params_t *params);
+BehaviorStatus BehaviorCheckChildState(behavior_params_t *params);
 BehaviorStatus BehaviorCheckWorldState(behavior_params_t *params);
 BehaviorStatus BehaviorSelectShape(behavior_params_t *params);
 BehaviorStatus BehaviorSelectHelpfulShape(behavior_params_t *params);
 
 static inline behavior_tree_node_t* LeafCheckOthersState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCheckOthersState,params); }
 static inline behavior_tree_node_t* LeafCheckOwnersState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCheckOwnersState,params); }
+static inline behavior_tree_node_t* LeafCheckChildState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCheckChildState,params); }
 static inline behavior_tree_node_t* LeafCheckWorldState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCheckWorldState,params); }
 static inline behavior_tree_node_t* LeafInitChild(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorInitChild,params); }
 static inline behavior_tree_node_t* LeafMatchNeighbors(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorMatchNeighbors,params); }
+static inline behavior_tree_node_t* LeafMatchChild(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorMatchChild,params); }
 static inline behavior_tree_node_t* LeafProgressWorldState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorProgressWorldState,params); }
 static inline behavior_tree_node_t* LeafChangeState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorChangeState,params); }
 static inline behavior_tree_node_t* LeafChangeOwnerState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorChangeOwnerState,params); }
+static inline behavior_tree_node_t* LeafChangeChildState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorChangeChildState,params); }
 static inline behavior_tree_node_t* LeafSelectShape(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorSelectShape,params); }
 static inline behavior_tree_node_t* LeafSelectHelpfulShape(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorSelectHelpfulShape,params); }
 #endif
