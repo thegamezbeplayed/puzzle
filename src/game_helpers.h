@@ -33,8 +33,8 @@ static bool HasMatch(ShapeID grid[GRID_WIDTH][GRID_HEIGHT]) {
 
   return false;
 }
-
-static bool CanBeSolvedInMoves(ShapeID grid[GRID_WIDTH][GRID_HEIGHT], int depth) {
+/*
+static bool OldCanBeSolvedInMoves(ShapeID grid[GRID_WIDTH][GRID_HEIGHT], int depth) {
     if (HasMatch(grid)) return true;
     if (depth <= 0) return false;
 
@@ -52,16 +52,59 @@ static bool CanBeSolvedInMoves(ShapeID grid[GRID_WIDTH][GRID_HEIGHT], int depth)
 
                 // Swap
                 ShapeID tmp = newGrid[y][x];
-                if(WorldGetShapeMoves(y,x) && WorldGetShapeMoves(ny,nx))
-                  newGrid[y][x] = newGrid[ny][nx];
-                else
-                  TraceLog(LOG_INFO,"%i,%i cant move",x,y);
+                newGrid[y][x] = newGrid[ny][nx];
 
                 newGrid[ny][nx] = tmp;
 
                 if (CanBeSolvedInMoves(newGrid, depth - 1)){
                   TraceLog(LOG_INFO,"Solve in %d moves",depth);
                   return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+*/
+static bool CanBeSolvedInMoves(
+    ShapeID grid[GRID_WIDTH][GRID_HEIGHT],
+    int moves[GRID_WIDTH][GRID_HEIGHT],
+    int depth)
+{
+    if (HasMatch(grid)) return true;
+    if (depth <= 0) return false;
+
+    for (int y = 0; y < GRID_HEIGHT; y++) {
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            // Only attempt to move tiles that still have moves left
+            if (moves[y][x] <= 0) continue;
+
+            int dx[2] = {1, 0};
+            int dy[2] = {0, 1};
+
+            for (int d = 0; d < 2; d++) {
+                int nx = x + dx[d], ny = y + dy[d];
+                if (nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+                if (moves[ny][nx] <= 0) continue;
+
+                // Copy both grid and moves for the recursive branch
+                ShapeID newGrid[GRID_HEIGHT][GRID_WIDTH];
+                int newMoves[GRID_HEIGHT][GRID_WIDTH];
+                memcpy(newGrid, grid, sizeof(newGrid));
+                memcpy(newMoves, moves, sizeof(newMoves));
+
+                // Perform swap
+                ShapeID tmp = newGrid[y][x];
+                newGrid[y][x] = newGrid[ny][nx];
+                newGrid[ny][nx] = tmp;
+
+                // Consume one move for both tiles
+                newMoves[y][x]--;
+                newMoves[ny][nx]--;
+
+                if (CanBeSolvedInMoves(newGrid, newMoves, depth - 1)) {
+                    TraceLog(LOG_INFO, "Solved in %d moves", depth);
+                    return true;
                 }
             }
         }

@@ -23,7 +23,7 @@ ent_t* InitEnt(ObjectInstance data){
       continue;
     e->control->bt[i] = InitBehaviorTree(BASE_SHAPE.behaviors[i]);
   }
-
+  e->matches = malloc(sizeof(ent_matches_t));
   e->control->moves = 2;
   SetState(e,STATE_SPAWN,NULL);
   return e;
@@ -52,7 +52,7 @@ ent_t* InitEntStatic(TileInstance data,Vector2 pos){
 
 void EntAddPoints(ent_t *e,EntityState old, EntityState s){
   float mul = WorldGetGridCombo(e->intgrid_pos);
-  AddPoints(1, e->stats[STAT_POINTS]->current,e->pos);
+  AddPoints(mul, e->stats[STAT_POINTS]->current,e->pos);
 }
 
 void EntDestroy(ent_t* e){
@@ -67,7 +67,18 @@ void EntDestroy(ent_t* e){
   e->owner->child = NULL;
   e->control = NULL;
 }
-void EntPrepStep(ent_t* e){
+
+bool EntCheckSolvable(ent_t *e, int depth){
+
+}
+
+void EntClearMatches(ent_t* e){
+  for(int x = 0; x < 2; x++){
+    e->matches->row[x] = NULL;
+    e->matches->col[x] = NULL;
+    e->matches->col_row[x] = false;
+    e->matches->col_col[x] = false;
+  }
 }
 
 bool FreeEnt(ent_t* e){

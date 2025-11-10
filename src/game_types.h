@@ -28,6 +28,13 @@ typedef struct{
 }controller_t;
 controller_t* InitController();
 
+typedef struct{
+  struct ent_s *row[2];
+  struct ent_s *col[2];
+  bool          col_row[2];
+  bool          col_col[2];
+}ent_matches_t;
+
 //===ENT_T===>
 typedef struct ent_s{
   int                   uid;
@@ -42,6 +49,7 @@ typedef struct ent_s{
   sprite_t              *sprite;
   struct ent_s          *child;
   struct ent_s          *owner;
+  ent_matches_t         *matches;
 } ent_t;
 
 ent_t* InitEnt(ObjectInstance data);
@@ -58,6 +66,8 @@ void EntPrepStep(ent_t *e);
 void EntSetPos(ent_t *e, Vector2 pos);
 void EntControlStep(ent_t *e);
 typedef void (*StateChangeCallback)(ent_t *e, EntityState old, EntityState s);
+void EntClearMatches(ent_t *e);
+bool EntCheckSolvable(ent_t *e, int depth);
 void SetViableTile(ent_t*, EntityState old, EntityState s);
 bool CheckEntAvailable(ent_t* e);
 bool CheckEntPosition(ent_t* e, Vector2 pos);

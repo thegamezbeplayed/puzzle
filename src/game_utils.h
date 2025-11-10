@@ -116,16 +116,22 @@ BehaviorStatus BehaviorMatchNeighbors(behavior_params_t *params);
 BehaviorStatus BehaviorMatchChild(behavior_params_t *params);
 BehaviorStatus BehaviorProgressWorldState(behavior_params_t *params);
 BehaviorStatus BehaviorCheckOthersState(behavior_params_t *params);
+BehaviorStatus BehaviorClearMatchState(behavior_params_t *params);
 BehaviorStatus BehaviorCheckOwnersState(behavior_params_t *params);
 BehaviorStatus BehaviorCheckChildState(behavior_params_t *params);
 BehaviorStatus BehaviorCheckWorldState(behavior_params_t *params);
+BehaviorStatus BehaviorCheckMoves(behavior_params_t *params);
+BehaviorStatus BehaviorCheckSolutions(behavior_params_t *params);
 BehaviorStatus BehaviorSelectShape(behavior_params_t *params);
 BehaviorStatus BehaviorSelectHelpfulShape(behavior_params_t *params);
 
 static inline behavior_tree_node_t* LeafCheckOthersState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCheckOthersState,params); }
+static inline behavior_tree_node_t* LeafClearMatchState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorClearMatchState,params); }
 static inline behavior_tree_node_t* LeafCheckOwnersState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCheckOwnersState,params); }
 static inline behavior_tree_node_t* LeafCheckChildState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCheckChildState,params); }
 static inline behavior_tree_node_t* LeafCheckWorldState(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCheckWorldState,params); }
+static inline behavior_tree_node_t* LeafCheckMoves(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCheckMoves,params); }
+static inline behavior_tree_node_t* LeafCheckSolutions(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorCheckSolutions,params); }
 static inline behavior_tree_node_t* LeafInitChild(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorInitChild,params); }
 static inline behavior_tree_node_t* LeafMatchNeighbors(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorMatchNeighbors,params); }
 static inline behavior_tree_node_t* LeafMatchChild(behavior_params_t *params)  { return BehaviorCreateLeaf(BehaviorMatchChild,params); }

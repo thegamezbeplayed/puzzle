@@ -88,6 +88,34 @@ bool WorldGetShapeMoves(int y, int x){
     return shape->control->moves > 0;
 }
 
+bool WorldCalcMatchCombos(void){
+
+  bool matched = false;
+  bool calculated[GRID_WIDTH][GRID_HEIGHT]={0};
+  for (int i = 0; i < 2; i++)
+  for (int x = 0; x < GRID_WIDTH; x++)
+    for (int y = 0; y < GRID_HEIGHT; y++){
+      if(!world.grid.matches[i][x][y]){
+        StatEmpty(world.grid.combos[x][y]->type_mul);
+        StatEmpty(world.grid.combos[x][y]->color_mul);
+        continue;
+      }
+      StatIncrementValue(world.grid.combos[x][y]->type_mul,true);
+      calculated[x][y] = true;
+      matched = true;
+    }
+
+  for (int x = 0; x < GRID_WIDTH; x++)
+    for (int y = 0; y < GRID_HEIGHT; y++)
+      if(calculated[x][y])
+        SetState(world.grid.combos[x][y]->tile->child,STATE_DIE,EntAddPoints);
+      else{
+        SetState(world.grid.combos[x][y]->tile->child,STATE_IDLE,NULL);
+        SetState(world.grid.combos[x][y]->tile,STATE_IDLE,NULL);
+      }
+  return matched;  
+}
+
 Cell WorldGetMaxShapes(){
   return (Cell){(int)world.max_shape->current,(int)world.max_color->current};
 }
@@ -116,9 +144,7 @@ void WorldClearMatches(void){
       }
     }
   }
-      
 }
-
 
 int WorldGetMatches(void){
 
@@ -156,17 +182,33 @@ bool TurnCanChangeState(TurnState state){
   return req->can(world.grid.state, req->required);
 }
 
+bool WorldCheckNewGrid(void){
+
+  return CanBeSolvedInMoves();
+}
+
 void TurnOnChangeState(TurnState state){
   switch(state){
     case TURN_START:
-      TurnSetState(TURN_INPUT);
+      if(WorldCheckNewGrid())
+        TurnSetState(TURN_INPUT);
+      else
+        MenuSetState(&ui.menus[MENU_EXIT],MENU_ACTIVE);
       break;
     case TURN_SCORE:
-      //TODO needs to be progressed by behavior tree
-      //if(WorldGetMatches() <1)
-        //TurnSetState(TURN_END);
+      if(WorldCalcMatchCombos()){
+        world.combo_streak++;
+      }
+      else
+        world.combo_streak =0;
+      TurnSetState(TURN_END);
       break;
     case TURN_END:
+      world.grid.turn++;
+      if(world.grid.turn%13==0)
+        StatIncrementValue(world.max_color,true);
+      if (world.grid.turn%21==0)
+        StatIncrementValue(world.max_shape,true);
       TurnSetState(TURN_STANDBY);
       break;
     case TURN_STANDBY:

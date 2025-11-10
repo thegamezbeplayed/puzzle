@@ -214,16 +214,31 @@ struct ent_s* e = params->owner;
 
     if(otherPos.x == e->intgrid_pos.x){
       shape_match_row[otherPos.y] = true;
+      int row_pos = 0;
+      if(e->matches->row[0])
+        row_pos = 1;
+        
+      e->matches->row[row_pos] = shape_pool[i];
 
-      if(IS_COLOR(compareColor,otherColor))
+      if(IS_COLOR(compareColor,otherColor)){
         color_match_row[otherPos.y] = true;
+        e->matches->col_row[row_pos] = true;
+      }
     }
 
     if(otherPos.y == e->intgrid_pos.y){
       shape_match_col[otherPos.x] = true;
 
-      if(IS_COLOR(compareColor,otherColor))
+      int col_pos = 0;
+      if(e->matches->col[0])
+        col_pos = 1;
+
+      e->matches->col[col_pos] = shape_pool[i];
+
+      if(IS_COLOR(compareColor,otherColor)){
         color_match_col[otherPos.x] = true;
+        e->matches->col_col[col_pos]=true;
+      }
     }
   }
 
@@ -301,7 +316,6 @@ BehaviorStatus BehaviorSelectShape(behavior_params_t *params){
 
 }
 
-
 BehaviorStatus BehaviorCheckChildState(behavior_params_t *params){
   struct ent_s* e = params->owner;
   if(!e || !e->control)
@@ -340,6 +354,19 @@ BehaviorStatus BehaviorCheckOwnersState(behavior_params_t *params){
 
 }
 
+BehaviorStatus BehaviorClearMatchState(behavior_params_t *params){
+  struct ent_s* e = params->owner;
+  if(!e || !e->control)
+    return BEHAVIOR_FAILURE;
+
+  if(!e->matches)
+    return BEHAVIOR_SUCCESS;
+
+  EntClearMatches(e);
+
+  return BEHAVIOR_SUCCESS;
+}
+
 BehaviorStatus BehaviorCheckOthersState(behavior_params_t *params){
   struct ent_s* e = params->owner;
   if(!e || !e->control)
@@ -369,6 +396,28 @@ struct ent_s* e = params->owner;
   return BEHAVIOR_RUNNING;
 }
 
+BehaviorStatus BehaviorCheckSolutions(behavior_params_t *params){
+struct ent_s* e = params->owner;
+  if(!e || !e->control)
+    return BEHAVIOR_FAILURE;
+
+  if(EntCheckSolvable(e,e->control->moves))
+    return BEHAVIOR_SUCCESS;
+
+  return BEHAVIOR_FAILURE;
+}
+
+BehaviorStatus BehaviorCheckMoves(behavior_params_t *params){
+struct ent_s* e = params->owner;
+  if(!e || !e->control)
+    return BEHAVIOR_FAILURE;
+
+  if(e->control->moves<1)
+    return BEHAVIOR_FAILURE;
+
+  return BEHAVIOR_SUCCESS;
+}
+
 BehaviorStatus BehaviorCheckWorldState(behavior_params_t *params){
 struct ent_s* e = params->owner;
   if(!e || !e->control)
@@ -379,7 +428,6 @@ struct ent_s* e = params->owner;
 
   return BEHAVIOR_RUNNING;
 }
-
 
 BehaviorStatus BehaviorTickLeaf(behavior_tree_node_t *self, void *context) {
     behavior_tree_leaf_t *leaf = (behavior_tree_leaf_t *)self->data;
