@@ -2,6 +2,7 @@
 #include "game_tools.h"
 #include "game_math.h"
 #include "game_process.h"
+#include "game_helpers.h"
 
 MAKE_ADAPTER(StepState, ent_t*);
 
@@ -14,7 +15,7 @@ ent_t* InitEnt(ObjectInstance data){
   e->sprite = InitSpriteByID(data.id,&shapedata);
   e->sprite->owner = e;
 
-  e->stats[STAT_POINTS] = InitStatOnMin(STAT_POINTS,(int)WorldGetPossibleShape()-2,10);
+  e->stats[STAT_POINTS] = InitStat(STAT_POINTS,1,10,(int)WorldGetPossibleShape()-2);
   e->events = InitEvents();
 
   e->control = InitController();
@@ -23,7 +24,6 @@ ent_t* InitEnt(ObjectInstance data){
       continue;
     e->control->bt[i] = InitBehaviorTree(BASE_SHAPE.behaviors[i]);
   }
-  e->matches = malloc(sizeof(ent_matches_t));
   e->control->moves = 2;
   SetState(e,STATE_SPAWN,NULL);
   return e;
@@ -36,7 +36,7 @@ ent_t* InitEntStatic(TileInstance data,Vector2 pos){
 
   e->sprite = InitSpriteByIndex(data.id,&tiledata);
   e->sprite->owner = e;
-  e->pos = Vector2Add(Vector2Scale(e->sprite->slice->center,SPRITE_SCALE),pos);
+  e->pos = pos;// = Vector2Add(Vector2Scale(e->sprite->slice->center,SPRITE_SCALE),pos);
 
   e->control = InitController();
   for (int i = STATE_SPAWN; i < STATE_END; i++){
@@ -68,19 +68,6 @@ void EntDestroy(ent_t* e){
   e->control = NULL;
 }
 
-bool EntCheckSolvable(ent_t *e, int depth){
-
-}
-
-void EntClearMatches(ent_t* e){
-  for(int x = 0; x < 2; x++){
-    e->matches->row[x] = NULL;
-    e->matches->col[x] = NULL;
-    e->matches->col_row[x] = false;
-    e->matches->col_col[x] = false;
-  }
-}
-
 bool FreeEnt(ent_t* e){
   if(!e)
     return false;
@@ -93,7 +80,6 @@ controller_t* InitController(){
   controller_t* ctrl = malloc(sizeof(controller_t));
   *ctrl = (controller_t){0};
 
-  ctrl->destination = VEC_UNSET;
   return ctrl;
 }
 
@@ -144,7 +130,8 @@ void SetViableTile(ent_t* e, EntityState old, EntityState s){
 }
 
 void EntToggleTooltip(ent_t* e){
-  //TraceLog(LOG_INFO,"Ent %i moves left %i",e->uid,e->control->moves);
+  TraceLog(LOG_INFO,"Owner at %i | %i", e->owner->intgrid_pos.x, e->owner->intgrid_pos.y);
+  TraceLog(LOG_INFO,"Ent %i at %i | %i",SHAPE_TYPE(e->shape) ,e->intgrid_pos.x, e->intgrid_pos.y);
 }
 
 bool SetState(ent_t *e, EntityState s,StateChangeCallback callback){
@@ -176,7 +163,7 @@ bool CanChangeState(EntityState old, EntityState s){
         return false;
       break;
     case STATE_CALCULATING:
-      if(old>STATE_PLACED)
+      if(old>STATE_PLACED || old < STATE_IDLE)
         return false;
     default:
       return true;
@@ -210,6 +197,7 @@ void OnStateChange(ent_t *e, EntityState old, EntityState s){
     case STATE_SCORE:
       break;
     case STATE_PLACED:
+      e->control->moved = true;
       break;
     default:
       break;

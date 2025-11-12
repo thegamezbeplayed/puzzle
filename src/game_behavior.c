@@ -200,7 +200,7 @@ struct ent_s* e = params->owner;
   
   color_match_col[e->intgrid_pos.x]=true;
   shape_match_col[e->intgrid_pos.x]=true;
-  
+
   ShapeFlags compareShape = SHAPE_TYPE(e->shape);
   ShapeFlags compareColor = SHAPE_COLOR(e->shape);
   for (int i = 0; i < num_shapes; i++){
@@ -214,30 +214,16 @@ struct ent_s* e = params->owner;
 
     if(otherPos.x == e->intgrid_pos.x){
       shape_match_row[otherPos.y] = true;
-      int row_pos = 0;
-      if(e->matches->row[0])
-        row_pos = 1;
-        
-      e->matches->row[row_pos] = shape_pool[i];
 
       if(IS_COLOR(compareColor,otherColor)){
         color_match_row[otherPos.y] = true;
-        e->matches->col_row[row_pos] = true;
       }
     }
 
     if(otherPos.y == e->intgrid_pos.y){
       shape_match_col[otherPos.x] = true;
-
-      int col_pos = 0;
-      if(e->matches->col[0])
-        col_pos = 1;
-
-      e->matches->col[col_pos] = shape_pool[i];
-
       if(IS_COLOR(compareColor,otherColor)){
         color_match_col[otherPos.x] = true;
-        e->matches->col_col[col_pos]=true;
       }
     }
   }
@@ -358,12 +344,12 @@ BehaviorStatus BehaviorClearMatchState(behavior_params_t *params){
   struct ent_s* e = params->owner;
   if(!e || !e->control)
     return BEHAVIOR_FAILURE;
-
+/*
   if(!e->matches)
     return BEHAVIOR_SUCCESS;
 
-  EntClearMatches(e);
-
+  //EntClearMatches(e);
+*/
   return BEHAVIOR_SUCCESS;
 }
 
@@ -400,9 +386,6 @@ BehaviorStatus BehaviorCheckSolutions(behavior_params_t *params){
 struct ent_s* e = params->owner;
   if(!e || !e->control)
     return BEHAVIOR_FAILURE;
-
-  if(EntCheckSolvable(e,e->control->moves))
-    return BEHAVIOR_SUCCESS;
 
   return BEHAVIOR_FAILURE;
 }

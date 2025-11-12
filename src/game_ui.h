@@ -59,6 +59,7 @@ typedef enum{
   UI_PANEL,
   UI_BOX,
   UI_LINE,
+  UI_GAME,
   UI_BLANK
 }ElementType;
 
@@ -66,6 +67,7 @@ typedef enum{
   LAYOUT_FREE,
   LAYOUT_VERTICAL,
   LAYOUT_HORIZONTAL,
+  LAYOUT_GRID,
 }UILayout;
 
 typedef enum{
@@ -97,11 +99,12 @@ typedef enum{
   MENU_PAUSE,
   MENU_RECAP,
   MENU_HUD,
+  MENU_PLAY_AREA,
   MENU_EXIT,
   MENU_DEBUG,
   MENU_DONE
 }MenuId;
-
+typedef struct ent_s ent_t;
 struct ui_element_s;
 typedef bool (*ElementCallback)(struct ui_element_s* self);
 typedef enum { VAL_INT, VAL_FLOAT, VAL_CHAR } ValueType;
@@ -134,6 +137,7 @@ typedef struct ui_element_s{
   ElementValueSync    get_val;
   int                 num_children;
   struct ui_element_s *children[16];
+  ent_t*              ent;
 }ui_element_t;
 
 ui_element_t* InitElement(const char* name, ElementType type, Vector2 pos, Vector2 size, UIAlignment align,UILayout layout);
@@ -141,8 +145,13 @@ ui_element_t* GetElement(const char* name);
 void ElementStepState(ui_element_t* e, ElementState s);
 bool ElementSetState(ui_element_t* e, ElementState s);
 void ElementAddChild(ui_element_t *o, ui_element_t* c);
+void ElementAddGameElement( ent_t* e);
 void UISyncElement(ui_element_t* e);
 bool UICloseOwner(ui_element_t* e);
+bool UIFreeElement(ui_element_t* e);
+
+ui_element_t* InitGameElement(ent_t* e);
+
 struct ui_menu_s;
 typedef bool (*MenuCallback)(struct ui_menu_s* self);
 
@@ -158,6 +167,7 @@ typedef struct ui_menu_s{
 }ui_menu_t;
 
 ui_menu_t InitMenu(MenuId id,Vector2 pos, Vector2 size, UIAlignment align,UILayout layout, bool modal);
+bool UIClearElements(ui_menu_t* m);
 void UISyncMenu(ui_menu_t* m);
 bool UICloseMenu(ui_menu_t* m);
 bool UITransitionScreen(ui_element_t* e);

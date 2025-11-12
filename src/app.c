@@ -8,7 +8,7 @@
 #if defined(PLATFORM_WEB)
 #include <emscripten/emscripten.h>
 #endif
-float screenWidth = 1600.0f;
+float screenWidth = 1200.0f;
 float screenHeight = 900.0f; 
 double currentTime = 0.0;           // Current time measure
 double updateDrawTime = 0.0;        // Update + Draw time
@@ -44,6 +44,7 @@ int main(void)
   
   InitGameProcess();
 
+  SetTargetFPS(200);
 #if defined(PLATFORM_WEB)
   emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
 #else

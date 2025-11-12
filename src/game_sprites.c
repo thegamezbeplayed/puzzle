@@ -39,8 +39,8 @@ void InitResources(){
 
 sprite_t* InitSpriteByID(int id, sprite_sheet_data_t* data){
   sprite_t* spr =malloc(sizeof(sprite_t));
+  memset(spr,0,sizeof(sprite_t));
   spr->anim = malloc(sizeof(anim_t));
-  //  memset(spr,0,sizeof(sprite_t));
 
   spr->state = ANIM_IDLE;
   spr->anim->duration = 67;
@@ -51,6 +51,7 @@ sprite_t* InitSpriteByID(int id, sprite_sheet_data_t* data){
     spr->slice = data->sprites[i];
     spr->sheet = data->sprite_sheet;
 
+    spr->offset = spr->slice->offset;
     //spr->slice->scale = SPRITE_SCALE;
   }
 
@@ -286,8 +287,8 @@ void SpriteLoadSubTextures(sprite_sheet_data_t *out, int sheet_id){
 
     spr->scale = ScreenSized(SIZE_SCALE);
     spr->id = sprData.tag;
-    spr->center = center;
-    spr->offset = offset;
+    spr->center = center;// Vector2Scale(offset,spr->scale);
+    spr->offset = offset;//center;//Vector2Scale(center,spr->scale);
     spr->bounds = bounds;
     out->sprites[out->num_sprites++] = spr;
 

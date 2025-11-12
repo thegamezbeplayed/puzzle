@@ -23,7 +23,6 @@ void DrawEndScreen(void)
   BeginDrawing();
   ClearBackground(RAYWHITE);
 
-  DrawFPS(10, 10);
   UISync();
   EndDrawing();
 }

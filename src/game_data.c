@@ -38,16 +38,28 @@ stat_t* InitStatOnMin(StatType attr, float min, float max){
   }; return s;
 }
 
-stat_t InitStatOnMax(StatType attr, float val){}
-stat_t InitStatEmpty(void){}
-void InitStats(stat_t stats[STAT_BLANK]){}
+stat_t* InitStatOnMax(StatType attr, float val){}
+stat_t* InitStatEmpty(void){}
+stat_t* InitStat(StatType attr,float min, float max, float amount){
+ stat_t* s = malloc(sizeof(stat_t));
+ *s =(stat_t){
+    .attribute = attr,
+      .min = min,
+      .max = max,
+      .current = amount,
+      .ratio = StatGetRatio,
+      .increment = 1.0f
+  }; return s;
+
+}
+
 bool StatIncrementValue(stat_t* attr,bool increase){
   float inc = attr->increment;
   if(!increase)
     inc*=-1;
 
   float old = attr->current;
-  attr->current+=attr->increment;
+  attr->current+=inc;
   attr->current = CLAMPF(attr->current,attr->min, attr->max);
   float cur = attr->current;
   return true;

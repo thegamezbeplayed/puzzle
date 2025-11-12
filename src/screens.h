@@ -1,14 +1,15 @@
 #ifndef SCREENS_H
 #define SCREENS_H
 #include "game_types.h"
-
+/*
 #if defined(PLATFORM_ANDROID)
 #define DESIGN_WIDTH 1080.0f
 #define DESIGN_HEIGHT 1920.0f
 #else
-#define DESIGN_WIDTH 1920.0f
-#define DESIGN_HEIGHT 1080.0f
-#endif
+*/
+#define DESIGN_WIDTH 1280.0f
+#define DESIGN_HEIGHT 960.0f
+//#endif
 
 static float SPRITE_SCALE = 1.0f;
 static float UI_SCALE = 1.0f;

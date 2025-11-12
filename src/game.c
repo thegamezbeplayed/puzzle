@@ -52,7 +52,6 @@ void DrawGameplayScreen(void)
   WorldRender();
 
   EndMode2D();
-  DrawFPS(10, 10);
   UISync();
   EndDrawing();
 }
@@ -61,6 +60,7 @@ void DrawGameplayScreen(void)
 void UnloadGameplayScreen(void)
 {
   MenuSetState(&ui.menus[MENU_HUD],MENU_CLOSED);
+  MenuSetState(&ui.menus[MENU_PLAY_AREA],MENU_INACTIVE);
 
   GameProcessEnd();
   // TODO: Unload GAMEPLAY screen variables here!

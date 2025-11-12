@@ -69,8 +69,8 @@ void InitUI(void){
   
    ui_element_t *turnPanel = InitElement("TURN_PANEL",UI_PANEL,VECTOR2_ZERO,VECTOR2_ZERO,0,LAYOUT_HORIZONTAL);
   turnPanel->texture = InitScalingElement(ELEMENT_PANEL_GRAY_WIDE);
-  ElementAddChild(turnPanel,turnBox);
-  ElementAddChild(turnPanel,turnText);
+  //ElementAddChild(turnPanel,turnBox);
+  //ElementAddChild(turnPanel,turnText);
 
   ui_element_t *comboPanel = InitElement("COMBO_PANEL",UI_PANEL,VECTOR2_ZERO,VECTOR2_ZERO,0,LAYOUT_HORIZONTAL);
   comboPanel->texture = InitScalingElement(ELEMENT_PANEL_GRAY_WIDE);
@@ -83,7 +83,7 @@ void InitUI(void){
   ElementAddChild(scorePanel,scoreText);
 
 
-  ElementAddChild(ui.menus[MENU_HUD].element,turnPanel);
+  //ElementAddChild(ui.menus[MENU_HUD].element,turnPanel);
   ElementAddChild(ui.menus[MENU_HUD].element,comboPanel);
   ElementAddChild(ui.menus[MENU_HUD].element,scorePanel);
 
@@ -118,7 +118,9 @@ void InitUI(void){
   endBtn->cb[ELEMENT_ACTIVATED] = UICloseOwner;
   ElementAddChild(ui.menus[MENU_EXIT].element,endBtn);
 
-
+  ui.menus[MENU_PLAY_AREA] = InitMenu(MENU_PLAY_AREA,VECTOR2_ZERO,Vector2XY(ROOM_WIDTH,ROOM_HEIGHT),ALIGN_CENTER|ALIGN_MID,LAYOUT_GRID,false);
+  ui.menus[MENU_PLAY_AREA].element->spacing[UI_MARGIN]=4;//3*UI_SCALE;
+  ui.menus[MENU_PLAY_AREA].cb[MENU_INACTIVE] = UIClearElements;
 }
 
 ui_menu_t InitMenu(MenuId id,Vector2 pos, Vector2 size, UIAlignment align,UILayout layout, bool modal){
@@ -176,6 +178,48 @@ ui_element_t* InitElement(const char* name, ElementType type, Vector2 pos, Vecto
   return u;
 }
 
+ui_element_t* InitGameElement(ent_t* e){
+  ui_element_t* u = malloc(sizeof(ui_element_t));
+  *u = (ui_element_t) {0};
+
+  u->ent = e;
+  Vector2 pos = VECTOR2_ZERO;
+  Vector2 size = RectSize(RectScale(e->sprite->slice->bounds,ScreenSized(SIZE_SCALE)));
+  TraceLog(LOG_INFO,"==Render Size %0.1f | %0.1f", size.x,size.y);
+  const char* name = TextFormat("TILE%i%i",e->intgrid_pos.x,e->intgrid_pos.y);
+  u->hash = hash_str(name);
+  u->num_children = 0;
+  u->type = UI_GAME;
+  u->state = ELEMENT_IDLE;
+  u->get_val = NULL;//CHAR_DO_NOTHING;
+  u->bounds = Rect(pos.x,pos.y,size.x,size.y);
+  u->width = size.x;
+  u->height = size.y;
+  
+  for(int i = 0; i < ELEMENT_DONE; i++)
+    u->cb[i] = UI_BOOL_DO_NOTHING;
+
+  for (int i = 0; i < UI_POSITIONING; i++)
+    u->spacing[i] = 0.0f;
+
+  ui.elements[ui.num_elements++] = u;
+  return u;
+
+}
+
+void ElementAddGameElement( ent_t* e){
+  ui_element_t *o = ui.menus[MENU_PLAY_AREA].element;
+
+  if(!o->menu)
+    o->menu = &ui.menus[MENU_PLAY_AREA];
+  ui_element_t* g = InitGameElement(e);
+  g->owner = o;
+  g->layout = LAYOUT_GRID;
+  g->menu = o->menu;
+  g->index = o->num_children;
+  o->children[o->num_children++] = g;
+}
+
 void ElementAddChild(ui_element_t *o, ui_element_t* c){
   Vector2 pos_adjustment = Vector2FromXY(c->bounds.x,c->bounds.y);
   c->index = o->num_children;
@@ -185,9 +229,14 @@ void ElementAddChild(ui_element_t *o, ui_element_t* c){
 }
 
 float ElementGetHeightSum(ui_element_t *e){
-  float height = e->bounds.height + e->spacing[UI_MARGIN] + e->spacing[UI_MARGIN_TOP];
+  float height = e->bounds.height;// + e->spacing[UI_MARGIN] + e->spacing[UI_MARGIN_TOP];
 
   float cheight = 0;
+  if (e->layout == LAYOUT_GRID){
+      cheight = e->bounds.height * e->owner->num_children / GRID_HEIGHT;
+      return height+cheight;
+  }
+
   for(int i = 0; i < e->num_children; i++)
     if(e->layout == LAYOUT_VERTICAL)
       cheight += ElementGetHeightSum(e->children[i]);
@@ -198,9 +247,14 @@ float ElementGetHeightSum(ui_element_t *e){
 }
 
 float ElementGetWidthSum(ui_element_t *e){
-  float width = e->bounds.width + e->spacing[UI_MARGIN] + e->spacing[UI_MARGIN_LEFT];
+  float width = e->bounds.width;// + e->spacing[UI_MARGIN] + e->spacing[UI_MARGIN_LEFT];
 
   float cwidth = 0;
+  if (e->layout == LAYOUT_GRID){
+    cwidth = e->bounds.width * e->owner->num_children / GRID_WIDTH;
+    return width+cwidth;
+  }
+
   for(int i = 0; i < e->num_children; i++)
     if(e->layout == LAYOUT_HORIZONTAL)
       cwidth += ElementGetWidthSum(e->children[i]);
@@ -236,6 +290,10 @@ void ElementResize(ui_element_t *e){
         if(e->children[i]->height > cheights)
           cheights = e->children[i]->height;
         break;
+      case LAYOUT_GRID:
+        cwidths = 0;//ElementGetWidthSum(e->children[i]);
+        cheights = 0;//ElementGetHeightSum(e->children[i]);
+        break;
       default:
         if(e->children[i]->height > cheights)
           cheights = e->children[i]->height;
@@ -261,29 +319,58 @@ void ElementResize(ui_element_t *e){
     xinc = centerx-e->bounds.width/2;
   if(align & ALIGN_MID)
     yinc = centery- e->bounds.height/2;
+ 
   
   xinc += omarginx;
   yinc += omarginy;
 
+  UILayout layout = e->layout;
+  if(e->owner)
+    layout = e->owner->layout;
+
+  Rectangle prior = RectPos(Vector2XY(xinc/ScreenSized(SIZE_SCALE),yinc),RECT_ZERO);
   if(e->index > 0){
-    Rectangle prior = e->owner->children[e->index-1]->bounds;
+    prior = e->owner->children[e->index-1]->bounds;
+
     omarginx = e->owner->spacing[UI_MARGIN] + e->owner->spacing[UI_MARGIN_LEFT];
     omarginy = e->owner->spacing[UI_MARGIN] + e->owner->spacing[UI_MARGIN_TOP];
+  }
 
-
-    switch(e->owner->layout){
-      case LAYOUT_VERTICAL:
+  switch(layout){
+    case LAYOUT_VERTICAL:
+      if(e->index > 0)
         yinc = omarginy+prior.y + prior.height;
-        break;
-      case LAYOUT_HORIZONTAL:
+      break;
+    case LAYOUT_HORIZONTAL:
+      if(e->index > 0)
         xinc = omarginx + prior.x + prior.width;
+      break;
+    case LAYOUT_GRID:
+      if(!e->owner)
         break;
-      default:
-        break;
-    }
+      switch(e->index%GRID_WIDTH){
+        case 1:
+        case 2:
+          yinc = omarginy+prior.y + prior.height;
+          xinc = prior.x;
+          break;  
+        case 0:
+          //yinc = omarginy+prior.y;//height;
+          xinc = prior.x + prior.width+omarginx;
+          break;
+        default:
+          break;
+      }
+      break;
+    default:
+      break;
   }
 
   e->bounds = RectInc(e->bounds,xinc,yinc);
+
+  if(e->type == UI_GAME && e->ent)
+    EntSetPos(e->ent,Vector2Add(e->ent->sprite->slice->center,RectXY(e->bounds)));
+
   for(int i = 0; i < e->num_children; i++)
     ElementResize(e->children[i]);
 }
@@ -319,7 +406,7 @@ void UISyncElement(ui_element_t* e){
   if(e->state < ELEMENT_IDLE)
     return;
 
-  int clicked,toggle,focused = 0;
+  int clicked = 0,toggle = 0,focused = 0;
   if(e->get_val){
     ElementValue ev = e->get_val();
     if(ev.type == VAL_CHAR)
@@ -357,6 +444,15 @@ void UISyncElement(ui_element_t* e){
     UISyncElement(e->children[i]);
 }
 
+bool UIFreeElement(ui_element_t* e){
+  if(!e)
+    return false;
+
+  free(e);
+
+  return true;
+}
+
 bool UICloseOwner(ui_element_t* e){
   if(!e->menu)
     return false;
@@ -366,6 +462,16 @@ bool UICloseOwner(ui_element_t* e){
 
 bool UICloseMenu(ui_menu_t* m){
   return MenuSetState(m,MENU_CLOSE);
+}
+
+bool UIClearElements(ui_menu_t* m){
+  ui_element_t* eo = m->element;
+  int num_children = eo->num_children;
+  for (int i = 0; i < num_children; i++){
+    if(UIFreeElement(eo->children[i]))
+      eo->num_children--;
+
+  }
 }
 
 bool UITransitionScreen(ui_element_t* e){
@@ -387,6 +493,11 @@ void MenuOnStateChanged(ui_menu_t*m, MenuState old, MenuState s){
   switch(s){
     case MENU_CLOSE:
       MenuSetState(m,MENU_CLOSED);
+      break;
+    case MENU_ACTIVE:
+    case MENU_READY:
+    case MENU_OPENED:
+      GuiSetState(STATE_NORMAL);
       break;
     default:
       break;
@@ -441,7 +552,6 @@ bool ElementSetState(ui_element_t* e, ElementState s){
 
   return true;
 }
-
 
 ElementValue GetDisplayPoints(void){
   ElementValue ev = {0};

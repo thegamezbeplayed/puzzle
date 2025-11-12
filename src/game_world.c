@@ -44,34 +44,15 @@ void AddFloatingText(render_text_t *rt){
   }
 }
 
-int GridGetRow(int row, ent_t** out){
-  int count = 0;
-  for (int x = 0; x < GRID_WIDTH; x++) {
-    ent_t *e = world.grid.combos[x][row]->tile;
-    if (e)
-      out[count++] = e;
-  }
-
-  return count;
-}
-
-int GridGetCol(int col,ent_t** out){
-  int count = 0;
-  for (int y = 0; y < GRID_HEIGHT; y++) {
-    ent_t *e = world.grid.combos[col][y]->tile;
-    if (e)
-      out[count++] = e;
-  }
-
-  return count;
-}
-
 void WorldTurnAddMatch(ent_t* e, bool color_matches){
   Cell epos = e->intgrid_pos;
-  if(world.grid.matches[0][epos.x][epos.y]==NULL)
-    world.grid.matches[0][epos.x][epos.y] = e;
-  else
-    world.grid.matches[1][epos.x][epos.y] = e;
+  int cell = 0;
+  if(world.grid.matches[0][epos.x][epos.y])
+    cell = 1;
+
+    world.grid.matches[cell][epos.x][epos.y] = e;
+    if(color_matches)
+      world.grid.color_matches[cell][epos.x][epos.y] = true;
 
 }
 
@@ -88,32 +69,47 @@ bool WorldGetShapeMoves(int y, int x){
     return shape->control->moves > 0;
 }
 
-bool WorldCalcMatchCombos(void){
+int WorldCalcMatchCombos(void){
 
-  bool matched = false;
+  int matched = 0;
   bool calculated[GRID_WIDTH][GRID_HEIGHT]={0};
   for (int i = 0; i < 2; i++)
   for (int x = 0; x < GRID_WIDTH; x++)
     for (int y = 0; y < GRID_HEIGHT; y++){
       if(!world.grid.matches[i][x][y]){
-        StatEmpty(world.grid.combos[x][y]->type_mul);
-        StatEmpty(world.grid.combos[x][y]->color_mul);
-        continue;
+       continue;
       }
-      StatIncrementValue(world.grid.combos[x][y]->type_mul,true);
+      if(!calculated[x][y])
+        matched++;
+      
       calculated[x][y] = true;
-      matched = true;
+
+      StatIncrementValue(world.grid.combos[x][y]->type_mul,true);
+      if(world.grid.color_matches[i][x][y])
+        StatIncrementValue(world.grid.combos[x][y]->color_mul,true);
     }
 
   for (int x = 0; x < GRID_WIDTH; x++)
     for (int y = 0; y < GRID_HEIGHT; y++)
-      if(calculated[x][y])
+      if(calculated[x][y]){
         SetState(world.grid.combos[x][y]->tile->child,STATE_DIE,EntAddPoints);
+      }
       else{
+        if(world.grid.combos[x][y]->tile->child->control->moved){
+          StatEmpty(world.grid.combos[x][y]->type_mul);
+          StatEmpty(world.grid.combos[x][y]->color_mul);
+        }
+        
         SetState(world.grid.combos[x][y]->tile->child,STATE_IDLE,NULL);
         SetState(world.grid.combos[x][y]->tile,STATE_IDLE,NULL);
       }
-  return matched;  
+  int groups = matched /3;
+  bool remainder = (matched %3)>0;
+
+  if(remainder)
+    groups++;
+  
+  return groups;  
 }
 
 Cell WorldGetMaxShapes(){
@@ -140,6 +136,12 @@ void WorldClearMatches(void){
     for(int x = 0; x < GRID_WIDTH;x++){
       for (int y = 0; y < GRID_HEIGHT; y++){
         world.grid.matches[i][x][y]=NULL;
+        world.grid.color_matches[i][x][y]=false;
+        if(world.grid.combos[x][y]->tile->child)
+          world.grid.combos[x][y]->tile->child->control->moved = false;
+        
+        world.grid.combos[x][y]->type_mul->increment=0.125f*world.max_shape->current;
+        world.grid.combos[x][y]->color_mul->increment=0.25f*(((int)world.max_color->current)>>4);
 
       }
     }
@@ -183,8 +185,15 @@ bool TurnCanChangeState(TurnState state){
 }
 
 bool WorldCheckNewGrid(void){
+  ShapeID grid[GRID_HEIGHT][GRID_WIDTH];
+  int moves[GRID_HEIGHT][GRID_WIDTH];
 
-  return CanBeSolvedInMoves();
+  for(int x = 0; x < GRID_WIDTH; x++)
+    for (int y = 0 ; y < GRID_HEIGHT; y++){
+      grid[x][y] = world.grid.combos[x][y]->tile->child->shape;
+      moves[x][y] = world.grid.combos[x][y]->tile->child->control->moves;
+    }
+  return CanBeSolvedInMoves(grid,moves,4);
 }
 
 void TurnOnChangeState(TurnState state){
@@ -196,9 +205,9 @@ void TurnOnChangeState(TurnState state){
         MenuSetState(&ui.menus[MENU_EXIT],MENU_ACTIVE);
       break;
     case TURN_SCORE:
-      if(WorldCalcMatchCombos()){
-        world.combo_streak++;
-      }
+      int turn_matches = WorldCalcMatchCombos();
+      if(turn_matches > 0)
+        world.combo_streak+=turn_matches;
       else
         world.combo_streak =0;
       TurnSetState(TURN_END);
@@ -207,13 +216,12 @@ void TurnOnChangeState(TurnState state){
       world.grid.turn++;
       if(world.grid.turn%13==0)
         StatIncrementValue(world.max_color,true);
-      if (world.grid.turn%21==0)
+      if (world.grid.turn%27==0)
         StatIncrementValue(world.max_shape,true);
       TurnSetState(TURN_STANDBY);
       break;
     case TURN_STANDBY:
       WorldClearMatches();
-      TurnSetState(TURN_START);
       break;
     default:
       break;
@@ -345,14 +353,19 @@ bool RegisterSprite(sprite_t *s){
 }
 
 void WorldInitOnce(){
-  
   InteractionStep();
 
   TurnSetState(TURN_INPUT);
-
 }
 
 void WorldPreUpdate(){
+  if(TurnGetState()==TURN_STANDBY){
+    ent_t* tile_pool[GRID_WIDTH*GRID_HEIGHT];
+    int num_empty = WorldGetEnts(tile_pool,FilterEmptyTile,NULL);
+    if (num_empty == 0)
+      TurnSetState(TURN_START);
+  }
+
   InteractionStep();
   
   for(int i = 0; i < world.num_spr; i++){
@@ -401,14 +414,12 @@ void InitWorld(world_data_t data){
 
   world.max_color->increment = 16;
 
-  float cs = ScreenSized(SIZE_CELL);
-  float gs = ScreenSized(SIZE_GRID);
-  Vector2 gridStart = ScreenAreaStart(AREA_PLAY); 
-  for(int x = 0; x < GRID_WIDTH; x++)
-    for(int y = 0; y < GRID_HEIGHT; y++){
-      Vector2 pos = {x*cs + gridStart.x,y*cs+gridStart.y};
-      ent_t* tile = InitEntStatic(BASE_TILE,pos);
+  for(int y = 0; y < GRID_HEIGHT; y++)
+    for(int x = 0; x < GRID_WIDTH; x++){
+      //Vector2 pos = {x*cs + gridStart.x,y*cs+gridStart.y};
+      ent_t* tile = InitEntStatic(BASE_TILE,VECTOR2_ZERO);
       tile->intgrid_pos = (Cell){x,y};
+      ElementAddGameElement(tile);
       RegisterEnt(tile);
       world.grid.combos[x][y] = malloc(sizeof(grid_combo_t));
       world.grid.combos[x][y]->tile = tile;
@@ -504,6 +515,7 @@ void InitGameEvents(){
   game_process.children[SCREEN_GAMEPLAY].process = PROCESS_LEVEL;
   game_process.game_frames = 0; 
   MenuSetState(&ui.menus[MENU_PAUSE],MENU_READY);
+  MenuSetState(&ui.menus[MENU_PLAY_AREA],MENU_READY);
 }
 
 bool GameTransitionScreen(){

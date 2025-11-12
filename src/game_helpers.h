@@ -33,39 +33,7 @@ static bool HasMatch(ShapeID grid[GRID_WIDTH][GRID_HEIGHT]) {
 
   return false;
 }
-/*
-static bool OldCanBeSolvedInMoves(ShapeID grid[GRID_WIDTH][GRID_HEIGHT], int depth) {
-    if (HasMatch(grid)) return true;
-    if (depth <= 0) return false;
 
-    for (int y = 0; y < GRID_HEIGHT; y++) {
-        for (int x = 0; x < GRID_WIDTH; x++) {
-            int dx[2] = {1, 0};
-            int dy[2] = {0, 1};
-
-            for (int d = 0; d < 2; d++) {
-                int nx = x + dx[d], ny = y + dy[d];
-                if (nx >= 3 || ny >= 3) continue;
-
-                ShapeID newGrid[GRID_HEIGHT][GRID_WIDTH];
-                memcpy(newGrid, grid, sizeof(newGrid));
-
-                // Swap
-                ShapeID tmp = newGrid[y][x];
-                newGrid[y][x] = newGrid[ny][nx];
-
-                newGrid[ny][nx] = tmp;
-
-                if (CanBeSolvedInMoves(newGrid, depth - 1)){
-                  TraceLog(LOG_INFO,"Solve in %d moves",depth);
-                  return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-*/
 static bool CanBeSolvedInMoves(
     ShapeID grid[GRID_WIDTH][GRID_HEIGHT],
     int moves[GRID_WIDTH][GRID_HEIGHT],

@@ -75,9 +75,6 @@ typedef enum{
   BEHAVIOR_IDLE_TILE,
   BEHAVIOR_CHECK_TURN,
   BEHAVIOR_NEXT_TURN,
-  BEHAVIOR_CAN_MOVE,
-  BEHAVIOR_CAN_SOLVE,
-  BEHAVIOR_CHECK_MOVES,
   BEHAVIOR_COUNT
 }BehaviorID;
 
@@ -249,9 +246,9 @@ typedef struct stat_s{
 } stat_t;
 
 stat_t* InitStatOnMin(StatType attr, float min, float max);
-stat_t InitStatOnMax(StatType attr, float val);
-stat_t InitStatEmpty(void);
-void InitStats(stat_t stats[STAT_BLANK]);
+stat_t* InitStatOnMax(StatType attr, float val);
+stat_t* InitStatEmpty(void);
+stat_t* InitStat(StatType attr,float min, float max, float amount);
 bool StatIncrementValue(stat_t* attr,bool increase);
 bool StatChangeValue(struct ent_s* owner, stat_t* attr, float val);
 void StatMaxOut(stat_t* s);

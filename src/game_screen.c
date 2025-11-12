@@ -10,15 +10,15 @@ play_area_t play_area;
 void InitPlayArea(void){
   float sx = GetScreenWidth()/DESIGN_WIDTH;
   float sy = GetScreenHeight()/DESIGN_HEIGHT;
-  float scale = (sx>sy? sx:sy)*GetApproxDPIScale();
-  TraceLog(LOG_INFO,"Window Scaling %0.2f",scale);
-  SPRITE_SCALE = scale;
+  float scale = GetApproxDPIScale();
+  SPRITE_SCALE = scale*GetApproxDPIScale();;
+  TraceLog(LOG_INFO,"Render Sprite Scaling %0.2f",SPRITE_SCALE);
   UI_SCALE = scale;
-  play_area.sizes[SIZE_SCALE] = scale;
+  play_area.sizes[SIZE_SCALE] = SPRITE_SCALE;
   play_area.sizes[SIZE_GRID] = GRID_WIDTH * scale;
   play_area.sizes[SIZE_CELL] = CELL_WIDTH * scale;
 
-  play_area.area[AREA_PLAY] = Rect(0,0,ROOM_WIDTH*scale,ROOM_HEIGHT * scale);
+  play_area.area[AREA_PLAY] = Rect(0,0,ROOM_WIDTH,ROOM_HEIGHT);
   play_area.area[AREA_UI] = Rect(0,0,DESIGN_WIDTH*scale,DESIGN_HEIGHT * scale);
 }
 
@@ -74,7 +74,7 @@ void ScreenSyncMouse(void){
     ClearMouse(); 
   }
   else if (!mousectrl.is_dragging){
-    /*
+  /*
     ent_t* hover = ScreenEntMouseHover();
     if(mousectrl.hover && mousectrl.hover != hover){
       SetState(mousectrl.hover,STATE_IDLE,NULL);
@@ -83,8 +83,8 @@ void ScreenSyncMouse(void){
     mousectrl.hover = hover;
     if(mousectrl.hover)
       SetState(mousectrl.hover,STATE_HOVER,NULL);
-      */
-  }
+  */
+   }
 
   if(mousectrl.is_dragging){
     SetState(mousectrl.target,STATE_SELECTED,NULL);
@@ -125,5 +125,11 @@ ent_t* ScreenEntMouseCollision(void){
 
 float GetApproxDPIScale(void)
 {
-    return (float)GetScreenWidth() / (float)GetRenderWidth();
+#if defined (PLATFORM_ANDROID)
+  TraceLog(LOG_INFO," Render Width %0.4f", (float)GetRenderWidth());
+    return (float)(float)GetRenderWidth()/DESIGN_HEIGHT;
+#else
+    return 1.0f;
+#endif
+    //return (float)(float)GetRenderWidth()/DESIGN_WIDTH;
 }

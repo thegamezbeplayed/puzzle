@@ -17,6 +17,16 @@ typedef void (*UpdateFn)(void);
 typedef bool EntFilterFn(ent_t* e, ent_t* other); 
 bool CheckWorldGridAdjacent(ent_t* e, ent_t* other);
 
+static bool FilterEmptyTile(ent_t* e, ent_t* other){
+  if(e->state != STATE_EMPTY)
+    return false;
+
+  if(e->type != ENT_TILE)
+    return false;
+
+  return true;
+}
+
 static bool FilterEntShape(ent_t* e,ent_t* other){
   if(e->state < STATE_IDLE || e->state > STATE_SCORE)
     return false;
@@ -139,6 +149,7 @@ typedef struct{
   int           turn;
   int           turn_connections;
   ent_t         *matches[2][GRID_WIDTH][GRID_HEIGHT];
+  bool          color_matches[2][GRID_WIDTH][GRID_HEIGHT];
   grid_combo_t* combos[GRID_WIDTH][GRID_HEIGHT];
 }grid_manager_t;
 
